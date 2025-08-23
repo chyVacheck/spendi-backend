@@ -9,7 +9,7 @@
 * <p>Принципы:
 * <ul>
 *   <li>Работа с коллекцией осуществляется через MongoCollection&lt;Document&gt;.</li>
-*   <li>Маппинг Document &harr; Entity делегируется абстрактным методам {@link #toEntity(Document)} и {@link #toDocument(Object)}.</li>
+*   <li>Маппинг Document ↔ Entity делегируется абстрактным методам {@link #toEntity(Document)} и {@link #toDocument(Object)}.</li>
 *   <li>Пагинация: 1-базная (page &ge; 1), limit &ge; 1; параметры нормализуются.</li>
 * </ul>
 *

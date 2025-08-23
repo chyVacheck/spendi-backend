@@ -1,5 +1,6 @@
 /**
- * @module com.spendi.core.types.EClassType
+ * @file EClassType.java
+ * @module com.spendi.core.types
  * @description
  * Перечисление всех возможных типов классов в системе.
  *
@@ -36,6 +37,7 @@
  *
  * @author Dmytro Shakh
  */
+
 package com.spendi.core.types;
 
 public enum EClassType {
