@@ -28,6 +28,10 @@ import org.bson.types.ObjectId;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 /**
  * ! java imports
@@ -341,63 +345,122 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 */
 
 	/**
-	 * Обновить документ по id (partial update: $set).
+	 * 
+	 * Обновить документ по id (partial update: $set) и вернуть обновлённый
+	 * документ.
 	 *
 	 * @param id      ObjectId в строковом виде
 	 * @param updates карта полей для $set
 	 */
-	public void updateById(String id, Map<String, Object> updates) {
-		collection.updateOne(
+	public Optional<Document> updateDocById(String id, Map<String, Object> updates) {
+		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+		Document updated = collection.findOneAndUpdate(
 				Filters.eq("_id", new ObjectId(id)),
-				new Document("$set", new Document(updates)));
+				new Document("$set", new Document(updates)),
+				opts);
+		return Optional.ofNullable(updated);
 	}
 
 	/**
-	 * Обновить один документ по фильтру (partial update: $set).
+	 * Обновить документ по id (partial update: $set) и вернуть обновлённую
+	 * сущность.
 	 *
+	 * @param id      ObjectId в строковом виде
+	 * @param updates карта полей для $set
+	 * @return Optional с обновлённой сущностью или empty, если документ не найден
+	 */
+	public Optional<TEntity> updateById(String id, Map<String, Object> updates) {
+		return this.updateDocById(id, updates) // Optional<Document>
+				.map(this::toEntity); // Optional<TEntity>
+	}
+
+	/**
+	 * Обновить один документ по фильтру (partial update: $set) и вернуть
+	 * обновлённый документ.
+	 * 
 	 * @param filter  карта условий
 	 * @param updates карта полей для $set
 	 */
-	public void updateOne(Map<String, Object> filter, Map<String, Object> updates) {
-		collection.updateOne(
+	public Optional<Document> updateDocOne(Map<String, Object> filter, Map<String, Object> updates) {
+		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+		Document updated = collection.findOneAndUpdate(
 				new Document(filter),
-				new Document("$set", new Document(updates)));
+				new Document("$set", new Document(updates)),
+				opts);
+		return Optional.ofNullable(updated);
 	}
 
 	/**
-	 * Обновить один документ по условию (key == value) (partial update: $set).
+	 * Обновить один документ по фильтру (partial update: $set) и вернуть
+	 * обновлённую сущность.
+	 *
+	 * @param filter  карта условий
+	 * @param updates карта полей для $set
+	 * @return Optional с обновлённой сущностью или empty, если документ не найден
+	 */
+	public Optional<TEntity> updateOne(Map<String, Object> filter, Map<String, Object> updates) {
+		return this.updateDocOne(filter, updates)
+				.map(this::toEntity);
+	}
+
+	/**
+	 * Обновить один документ по условию key==value (partial update: $set) и вернуть
+	 * обновлённый документ.
 	 *
 	 * @param key     поле
 	 * @param value   значение
 	 * @param updates карта полей для $set
 	 */
-	public void updateOne(String key, Object value, Map<String, Object> updates) {
-		collection.updateOne(
+	public Optional<Document> updateDocOne(String key, Object value, Map<String, Object> updates) {
+		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+		Document updated = collection.findOneAndUpdate(
 				Filters.eq(key, value),
-				new Document("$set", new Document(updates)));
+				new Document("$set", new Document(updates)),
+				opts);
+		return Optional.ofNullable(updated);
 	}
 
 	/**
-	 * Обновить много документов по фильтру (partial update: $set).
+	 * Обновить один документ по условию (key == value) (partial update: $set) и
+	 * вернуть обновлённую сущность.
+	 *
+	 * @param key     поле
+	 * @param value   значение
+	 * @param updates карта полей для $set
+	 * @return Optional с обновлённой сущностью или empty, если документ не найден
+	 */
+	public Optional<TEntity> updateOne(String key, Object value, Map<String, Object> updates) {
+		return this.updateDocOne(key, value, updates)
+				.map(this::toEntity);
+	}
+
+	/**
+	 * * Обновление нескольких
+	 */
+
+	/**
+	 * Обновить много документов по фильтру. Возвращает статистику обновления.
+	 * (MongoDB не возвращает «список обновлённых документов» для bulk-апдейта).
 	 *
 	 * @param filter  карта условий
 	 * @param updates карта полей для $set
 	 */
-	public void updateMany(Map<String, Object> filter, Map<String, Object> updates) {
-		collection.updateMany(
+	public UpdateResult updateManyDocs(Map<String, Object> filter, Map<String, Object> updates) {
+		return collection.updateMany(
 				new Document(filter),
 				new Document("$set", new Document(updates)));
 	}
 
 	/**
-	 * Обновить много документов по условию (key == value) (partial update: $set).
-	 *
+	 * Обновить много документов по условию key==value. Возвращает статистику
+	 * обновления.
+	 * 
 	 * @param key     поле
 	 * @param value   значение
 	 * @param updates карта полей для $set
 	 */
-	public void updateMany(String key, Object value, Map<String, Object> updates) {
-		collection.updateMany(
+	public UpdateResult updateManyDocs(String key, Object value, Map<String, Object> updates) {
+		return collection.updateMany(
 				Filters.eq(key, value),
 				new Document("$set", new Document(updates)));
 	}
@@ -409,49 +472,66 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 */
 
 	/**
-	 * Удалить один документ по id.
+	 * Удалить один документ по id и вернуть его id (если был удалён).
 	 *
 	 * @param id ObjectId в строковом виде
 	 */
-	public void deleteById(String id) {
-		collection.deleteOne(Filters.eq("_id", new ObjectId(id)));
+	public Optional<String> deleteById(String id) {
+		Document deleted = collection.findOneAndDelete(Filters.eq("_id", new ObjectId(id)));
+		if (deleted == null)
+			return Optional.empty();
+		ObjectId deletedId = deleted.getObjectId("_id");
+		return Optional.ofNullable(deletedId).map(ObjectId::toHexString);
 	}
 
 	/**
-	 * Удалить один документ по фильтру.
+	 * Удалить один документ по фильтру и вернуть удалённый id.
 	 *
+	 * 
 	 * @param filter карта условий
 	 */
-	public void deleteOne(Map<String, Object> filter) {
-		collection.deleteOne(new Document(filter));
+	public Optional<String> deleteOne(Map<String, Object> filter) {
+		Document deleted = collection.findOneAndDelete(new Document(filter));
+		if (deleted == null)
+			return Optional.empty();
+		ObjectId deletedId = deleted.getObjectId("_id");
+		return Optional.ofNullable(deletedId).map(ObjectId::toHexString);
 	}
 
 	/**
-	 * Удалить один документ по условию (key == value).
-	 *
+	 * Удалить один документ по условию key==value и вернуть удалённый id.
+	 * 
 	 * @param key   поле
 	 * @param value значение
 	 */
-	public void deleteOne(String key, Object value) {
-		collection.deleteOne(Filters.eq(key, value));
+	public Optional<String> deleteOne(String key, Object value) {
+		Document deleted = collection.findOneAndDelete(Filters.eq(key, value));
+		if (deleted == null)
+			return Optional.empty();
+		ObjectId deletedId = deleted.getObjectId("_id");
+		return Optional.ofNullable(deletedId).map(ObjectId::toHexString);
 	}
 
 	/**
-	 * Удалить несколько документов по фильтру.
-	 *
+	 * Удалить несколько документов по фильтру. Возвращает количество удалённых.
+	 * 
 	 * @param filter карта условий
 	 */
-	public void deleteMany(Map<String, Object> filter) {
-		collection.deleteMany(new Document(filter));
+	public long deleteMany(Map<String, Object> filter) {
+		DeleteResult r = collection.deleteMany(new Document(filter));
+		return r.getDeletedCount();
 	}
 
 	/**
-	 * Удалить несколько документов по условию (key == value).
-	 *
+	 * Удалить несколько документов по условию key==value. Возвращает количество
+	 * удалённых.
+	 * 
 	 * @param key   поле
 	 * @param value значение
 	 */
-	public void deleteMany(String key, Object value) {
-		collection.deleteMany(Filters.eq(key, value));
+	public long deleteMany(String key, Object value) {
+		DeleteResult r = collection.deleteMany(Filters.eq(key, value));
+		return r.getDeletedCount();
 	}
+
 }
