@@ -157,13 +157,30 @@ public class ServiceResponse<T> {
 	}
 
 	/**
+	 * NOTHING для write/delete-сценариев — считаем
+	 * бизнес-неуспехом.
+	 */
+	private static <T> ServiceResponse<T> _nothing(T data) {
+		var r = new ServiceResponse<T>(ServiceProcessType.NOTHING, data);
+		r.setFailed();
+		return r;
+	}
+
+	/**
 	 * NOTHING для write-сценариев (matched=0/modified=0) — считаем
 	 * бизнес-неуспехом.
 	 */
 	public static <T> ServiceResponse<T> nothingWrite(T data) {
-		var r = new ServiceResponse<T>(ServiceProcessType.NOTHING, data);
-		r.setFailed();
-		return r;
+		return _nothing(data);
+	}
+
+	/**
+	 * NOTHING для delete-сценариев (deleted=0) — считаем
+	 * бизнес-неуспехом.
+	 */
+	public static <T> ServiceResponse<T> nothingDeleted(T data) {
+		return _nothing(data);
+
 	}
 
 	/**
