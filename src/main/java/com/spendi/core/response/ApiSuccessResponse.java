@@ -55,7 +55,7 @@ public class ApiSuccessResponse<T> extends InnerResponse {
 	public Map<String, Object> toMap() {
 		return Map.of(
 				"requestId", getRequestId(),
-				"status", getStatus().getName(),
+				"status", getHttpStatusName(),
 				"statusCode", getStatusCode(),
 				"message", getMessage(),
 				"details", getDetails(),

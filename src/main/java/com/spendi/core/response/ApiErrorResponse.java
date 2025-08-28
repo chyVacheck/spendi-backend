@@ -66,7 +66,7 @@ public class ApiErrorResponse extends InnerResponse {
 		return Map.of(
 				"errorCode", errorCode.getName(),
 				"requestId", getRequestId(),
-				"status", getStatus().getName(),
+				"status", getHttpStatusName(),
 				"statusCode", getStatusCode(),
 				"message", getMessage(),
 				"details", getDetails(),
