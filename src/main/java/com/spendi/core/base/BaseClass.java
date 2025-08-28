@@ -20,11 +20,14 @@
 * @see LogData
 * @see LogOptions
 *
-* @author
-* Dmytro Shakh
+* @author Dmytro Shakh
 */
+
 package com.spendi.core.base;
 
+/**
+ * ! java imports
+ */
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -141,6 +144,42 @@ public abstract class BaseClass extends CoreClass {
 			case ERROR -> Logger.error(data);
 			case FATAL -> Logger.fatal(data);
 		}
+	}
+
+	/*
+	 * =========================
+	 * INFO
+	 * =========================
+	 */
+
+	/** Полная форма. */
+	protected final void info(String message, String requestId, Map<String, Object> details, LogOptions options) {
+		log(ELogLevel.INFO, message, requestId, details, options);
+	}
+
+	/** Только сообщение. */
+	protected final void info(String message) {
+		log(ELogLevel.INFO, message, null, null, null);
+	}
+
+	/** Сообщение + save-флаг. */
+	protected final void info(String message, boolean save) {
+		log(ELogLevel.INFO, message, null, null, new LogOptions(save));
+	}
+
+	/** Сообщение + details. */
+	protected final void info(String message, Map<String, Object> details) {
+		log(ELogLevel.INFO, message, null, details, null);
+	}
+
+	/** Только details (сообщение дефолтное). */
+	protected final void info(Map<String, Object> details) {
+		log(ELogLevel.INFO, null, null, details, null);
+	}
+
+	/** Без всего (полностью дефолтное сообщение). */
+	protected final void info() {
+		log(ELogLevel.INFO, null, null, null, null);
 	}
 
 	/*
