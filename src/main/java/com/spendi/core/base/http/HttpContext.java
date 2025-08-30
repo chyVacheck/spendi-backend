@@ -1,91 +1,44 @@
-
 /**
  * @file HttpContext.java
  * @module core/base/http
  *
+ * @description
+ * Абстрактный контракт для работы с HTTP-запросом/ответом
+ * + общие атрибуты (requestId, success, startTime).
+ *
+ * Разные серверные адаптеры (Javalin, Undertow и т.д.)
+ * дают конкретные реализации.
+ *
  * @author Dmytro Shakh
  */
-
 package com.spendi.core.base.http;
 
-/**
- * ! java imports
- */
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+public interface HttpContext {
 
-/**
- * Общий контекст обработки запроса: Request + Response + произвольные атрибуты.
- */
-public final class HttpContext {
-	public static final String ATTR_REQUEST_ID = "requestId";
-	public static final String ATTR_START_NANOS = "startNanos";
-	public static final String ATTR_IS_SUCCESS = "isSuccess";
+	/** Доступ к запросу. */
+	HttpRequest req();
 
-	private final HttpRequest request;
-	private final HttpResponse response;
+	/** Доступ к ответу. */
+	HttpResponse res();
 
-	// фиксируем сразу при создании контекста
-	private final String requestId;
-	private final long startNanos;
+	/** Установка произвольного атрибута. */
+	void setAttr(String key, Object value);
 
-	private final Map<String, Object> attributes = new ConcurrentHashMap<>();
+	/** Получение атрибута по ключу (raw). */
+	Object getAttr(String key);
 
-	public HttpContext(HttpRequest request, HttpResponse response) {
-		this.request = request;
-		this.response = response;
+	/** Получение атрибута с приведением типа. */
+	<T> T getAttr(String key, Class<T> type);
 
-		this.requestId = UUID.randomUUID().toString().substring(0, 8);
-		this.startNanos = System.nanoTime();
+	/** Уникальный идентификатор запроса (устанавливается на старте). */
+	String getRequestId();
 
-		// дублируем в атрибуты — вдруг где-то удобно читать как generic-значения
-		attributes.put(ATTR_REQUEST_ID, requestId);
-		attributes.put(ATTR_START_NANOS, startNanos);
-	}
+	/** Время старта запроса (System.nanoTime). */
+	long getStartNanos();
 
-	public HttpRequest req() {
-		return request;
-	}
+	/** Признак успеха запроса (по умолчанию true). */
+	boolean isSuccess();
 
-	public HttpResponse res() {
-		return response;
-	}
-
-	/** стабильный requestId на весь жизненный цикл запроса */
-	public String getRequestId() {
-		return requestId;
-	}
-
-	/** момент старта запроса в нс (System.nanoTime()) */
-	public long getStartNanos() {
-		return startNanos;
-	}
-
-	/** бизнес-успешность (опционально, можно дергать из хендлеров/миддвар) */
-	public void setSuccess(boolean value) {
-		attributes.put(ATTR_IS_SUCCESS, value);
-	}
-
-	public boolean isSuccess() {
-		Object v = attributes.get(ATTR_IS_SUCCESS);
-		return v instanceof Boolean b && b;
-	}
-
-	/**
-	 * Атрибуты middleware/handler'ов (например, requestId).
-	 */
-	public void setAttr(String key, Object value) {
-		attributes.put(key, value);
-	}
-
-	public Object getAttr(String key) {
-		return attributes.get(key);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T getAttr(String key, Class<T> type) {
-		Object v = attributes.get(key);
-		return (v != null && type.isInstance(v)) ? (T) v : null;
-	}
+	/** Явно пометить запрос как успешный/неуспешный. */
+	void setSuccess(boolean success);
 }

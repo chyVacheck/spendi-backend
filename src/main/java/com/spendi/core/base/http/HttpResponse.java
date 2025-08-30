@@ -16,6 +16,12 @@ package com.spendi.core.base.http;
 import java.util.Map;
 
 /**
+ * ! my imports
+ */
+import com.spendi.core.response.ApiErrorResponse;
+import com.spendi.core.response.ApiSuccessResponse;
+
+/**
  * Фреймворк-агностичное представление HTTP-ответа.
  * Адаптер веб-сервера реализует реальную отправку.
  */
@@ -54,4 +60,24 @@ public interface HttpResponse {
 	 * Отправить JSON-ответ. Конкретный адаптер сериализует объект.
 	 */
 	void sendJson(Object body);
+
+	default HttpResponse success(ApiSuccessResponse<?> body) {
+		status(body.getStatusCode());
+		sendJson(
+				Map.of(
+						"message", body.getMessage(),
+						"data", body.getData(),
+						"details", body.getDetails()));
+		return this;
+	}
+
+	default HttpResponse error(ApiErrorResponse body) {
+		status(body.getStatusCode());
+		sendJson(
+				Map.of(
+						"message", body.getMessage(),
+						"errors", body.getErrors(),
+						"details", body.getDetails()));
+		return this;
+	}
 }

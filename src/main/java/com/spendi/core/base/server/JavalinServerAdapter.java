@@ -22,17 +22,22 @@ package com.spendi.core.base.server;
  * ! lib imports
  */
 import io.javalin.Javalin;
+import io.javalin.http.Context;
+import io.javalin.json.JavalinJackson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * ! java imports
  */
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * ! my imports
  */
+import com.spendi.core.base.BaseClass;
 import com.spendi.core.base.BaseRouter;
 import com.spendi.core.base.http.*;
 import com.spendi.core.base.router.Route;
@@ -40,26 +45,72 @@ import com.spendi.core.http.HttpMethod;
 import com.spendi.core.logger.Logger;
 import com.spendi.core.logger.model.LogData;
 import com.spendi.core.logger.types.LogOptions;
+import com.spendi.core.response.ApiErrorResponse;
 import com.spendi.core.types.EClassType;
-import com.spendi.core.base.server.javalin.JavalinHttpRequest;
-import com.spendi.core.base.server.javalin.JavalinHttpResponse;
+import com.spendi.core.base.server.javalin.JavalinHttpContext;
+import com.spendi.core.exceptions.DomainException;
+import com.spendi.core.exceptions.ErrorCode;
 
-public class JavalinServerAdapter implements HttpServerAdapter {
+public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter {
 	private final Javalin app;
 	private final List<Middleware> globalMiddleware = new ArrayList<>();
 
-	public JavalinServerAdapter(Javalin preconfigured) {
-		this.app = Objects.requireNonNull(preconfigured, "Javalin instance must not be null");
-	}
+	private ExceptionMapper exceptionMapper;
 
 	public JavalinServerAdapter() {
-		this(Javalin.create());
+		super(EClassType.SYSTEM, JavalinServerAdapter.class.getSimpleName());
+
+		ObjectMapper mapper = new ObjectMapper()
+				.findAndRegisterModules()
+				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+		this.app = Javalin.create(cfg -> {
+			cfg.jsonMapper(new JavalinJackson(mapper));
+		});
+
+		app.exception(Exception.class, (e, jctx) -> {
+			var httpCtx = new JavalinHttpContext(jctx);
+			httpCtx.setSuccess(false);
+
+			DomainException domain = null;
+
+			if (e instanceof DomainException de) {
+				// Уже готовый доменный эксепшен
+				domain = de;
+			} else if (exceptionMapper != null) {
+				domain = exceptionMapper.toDomainException(e);
+			}
+
+			if (domain == null) {
+				// Совсем неожиданный случай
+				domain = new DomainException(
+						"Internal server error",
+						ErrorCode.INTERNAL_ERROR,
+						Map.of("exception", e.getClass().getName()),
+						Map.of()) {
+				};
+				logError(domain, "Unhandled exception");
+			} else {
+				// Ожидаемое бизнес-исключение
+				this.warn("Domain exception handled", httpCtx.getRequestId(), detailsOf(
+						"errorCode", domain.getErrorCodeName(),
+						"message", domain.getMessage()));
+			}
+
+			ApiErrorResponse body = domain.toErrorResponse(httpCtx.getRequestId());
+			httpCtx.res().error(body);
+		});
+
 	}
 
 	/** Удобный метод: пробросить себя в роутер и смонтировать его содержимое. */
 	public void registerRouter(BaseRouter router) {
 		router.configure(this);
-		this.mount(router.middlewares(), router.routes(), null);
+		this.mount(router.middlewares(), router.routes());
+	}
+
+	public void setExceptionMapper(ExceptionMapper mapper) {
+		this.exceptionMapper = mapper;
 	}
 
 	// ============================
@@ -71,9 +122,7 @@ public class JavalinServerAdapter implements HttpServerAdapter {
 			return;
 		globalMiddleware.add(middleware);
 		app.before(ctx -> {
-			var req = new JavalinHttpRequest(ctx);
-			var res = new JavalinHttpResponse(ctx);
-			var httpCtx = new HttpContext(req, res);
+			var httpCtx = new JavalinHttpContext(ctx);
 
 			// одна глобальная миддла = единичная цепь
 			var chain = new SingleMiddlewareChain(() -> {
@@ -88,17 +137,34 @@ public class JavalinServerAdapter implements HttpServerAdapter {
 		});
 	}
 
+	// до: void use(Middleware middleware)
+	public void useAfter(Middleware middleware) {
+		if (middleware == null)
+			return;
+		globalMiddleware.add(middleware);
+		app.after(ctx -> {
+			var httpCtx = new JavalinHttpContext(ctx);
+
+			var chain = new SingleMiddlewareChain(() -> {
+				/* no-op */});
+			try {
+				middleware.handle(httpCtx, chain);
+			} catch (Exception e) {
+				logError(e, "After middleware error");
+				throw e;
+			}
+		});
+	}
+
 	@Override
-	public void mount(List<Middleware> routerMiddlewares, List<Route> routes, ExceptionMapper exceptionMapper) {
+	public void mount(List<Middleware> routerMiddlewares, List<Route> routes) {
 		// Router-level middlewares: onBefore для каждого пути (через AnyPath)
 		if (routerMiddlewares != null) {
 			for (Middleware mw : routerMiddlewares) {
 				if (mw == null)
 					continue;
 				app.before(ctx -> {
-					var req = new JavalinHttpRequest(ctx);
-					var res = new JavalinHttpResponse(ctx);
-					var httpCtx = new HttpContext(req, res);
+					var httpCtx = new JavalinHttpContext(ctx);
 
 					var chain = new SingleMiddlewareChain(() -> {
 						/* next=ничего */});
@@ -118,26 +184,6 @@ public class JavalinServerAdapter implements HttpServerAdapter {
 				registerRoute(r);
 			}
 		}
-
-		// Exceptions
-		app.exception(Exception.class, (e, ctx) -> {
-			Exception toLog = e;
-			if (exceptionMapper != null) {
-				Exception mapped = exceptionMapper.toDomainException(e);
-				if (mapped != null) {
-					toLog = mapped;
-				}
-			}
-			// Фоллбэк: вернём 500 и текст
-			ctx.status(500).result("Internal Server Error");
-			logError(toLog, "Unhandled exception");
-		});
-
-	}
-
-	// Перегрузка, если пока нет ExceptionMapper
-	public void mount(List<Middleware> routerMiddlewares, List<Route> routes) {
-		mount(routerMiddlewares, routes, null);
 	}
 
 	@Override
@@ -169,11 +215,9 @@ public class JavalinServerAdapter implements HttpServerAdapter {
 		}
 	}
 
-	private void handleWithChain(io.javalin.http.Context ctx, RouteHandler handler, List<Middleware> locals)
+	private void handleWithChain(Context ctx, RouteHandler handler, List<Middleware> locals)
 			throws Exception {
-		var req = new JavalinHttpRequest(ctx);
-		var res = new JavalinHttpResponse(ctx);
-		var httpCtx = new HttpContext(req, res);
+		var httpCtx = new JavalinHttpContext(ctx);
 
 		// Выполняем локальные миддлы “по цепочке”, затем — handler
 		if (locals == null || locals.isEmpty()) {
