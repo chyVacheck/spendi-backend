@@ -32,6 +32,11 @@ public interface HttpResponse {
 	HttpResponse status(int statusCode);
 
 	/**
+	 * Получить HTTP-статус. Возвращает int.
+	 */
+	int getStatus();
+
+	/**
 	 * Установить заголовок (перезаписывает предыдущее значение).
 	 */
 	HttpResponse header(String name, String value);

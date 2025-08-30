@@ -29,7 +29,7 @@ import com.spendi.core.base.router.Route;
 public interface HttpServerAdapter {
 
 	/** Зарегистрировать глобальные middleware (до всех маршрутов). */
-	void use(Middleware middleware);
+	void useBefore(Middleware middleware);
 
 	/**
 	 * Смонтировать список маршрутов (уже с абсолютными путями) + локальные

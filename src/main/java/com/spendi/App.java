@@ -32,6 +32,5 @@ public class App {
 		server.registerRouter(new PingRouter());
 
 		server.start(config.getPort());
-		System.out.println("✅ Server started on http://localhost:" + config.getPort());
 	}
 }

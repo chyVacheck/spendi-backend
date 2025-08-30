@@ -9,6 +9,7 @@
  * @author
  * Dmytro Shakh
  */
+
 package com.spendi.core.utils;
 
 /**

@@ -157,6 +157,10 @@ public abstract class BaseClass extends CoreClass {
 		log(ELogLevel.INFO, message, requestId, details, options);
 	}
 
+	protected final void info(String message, String requestId, Map<String, Object> details, boolean save) {
+		log(ELogLevel.INFO, message, requestId, details, new LogOptions(save));
+	}
+
 	/** Только сообщение. */
 	protected final void info(String message) {
 		log(ELogLevel.INFO, message, null, null, null);
@@ -175,11 +179,6 @@ public abstract class BaseClass extends CoreClass {
 	/** Только details (сообщение дефолтное). */
 	protected final void info(Map<String, Object> details) {
 		log(ELogLevel.INFO, null, null, details, null);
-	}
-
-	/** Без всего (полностью дефолтное сообщение). */
-	protected final void info() {
-		log(ELogLevel.INFO, null, null, null, null);
 	}
 
 	/*
@@ -228,8 +227,24 @@ public abstract class BaseClass extends CoreClass {
 		log(ELogLevel.WARN, message, null, null, null);
 	}
 
+	protected final void warn(String message, String requestId) {
+		log(ELogLevel.WARN, message, requestId, null, null);
+	}
+
+	protected final void warn(String message, String requestId, Map<String, Object> details, boolean save) {
+		log(ELogLevel.WARN, message, requestId, details, new LogOptions(save));
+	}
+
 	protected final void warn(String message, boolean save) {
 		log(ELogLevel.WARN, message, null, null, new LogOptions(save));
+	}
+
+	protected final void warn(String message, String requestId, boolean save) {
+		log(ELogLevel.WARN, message, requestId, null, new LogOptions(save));
+	}
+
+	protected final void warn(String message, String requestId, Map<String, Object> details) {
+		log(ELogLevel.WARN, message, requestId, details, null);
 	}
 
 	protected final void warn(String message, Map<String, Object> details) {
@@ -238,10 +253,6 @@ public abstract class BaseClass extends CoreClass {
 
 	protected final void warn(Map<String, Object> details) {
 		log(ELogLevel.WARN, null, null, details, null);
-	}
-
-	protected final void warn() {
-		log(ELogLevel.WARN, null, null, null, null);
 	}
 
 	/*

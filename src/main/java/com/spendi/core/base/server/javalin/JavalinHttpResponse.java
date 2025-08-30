@@ -29,6 +29,11 @@ public final class JavalinHttpResponse implements HttpResponse {
 	}
 
 	@Override
+	public int getStatus() {
+		return ctx.status().getCode(); // возвращает текущий статус в числовом виде
+	}
+
+	@Override
 	public HttpResponse status(int statusCode) {
 		ctx.status(statusCode);
 		return this;

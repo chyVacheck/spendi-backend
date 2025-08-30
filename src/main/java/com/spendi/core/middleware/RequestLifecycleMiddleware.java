@@ -47,21 +47,23 @@ public class RequestLifecycleMiddleware extends BaseMiddleware {
 			ctx.res().header("X-Is-Succesfull", String.valueOf(ctx.isSuccess()));
 
 			boolean isHeavyRequest = durationMs > HEAVY_REQUEST_THRESHOLD_MS;
+
 			if (isHeavyRequest) {
 				ctx.res().header("X-Request-Heavy", "true");
-				warn("Heavy request", detailsOf(
-						"requestId", ctx.getRequestId(),
+				this.warn("Heavy request", ctx.getRequestId(), detailsOf(
 						"durationMs", durationMs,
 						"durationNanos", durationNanos,
-						"path", ctx.req().path()));
+						"isHeavyRequest", isHeavyRequest,
+						"isError", !ctx.isSuccess(),
+						"statusCode", ctx.res().getStatus()), true);
 			} else {
-				debug("Request processed", detailsOf(
-						"requestId", ctx.getRequestId(),
+				// логируем входящий запрос
+				this.info("Request processed", ctx.getRequestId(), detailsOf(
 						"durationMs", durationMs,
 						"durationNanos", durationNanos,
-						"path", ctx.req().path()));
+						"isError", !ctx.isSuccess(),
+						"statusCode", ctx.res().getStatus()), true);
 			}
-
 		}
 	}
 }
