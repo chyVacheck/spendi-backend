@@ -12,6 +12,7 @@ package com.spendi;
  */
 import com.spendi.config.ServerConfig;
 import com.spendi.core.base.server.JavalinServerAdapter;
+import com.spendi.core.base.server.MyExceptionMapper;
 import com.spendi.core.middleware.RequestLifecycleMiddleware;
 import com.spendi.core.router.PingRouter;
 
@@ -22,8 +23,10 @@ public class App {
 
 		var server = new JavalinServerAdapter();
 
+		server.setExceptionMapper(new MyExceptionMapper());
+
 		// глобальные middleware
-		server.use(new RequestLifecycleMiddleware()); // или без параметра
+		server.useAfter(new RequestLifecycleMiddleware());
 
 		// вызываешь get/post/... и всё
 		server.registerRouter(new PingRouter());

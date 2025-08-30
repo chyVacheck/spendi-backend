@@ -11,7 +11,6 @@
  * - выставляет заголовки (X-Request-Id, X-Response-Time, X-Response-Time-Nanos, X-Request-Heavy),
  * - логирует итог запроса.
  *
- *
  * @author Dmytro Shakh
  */
 
@@ -45,6 +44,7 @@ public class RequestLifecycleMiddleware extends BaseMiddleware {
 			ctx.res().header("X-Request-Id", ctx.getRequestId());
 			ctx.res().header("X-Response-Time-Nanos", String.valueOf(durationNanos));
 			ctx.res().header("X-Response-Time", durationMs + "ms");
+			ctx.res().header("X-Is-Succesfull", String.valueOf(ctx.isSuccess()));
 
 			boolean isHeavyRequest = durationMs > HEAVY_REQUEST_THRESHOLD_MS;
 			if (isHeavyRequest) {
