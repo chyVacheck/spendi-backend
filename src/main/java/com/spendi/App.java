@@ -14,6 +14,7 @@ import com.spendi.config.ServerConfig;
 import com.spendi.core.base.server.JavalinServerAdapter;
 import com.spendi.core.base.server.MyExceptionMapper;
 import com.spendi.core.middleware.RequestLifecycleMiddleware;
+import com.spendi.core.router.NotFoundRouter;
 import com.spendi.core.router.PingRouter;
 
 public class App {
@@ -30,6 +31,9 @@ public class App {
 
 		// вызываешь get/post/... и всё
 		server.registerRouter(new PingRouter());
+
+		// обязательно ПОСЛЕДНИМ
+		server.registerRouter(new NotFoundRouter());
 
 		server.start(config.getPort());
 	}

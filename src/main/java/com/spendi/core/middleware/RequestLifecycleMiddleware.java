@@ -29,7 +29,6 @@ public class RequestLifecycleMiddleware extends BaseMiddleware {
 
 	public RequestLifecycleMiddleware() {
 		super(RequestLifecycleMiddleware.class.getSimpleName());
-
 	}
 
 	@Override
