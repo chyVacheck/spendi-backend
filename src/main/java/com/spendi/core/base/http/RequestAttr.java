@@ -1,0 +1,24 @@
+
+/**
+ * @file RequestAttr.java
+ * @module core/base/http
+ *
+ * Перечисление списка системных атрибутов
+ *
+ * @author Dmytro Shakh
+ */
+
+package com.spendi.core.base.http;
+
+public final class RequestAttr {
+	private RequestAttr() {
+	}
+
+	public static final String REQUEST_ID = "requestId";
+	public static final String START_NANOS = "startNanos";
+	public static final String SUCCESS = "success";
+
+	public static final String RAW_BODY = "rawBody"; // byte[]
+	public static final String RAW_JSON = "rawJson"; // com.fasterxml.jackson.databind.JsonNode
+	public static final String VALID_BODY = "validBody"; // T (валидация/маппинг)
+}

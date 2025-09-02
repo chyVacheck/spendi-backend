@@ -95,7 +95,9 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 				// Ожидаемое бизнес-исключение
 				this.warn("Domain exception handled", httpCtx.getRequestId(), detailsOf(
 						"errorCode", domain.getErrorCodeName(),
-						"message", domain.getMessage()));
+						"details", domain.getDetails(),
+						"fieldErrors", domain.getFieldErrors(),
+						"message", domain.getMessage()), true);
 			}
 
 			ApiErrorResponse body = domain.toErrorResponse(httpCtx.getRequestId());

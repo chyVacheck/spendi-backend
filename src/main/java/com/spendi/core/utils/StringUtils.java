@@ -1,3 +1,4 @@
+
 /**
  * @file StringUtils.java
  * @module core/utils
@@ -6,10 +7,14 @@
  * Утилитарные функции для работы со строками.
  * Используется в логгере для выравнивания строк.
  *
- * @author
- * Dmytro Shakh
+ * @author Dmytro Shakh
  */
 package com.spendi.core.utils;
+
+/**
+ * ! java imports
+ */
+import java.util.Optional;
 
 /**
  * Утилиты для работы со строками.
@@ -32,5 +37,15 @@ public final class StringUtils {
 		if (str == null)
 			return " ".repeat(width);
 		return String.format("%-" + width + "s", str);
+	}
+
+	/**
+	 * Преобразовать Optional<String> в lowercase-строку или null.
+	 * Если сам Optional == null — вернуть null.
+	 */
+	public static String lowerOrNull(Optional<String> opt) {
+		if (opt == null)
+			return null;
+		return opt.map(String::toLowerCase).orElse(null);
 	}
 }

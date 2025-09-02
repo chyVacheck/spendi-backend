@@ -8,6 +8,11 @@
 package com.spendi;
 
 /**
+ * ! java imports
+ */
+import java.util.Locale;
+
+/**
  * ! my imports
  */
 import com.spendi.config.ServerConfig;
@@ -19,6 +24,7 @@ import com.spendi.core.router.PingRouter;
 
 public class App {
 	public static void main(String[] args) {
+		Locale.setDefault(Locale.ENGLISH);
 		ServerConfig config = new ServerConfig();
 		System.out.println("✅ Loaded config: " + config);
 
