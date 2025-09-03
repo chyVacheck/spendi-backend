@@ -14,29 +14,17 @@
 package com.spendi.config;
 
 /**
- * ! lib imports
+ * ! my imports
  */
-import io.github.cdimascio.dotenv.Dotenv;
+import com.spendi.core.base.BaseConfig;
 
-public class ServerConfig {
+public class ServerConfig extends BaseConfig {
 	private final String host;
 	private final int port;
 
 	public ServerConfig() {
-		Dotenv dotenv = Dotenv.configure()
-				.ignoreIfMissing() // чтобы не падало, если .env нет
-				.load();
-
-		this.host = getenv(dotenv, "SPENDI_SERVER_HOST", "0.0.0.0");
+		this.host = getenv(this.dotenv, "SPENDI_SERVER_HOST", "0.0.0.0");
 		this.port = Integer.parseInt(getenv(dotenv, "SPENDI_SERVER_PORT", "6070"));
-	}
-
-	private String getenv(Dotenv dotenv, String key, String defaultValue) {
-		String val = dotenv.get(key);
-		if (val == null || val.isBlank()) {
-			val = System.getenv(key);
-		}
-		return (val != null && !val.isBlank()) ? val : defaultValue;
 	}
 
 	public String getHost() {
