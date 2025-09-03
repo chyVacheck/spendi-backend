@@ -20,5 +20,9 @@ public final class RequestAttr {
 
 	public static final String RAW_BODY = "rawBody"; // byte[]
 	public static final String RAW_JSON = "rawJson"; // com.fasterxml.jackson.databind.JsonNode
+
 	public static final String VALID_BODY = "validBody"; // T (валидация/маппинг)
+	public static final String VALID_PARAMS = "validParams"; // T (валидация/маппинг)
+	public static final String VALID_QUERY = "validQuery"; // T (валидация/маппинг)
+
 }

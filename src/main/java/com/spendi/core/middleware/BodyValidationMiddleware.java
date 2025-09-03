@@ -41,8 +41,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * - берёт из контекста RAW_JSON (JsonBodyParserMiddleware должен идти раньше),
  * - конвертирует JSON в DTO (T),
  * - валидирует через Jakarta Bean Validation,
- * - кладёт валидный DTO в контекст под ключом VALID_BODY (или
- * пользовательским),
+ * - кладёт валидный DTO в контекст под ключом VALID_BODY
  * - при ошибках кидает ValidationException с map вида "field.path" ->
  * "message".
  */
@@ -85,9 +84,9 @@ public final class BodyValidationMiddleware<T> extends BaseMiddleware {
 				Map<String, String> fieldErrors = new HashMap<>(violations.size());
 				for (ConstraintViolation<T> v : violations) {
 					String path = v.getPropertyPath() != null ? v.getPropertyPath().toString() : "";
-					fieldErrors.put(path, v.getMessage());
+					fieldErrors.put("body." + path, v.getMessage());
 				}
-				throw new ValidationException("Validation failed", fieldErrors, Map.of());
+				throw new ValidationException("Body validation failed", fieldErrors, Map.of());
 			}
 
 			// Кладём валидный DTO в контекст под стандартным ключом
