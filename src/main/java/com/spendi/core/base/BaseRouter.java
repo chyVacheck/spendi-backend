@@ -92,14 +92,14 @@ public abstract class BaseRouter extends BaseClass {
 		route(HttpMethod.DELETE, subPath, h, mw);
 	}
 
-	private static String normalizeBase(String base) {
+	protected static String normalizeBase(String base) {
 		if (base == null || base.isBlank())
 			return "/";
 		String b = base.startsWith("/") ? base : "/" + base;
 		return b.endsWith("/") && b.length() > 1 ? b.substring(0, b.length() - 1) : b;
 	}
 
-	private static String join(String base, String sub) {
+	protected static String join(String base, String sub) {
 		if (sub == null || sub.isBlank() || "/".equals(sub))
 			return base;
 		String s = sub.startsWith("/") ? sub : "/" + sub;

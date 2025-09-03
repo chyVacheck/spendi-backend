@@ -1,3 +1,4 @@
+
 /**
  * @file NotFoundRouter.java
  * @module core/router
@@ -15,15 +16,14 @@ package com.spendi.core.router;
 /**
  * ! my imports
  */
-import com.spendi.core.base.BaseRouter;
 import com.spendi.core.base.http.HttpContext;
 import com.spendi.core.base.server.HttpServerAdapter;
 import com.spendi.core.exceptions.RouterNotFoundException;
 
-public class NotFoundRouter extends BaseRouter {
+public class NotFoundRouter extends ApiRouter {
 
-	public NotFoundRouter() {
-		super(NotFoundRouter.class.getSimpleName(), "/");
+	public NotFoundRouter(String apiPrefix) {
+		super(NotFoundRouter.class.getSimpleName(), "/", apiPrefix);
 	}
 
 	@Override
