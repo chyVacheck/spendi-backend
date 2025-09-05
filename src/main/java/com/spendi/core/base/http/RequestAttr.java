@@ -25,4 +25,14 @@ public final class RequestAttr {
 	public static final String VALID_PARAMS = "validParams"; // T (валидация/маппинг)
 	public static final String VALID_QUERY = "validQuery"; // T (валидация/маппинг)
 
+	/**
+	 * Список загруженных файлов (List<UploadedFile>)
+	 */
+	public static final String FILES = "uploadedFiles";
+
+	/**
+	 * Служебное: список временных путей для последующей очистки
+	 * (List<java.nio.file.Path>)
+	 */
+	public static final String TEMP_FILES = "tempFiles";
 }

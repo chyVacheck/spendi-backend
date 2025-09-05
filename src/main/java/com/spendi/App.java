@@ -32,6 +32,7 @@ import com.spendi.config.ServerConfig;
 import com.spendi.core.base.server.JavalinServerAdapter;
 import com.spendi.core.base.server.MyExceptionMapper;
 import com.spendi.core.middleware.RequestLifecycleMiddleware;
+import com.spendi.core.router.FilesRouter;
 import com.spendi.core.router.NotFoundRouter;
 import com.spendi.core.router.PingRouter;
 
@@ -71,6 +72,8 @@ public class App {
 		// GET /api/v1/ping
 		// GET /api/v1/ping/version
 		server.registerRouter(new PingRouter(apiConfig.getApiPrefix()));
+
+		server.registerRouter(new FilesRouter(apiConfig.getApiPrefix()));
 
 		// Регистрируем NotFoundRouter (ОБЯЗАТЕЛЬНО последним).
 		// Он обрабатывает все несуществующие пути внутри /api/v1/*

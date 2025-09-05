@@ -63,6 +63,10 @@ public final class JavalinHttpContext implements HttpContext {
 		this.response = new JavalinHttpResponse(jctx);
 	}
 
+	public Context raw() {
+		return jctx;
+	}
+
 	/*
 	 * =========================
 	 * Реализация HttpContext
@@ -135,4 +139,5 @@ public final class JavalinHttpContext implements HttpContext {
 		// короткий UUID (8 символов)
 		return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 	}
+
 }

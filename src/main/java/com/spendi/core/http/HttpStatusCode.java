@@ -31,6 +31,7 @@ public enum HttpStatusCode {
 	NOT_FOUND(404, "NOT_FOUND"), // Ресурс не найден
 	CONFLICT(409, "CONFLICT"), // Конфликт в запросе
 	PAYLOAD_TOO_LARGE(413, "PAYLOAD_TOO_LARGE"), // Тело запроса слишком большое
+	UNSUPPORTED_MEDIA_TYPE(415, "UNSUPPORTED_MEDIA_TYPE"), // Не поддерживаемый тип файла
 	UNPROCESSABLE_ENTITY(422, "UNPROCESSABLE_ENTITY"), // Ошибка валидации данных
 	TOO_MANY_REQUESTS(429, "TOO_MANY_REQUESTS"), // Слишком много запросов (rate-limit)
 
