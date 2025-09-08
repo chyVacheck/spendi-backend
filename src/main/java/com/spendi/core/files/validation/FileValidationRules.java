@@ -22,6 +22,7 @@ import java.util.Set;
  * ! my imports
  */
 import com.spendi.config.FileValidationConfig;
+import com.spendi.core.utils.SetUtils;
 
 /**
  * Иммутабельные правила валидации файлов.
@@ -120,8 +121,28 @@ public final class FileValidationRules {
 			return this;
 		}
 
+		public Builder allowedMimes(String... m) {
+			this.allowedMimes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
+		public Builder allowedMimes(Iterable<String> m) {
+			this.allowedMimes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
 		public Builder allowedMimePrefixes(Set<String> m) {
 			this.allowedMimePrefixes = safeSet(m);
+			return this;
+		}
+
+		public Builder allowedMimePrefixes(String... m) {
+			this.allowedMimePrefixes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
+		public Builder allowedMimePrefixes(Iterable<String> m) {
+			this.allowedMimePrefixes = SetUtils.ofNonNull(m);
 			return this;
 		}
 
@@ -130,13 +151,51 @@ public final class FileValidationRules {
 			return this;
 		}
 
+		public Builder deniedMimes(String... m) {
+			this.deniedMimes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
+		public Builder deniedMimes(Iterable<String> m) {
+			this.deniedMimes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
 		public Builder deniedMimePrefixes(Set<String> m) {
 			this.deniedMimePrefixes = safeSet(m);
 			return this;
 		}
 
+		public Builder deniedMimePrefixes(String... m) {
+			this.deniedMimePrefixes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
+		public Builder deniedMimePrefixes(Iterable<String> m) {
+			this.deniedMimePrefixes = SetUtils.ofNonNull(m);
+			return this;
+		}
+
 		public Builder allowedExtensions(Set<String> exts) {
 			this.allowedExtensions = safeSet(exts);
+			return this;
+		}
+
+		/**
+		 * Указать разрешённые расширения как varargs.
+		 * Пример: allowedExtensions(".png", ".jpg")
+		 */
+		public Builder allowedExtensions(String... exts) {
+			this.allowedExtensions = SetUtils.ofNonNull(exts);
+			return this;
+		}
+
+		/**
+		 * Указать разрешённые расширения из коллекции.
+		 * Пример: allowedExtensions(List.of(".png", ".jpg"))
+		 */
+		public Builder allowedExtensions(Iterable<String> exts) {
+			this.allowedExtensions = SetUtils.ofNonNull(exts);
 			return this;
 		}
 
