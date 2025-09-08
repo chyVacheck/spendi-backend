@@ -48,4 +48,13 @@ public final class StringUtils {
 			return null;
 		return opt.map(String::toLowerCase).orElse(null);
 	}
+
+	/**
+	 * Преобразовать String в lowercase-строку или null.
+	 */
+	public static String lowerOrNull(String s) {
+		if (s == null)
+			return null;
+		return s.toLowerCase();
+	}
 }

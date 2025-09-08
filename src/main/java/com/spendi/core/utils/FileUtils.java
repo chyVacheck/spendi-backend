@@ -63,6 +63,15 @@ public final class FileUtils {
 		}
 	}
 
+	public static String getFileExtension(String fileName) {
+		if (fileName == null)
+			return null;
+		int dot = fileName.lastIndexOf('.');
+		if (dot < 0 || dot == fileName.length() - 1)
+			return null;
+		return fileName.substring(dot).toLowerCase();
+	}
+
 	/**
 	 * Удалить файл (игнорировать, если не существует)
 	 */
