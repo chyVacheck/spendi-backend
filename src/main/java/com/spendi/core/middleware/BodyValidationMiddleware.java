@@ -64,7 +64,7 @@ public final class BodyValidationMiddleware<T> extends BaseMiddleware {
 	}
 
 	@Override
-	public void handle(HttpContext ctx, MiddlewareChain chain) {
+	public void handle(HttpContext ctx, MiddlewareChain chain) throws Exception {
 		// Забираем RAW_JSON, который положил JsonBodyParserMiddleware
 		JsonNode json = ctx.getAttr(RequestAttr.RAW_JSON, JsonNode.class);
 		if (json == null) {
@@ -91,7 +91,6 @@ public final class BodyValidationMiddleware<T> extends BaseMiddleware {
 
 			// Кладём валидный DTO в контекст под стандартным ключом
 			ctx.setAttr(RequestAttr.VALID_BODY, dto);
-			chain.next();
 
 		} catch (com.fasterxml.jackson.databind.JsonMappingException e) {
 			// на случай несовпадения типов при treeToValue
@@ -106,5 +105,7 @@ public final class BodyValidationMiddleware<T> extends BaseMiddleware {
 		} catch (Exception e) {
 			throw new ValidationException("Unable to validate body", Map.of(), Map.of("message", e.getMessage()));
 		}
+
+		chain.next();
 	}
 }
