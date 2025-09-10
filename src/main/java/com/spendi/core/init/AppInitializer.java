@@ -18,6 +18,8 @@ import com.spendi.modules.files.FileRepository;
 import com.spendi.modules.files.FileService;
 import com.spendi.modules.user.UserRepository;
 import com.spendi.modules.user.UserService;
+import com.spendi.modules.payment.PaymentMethodRepository;
+import com.spendi.modules.payment.PaymentMethodService;
 import com.spendi.modules.session.SessionRepository;
 import com.spendi.modules.session.SessionService;
 import com.mongodb.client.MongoDatabase;
@@ -36,6 +38,7 @@ public final class AppInitializer {
 		initFilesModule(db);
 		initSessionModule(db);
 		initUserModule(db);
+		initPaymentModule(db);
 	}
 
 	/**
@@ -67,6 +70,12 @@ public final class AppInitializer {
 	public static void initUserModule(MongoDatabase db) {
 		var userRepo = new UserRepository(db);
 		UserService.init(userRepo);
+	}
+
+	/** Инициализация модуля способов оплаты. */
+	public static void initPaymentModule(MongoDatabase db) {
+		var pmRepo = new PaymentMethodRepository(db);
+		PaymentMethodService.init(pmRepo);
 	}
 
 }
