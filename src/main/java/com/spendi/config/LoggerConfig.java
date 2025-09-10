@@ -3,10 +3,20 @@
  * @file LoggerConfig.java
  * @module config
  * @description
- * Конфигурация логгера. Определяет поведение логирования (файл, форматирование, ширина колонок).
+ * Конфигурация логгера. Берёт значения из .env / System.getenv через BaseConfig.
+ * Значения по умолчанию подобраны для удобства разработки.
  *
- * @author
- * Dmytro Shakh
+ * Переменные окружения (пример):
+ *  - SPENDI_LOG_LEVEL=INFO|DEBUG|WARN|ERROR|FATAL
+ *  - SPENDI_LOG_FILE_ENABLED=true
+ *  - SPENDI_LOG_FILE_MAX_SIZE=1048576
+ *  - SPENDI_LOG_PATH=storage/logs
+ *  - SPENDI_LOG_WIDTH_LEVEL=5
+ *  - SPENDI_LOG_WIDTH_TIME=12
+ *  - SPENDI_LOG_WIDTH_TYPE=12
+ *  - SPENDI_LOG_WIDTH_NAME=26
+ *
+ * @author Dmytro Shakh
  */
 
 package com.spendi.config;
@@ -14,70 +24,50 @@ package com.spendi.config;
 /**
  * ! my imports
  */
+import com.spendi.core.base.BaseConfig;
 import com.spendi.core.logger.types.ELogLevel;
 
-/**
- * Конфигурация логгера в виде record.
- * Использует статическую константу {@link #DEFAULT} как дефолтный набор
- * значений.
- */
-public record LoggerConfig(
-		FileConfig file, // настройки файлового вывода
-		ELogLevel minLogLevel, // минимальный уровень логирования
-		int maxLevelWidth, // ширина поля уровня лога
-		int maxCurrentTimeWidth, // ширина поля даты/времени
-		int maxClassTypeWidth, // ширина поля типа модуля
-		int maxClassNameWidth // ширина поля имени модуля
-) {
+public class LoggerConfig extends BaseConfig {
 
-	/**
-	 * Вложенный record для настроек файлового вывода.
-	 */
-	public record FileConfig(
-			boolean enabled,
-			long maxSize,
-			String path) {
-		/** Дефолтная конфигурация файлового вывода */
-		public static final FileConfig DEFAULT = new FileConfig(
-				true, // enabled
-				1 * 1024 * 1024, // 1MB
-				"./logs" // путь к файлам
-		);
-	}
+    public static final LoggerConfig DEFAULT = new LoggerConfig();
 
-	/** Дефолтная конфигурация логгера */
-	public static final LoggerConfig DEFAULT = new LoggerConfig(
-			FileConfig.DEFAULT, // файл
-			ELogLevel.INFO, // минимальный уровень логирования
-			5, // ширина уровня
-			12, // ширина даты/времени
-			12, // ширина типа модуля
-			26 // ширина имени модуля
-	);
+    public static record FileConfig(boolean enabled, long maxSize, String path) {}
 
-	// --- Методы доступа к полям ---
+    private final FileConfig file;
+    private final ELogLevel minLogLevel;
+    private final int maxLevelWidth;
+    private final int maxCurrentTimeWidth;
+    private final int maxClassTypeWidth;
+    private final int maxClassNameWidth;
 
-	public FileConfig getFileConfig() {
-		return file;
-	}
+    public LoggerConfig() {
+        // file settings
+        boolean enabled = parseBool(getenv(dotenv, "SPENDI_LOG_FILE_ENABLED", "true"), true);
+        long maxSize = parseLong(getenv(dotenv, "SPENDI_LOG_FILE_MAX_SIZE", "1048576"), 1048576);
+        String path = getenv(dotenv, "SPENDI_LOG_PATH", "storage/logs");
+        this.file = new FileConfig(enabled, maxSize, path);
 
-	public int getMaxLevelWidth() {
-		return maxLevelWidth;
-	}
+        // level and formatting widths
+        this.minLogLevel = parseEnum(getenv(dotenv, "SPENDI_LOG_LEVEL", "INFO"), ELogLevel.INFO);
+        this.maxLevelWidth = Integer.parseInt(getenv(dotenv, "SPENDI_LOG_WIDTH_LEVEL", "5"));
+        this.maxCurrentTimeWidth = Integer.parseInt(getenv(dotenv, "SPENDI_LOG_WIDTH_TIME", "12"));
+        this.maxClassTypeWidth = Integer.parseInt(getenv(dotenv, "SPENDI_LOG_WIDTH_TYPE", "12"));
+        this.maxClassNameWidth = Integer.parseInt(getenv(dotenv, "SPENDI_LOG_WIDTH_NAME", "26"));
+    }
 
-	public int getMaxCurrentTimeWidth() {
-		return maxCurrentTimeWidth;
-	}
+    // --- API совместимый с прежним кодом ---
 
-	public int getMaxClassTypeWidth() {
-		return maxClassTypeWidth;
-	}
+    public FileConfig file() { return file; }
+    public FileConfig getFileConfig() { return file; }
+    public ELogLevel getMinLogLevel() { return minLogLevel; }
+    public int getMaxLevelWidth() { return maxLevelWidth; }
+    public int getMaxCurrentTimeWidth() { return maxCurrentTimeWidth; }
+    public int getMaxClassTypeWidth() { return maxClassTypeWidth; }
+    public int getMaxClassNameWidth() { return maxClassNameWidth; }
 
-	public int getMaxClassNameWidth() {
-		return maxClassNameWidth;
-	}
-
-	public ELogLevel getMinLogLevel() {
-		return minLogLevel;
-	}
+    @Override
+    public String toString() {
+        return "LoggerConfig{file.enabled=%s,file.maxSize=%d,file.path='%s',level=%s}".formatted(
+                file.enabled(), file.maxSize(), file.path(), minLogLevel.name());
+    }
 }

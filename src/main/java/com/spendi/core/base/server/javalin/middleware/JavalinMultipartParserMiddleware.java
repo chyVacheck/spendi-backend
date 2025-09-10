@@ -89,9 +89,6 @@ public class JavalinMultipartParserMiddleware extends BaseMiddleware {
 			throw new BadRequestException("No files in request", Map.of("expected", "at least one file"));
 		}
 
-		long totalBytes = ours.stream().mapToLong(UploadedFile::getSize).sum();
-		this.debug("files uploaded", detailsOf("count", ours.size(), "totalBytes", totalBytes));
-
 		// Кладём в контекст
 		ctx.setAttr(RequestAttr.FILES, ours);
 		ctx.setAttr(RequestAttr.TEMP_FILES, temps);

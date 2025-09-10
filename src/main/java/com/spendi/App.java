@@ -28,63 +28,99 @@ import java.util.Locale;
  * ! my imports
  */
 import com.spendi.config.ApiConfig;
+import com.spendi.config.AuthConfig;
 import com.spendi.config.ServerConfig;
 import com.spendi.core.base.server.JavalinServerAdapter;
 import com.spendi.core.base.server.MyExceptionMapper;
+import com.spendi.core.init.AppInitializer;
 import com.spendi.core.middleware.RequestLifecycleMiddleware;
-import com.spendi.core.router.FilesRouter;
 import com.spendi.core.router.NotFoundRouter;
 import com.spendi.core.router.PingRouter;
+import com.spendi.modules.auth.AuthRouter;
+import com.spendi.modules.files.FileRouter;
+import com.spendi.modules.user.UserRouter;
 
 public class App {
 	public static void main(String[] args) {
-		// Устанавливаем локаль по умолчанию (для ошибок, дат и сообщений).
+		// ? --- Локаль процесса -------------------------------------------------
+		// Устанавливаем локаль по умолчанию (для форматирования ошибок, дат и
+		// сообщений).
 		// Это гарантирует, что вся система будет использовать ENGLISH,
-		// даже если у ОС другой язык.
+		// даже если у ОС/контейнера иной язык. Полезно для детерминированных логов.
 		Locale.setDefault(Locale.ENGLISH);
 
-		// Загружаем конфигурацию сервера (host, port и т.д.).
+		// ? --- Конфигурация ----------------------------------------------------
+		// Конфиг сервера (порт, хост и пр.). Источник значений инкапсулирован
+		// внутри ServerConfig (например, .env/переменные окружения/файлы свойств).
 		ServerConfig serverConfig = new ServerConfig();
 
-		// Загружаем конфигурацию API (например, префикс /api/v1).
+		// Конфиг API (например, общий префикс /api/v1). Единая точка изменения
+		// префикса помогает избежать «магических строк» в роутерах.
 		ApiConfig apiConfig = new ApiConfig();
 
-		// Выводим информацию о том, какие параметры сервера загрузились.
-		System.out.println("✅ Loaded config: " + serverConfig);
+		// Конфиг авторизации/сессий. Источник значений точка изменения
+		// времени жизни сессии, названия ключа для cookie и т.д.
+		AuthConfig authConfig = new AuthConfig();
 
-		// Создаём адаптер под Javalin (наш слой абстракции над фреймворком).
+		// Отладочная печать загруженных параметров
+		// (полезно при старте в разных средах).
+		System.out.println("✅ Loaded config for server: " + serverConfig);
+		System.out.println("✅ Loaded config api: " + apiConfig);
+		System.out.println("✅ Loaded config auth: " + authConfig);
+
+		// ? --- Инициализация модулей ------------------------------------------
+		// Централизованная инициализация зависимостей приложения: сервисов,
+		// репозиториев,
+		// клиентов внешних API, файловых/облачных хранилищ и т.д.
+		// Важно: порядок может иметь значение, если модули зависят друг от друга.
+		AppInitializer.initAll();
+
+		// ? --- Сервер/фреймворк -----------------------------------------------
+		// Создаём адаптер над Javalin. Наличие собственного адаптера позволяет:
+		// - абстрагироваться от конкретного фреймворка;
+		// - удобно тестировать (можно подменять адаптер/mock);
+		// - упростить миграцию на другой стек при необходимости.
 		var server = new JavalinServerAdapter();
 
-		// Устанавливаем маппер ошибок.
-		// Теперь любые исключения будут автоматически преобразованы
-		// в ApiErrorResponse через MyExceptionMapper.
+		// Централизованный маппер исключений: доменные/технические исключения
+		// приводятся к единообразному JSON-ответу (ApiErrorResponse) с корректным
+		// HTTP-статусом. Это повышает предсказуемость для клиентов API.
 		server.setExceptionMapper(new MyExceptionMapper());
 
-		// Глобальные middleware:
-		// RequestLifecycleMiddleware – финальный шаг запроса.
-		// Считает время обработки, выставляет X-Response-Time, X-Request-Id,
-		// логирует результат (успех или ошибка).
+		// ? --- Глобальные middleware -------------------------------------------
+		// RequestLifecycleMiddleware (after-фаза):
+		// - считает время обработки и выставляет X-Response-Time;
+		// - присваивает/прокидывает X-Request-Id для корреляции логов;
+		// - логирует результат (успех/ошибка) с итоговым статусом.
 		server.useAfter(new RequestLifecycleMiddleware());
 
-		// Регистрируем PingRouter.
-		// Содержит базовые эндпоинты для health-check и проверки версии.
-		// Например:
-		// GET /api/v1/ping
-		// GET /api/v1/ping/version
+		// ? --- Регистрация роутеров -------------------------------------------
+		// Рекомендуется группировать регистрацию логически и передавать общий
+		// API-префикс из ApiConfig, чтобы не дублировать строки и не ошибаться.
+
+		// Служебные/диагностические маршруты: health-check, версия и пр.
+		// Примеры:
+		// GET {prefix}/ping
+		// GET {prefix}/ping/version
 		server.registerRouter(new PingRouter(apiConfig.getApiPrefix()));
 
-		server.registerRouter(new FilesRouter(apiConfig.getApiPrefix()));
+		// ! admin router
+		// Файлы/загрузки/скачивание артефактов
+		server.registerRouter(new FileRouter(apiConfig.getApiPrefix()));
 
-		// Регистрируем NotFoundRouter (ОБЯЗАТЕЛЬНО последним).
-		// Он обрабатывает все несуществующие пути внутри /api/v1/*
-		// и выбрасывает RouterNotFoundException.
-		// Благодаря этому клиент получает структурированный JSON с ошибкой,
-		// а не дефолтную страницу Javalin.
+		// Аутентификация/авторизация
+		server.registerRouter(new AuthRouter(apiConfig.getApiPrefix()));
+
+		// Пользователи
+		server.registerRouter(new UserRouter(apiConfig.getApiPrefix()));
+
+		// Маршрут «не найдено» перехватывает несуществующие пути внутри {prefix}/* и
+		// выбрасывает RouterNotFoundException, чтобы клиент получил
+		// структурированный JSON, а не дефолтный ответ фреймворка.
 		server.registerRouter(new NotFoundRouter(apiConfig.getApiPrefix()));
 
-		// Запускаем HTTP-сервер на указанном порту.
-		// После этого сервер начинает слушать входящие запросы.
-
+		// ? --- Старт сервера ---------------------------------------------------
+		// Фактический запуск HTTP-сервера на указанном порту.
 		server.start(serverConfig.getPort());
 	}
 }

@@ -84,3 +84,9 @@ yarn-error.log*
 
 # Local overrides
 spendi.local.*
+
+# Хранилище файлов (локально)
+# Постоянные файлы (base dir)
+storage/
+# Временные загрузки
+uploads/

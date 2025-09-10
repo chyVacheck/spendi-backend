@@ -130,7 +130,6 @@ public class FileValidationMiddleware extends BaseMiddleware {
 			throw new PayloadTooLargeException(totalBytes, rules.getMaxTotalBytes());
 		}
 
-		this.debug("files validated", detailsOf("count", files.size(), "totalBytes", totalBytes));
 		chain.next();
 	}
 

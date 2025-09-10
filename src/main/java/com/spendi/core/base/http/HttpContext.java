@@ -13,6 +13,19 @@
  */
 package com.spendi.core.base.http;
 
+/**
+ * ! lib imports
+ */
+import com.spendi.core.files.UploadedFile;
+import com.spendi.modules.session.SessionEntity;
+import com.fasterxml.jackson.databind.JsonNode;
+
+/**
+ * ! java imports
+ */
+import java.nio.file.Path;
+import java.util.List;
+
 public interface HttpContext {
 
 	/** Доступ к запросу. */
@@ -41,4 +54,32 @@ public interface HttpContext {
 
 	/** Явно пометить запрос как успешный/неуспешный. */
 	void setSuccess(boolean success);
+
+	/**
+	 * RAW тело запроса как byte[] (если было распарсено соответствующим
+	 * middleware).
+	 */
+	byte[] getRawBody();
+
+	/** RAW JSON тела запроса (если было распарсено соответствующим middleware). */
+	JsonNode getRawJson();
+
+	/** Валидное DTO из тела запроса. */
+	<T> T getValidBody(Class<T> type);
+
+	/** Валидные path-параметры как DTO. */
+	<T> T getValidParams(Class<T> type);
+
+	/** Валидные query-параметры как DTO. */
+	<T> T getValidQuery(Class<T> type);
+
+	/** Список загруженных файлов (если был multipart-парсинг). */
+	List<UploadedFile> getFiles();
+
+	/** Список временных файлов для последующей очистки. */
+	List<Path> getTempFiles();
+
+	/** Сущность «аутентифицированная сессия» (типизировано вызывающим кодом). */
+	SessionEntity getAuthSession();
+
 }

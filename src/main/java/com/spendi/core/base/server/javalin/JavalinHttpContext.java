@@ -14,6 +14,7 @@ package com.spendi.core.base.server.javalin;
  * ! lib imports
  */
 import io.javalin.http.Context;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * ! java imports
@@ -21,6 +22,8 @@ import io.javalin.http.Context;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
+import java.nio.file.Path;
 
 /**
  * ! my imports
@@ -28,16 +31,14 @@ import java.util.UUID;
 import com.spendi.core.base.http.HttpContext;
 import com.spendi.core.base.http.HttpRequest;
 import com.spendi.core.base.http.HttpResponse;
+import com.spendi.core.base.http.RequestAttr;
+import com.spendi.core.files.UploadedFile;
+import com.spendi.modules.session.SessionEntity;
 
 public final class JavalinHttpContext implements HttpContext {
 
 	// Ключ «кармана» атрибутов внутри Javalin Context
 	private static final String ATTR_MAP_KEY = "__http_attrs";
-
-	// Ключи «системных» атрибутов
-	private static final String KEY_REQUEST_ID = "requestId";
-	private static final String KEY_START_NANOS = "startNanos";
-	private static final String KEY_SUCCESS = "success";
 
 	private final Context jctx;
 	private final JavalinHttpRequest request;
@@ -54,9 +55,9 @@ public final class JavalinHttpContext implements HttpContext {
 		}
 
 		// Гарантируем базовые значения один раз на запрос
-		attrs.putIfAbsent(KEY_REQUEST_ID, shortRequestId());
-		attrs.putIfAbsent(KEY_START_NANOS, System.nanoTime());
-		attrs.putIfAbsent(KEY_SUCCESS, Boolean.TRUE);
+		attrs.putIfAbsent(RequestAttr.REQUEST_ID, shortRequestId());
+		attrs.putIfAbsent(RequestAttr.START_NANOS, System.nanoTime());
+		attrs.putIfAbsent(RequestAttr.SUCCESS, Boolean.TRUE);
 
 		// Обёртки над запросом/ответом
 		this.request = new JavalinHttpRequest(jctx);
@@ -102,28 +103,67 @@ public final class JavalinHttpContext implements HttpContext {
 	 */
 
 	public String getRequestId() {
-		return getAttr(KEY_REQUEST_ID, String.class);
+		return getAttr(RequestAttr.REQUEST_ID, String.class);
 	}
 
+	@Override
 	public long getStartNanos() {
-		Long v = getAttr(KEY_START_NANOS, Long.class);
+		Long v = getAttr(RequestAttr.START_NANOS, Long.class);
 		return (v != null) ? v : 0L;
 	}
 
+	@Override
 	public boolean isSuccess() {
-		Boolean v = getAttr(KEY_SUCCESS, Boolean.class);
+		Boolean v = getAttr(RequestAttr.SUCCESS, Boolean.class);
 		return v != null && v;
 	}
 
+	@Override
 	public void setSuccess(boolean success) {
-		setAttr(KEY_SUCCESS, success);
+		setAttr(RequestAttr.SUCCESS, success);
 	}
 
-	/*
-	 * =========================
-	 * Внутренние помощники
-	 * =========================
-	 */
+	@Override
+	public byte[] getRawBody() {
+		return getAttr(RequestAttr.RAW_BODY, byte[].class);
+	}
+
+	@Override
+	public JsonNode getRawJson() {
+		return getAttr(RequestAttr.RAW_JSON, JsonNode.class);
+	}
+
+	@Override
+	public <T> T getValidBody(Class<T> type) {
+		return getAttr(RequestAttr.VALID_BODY, type);
+	}
+
+	@Override
+	public <T> T getValidParams(Class<T> type) {
+		return getAttr(RequestAttr.VALID_PARAMS, type);
+	}
+
+	@Override
+	public <T> T getValidQuery(Class<T> type) {
+		return getAttr(RequestAttr.VALID_QUERY, type);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<UploadedFile> getFiles() {
+		return getAttr(RequestAttr.FILES, List.class);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<Path> getTempFiles() {
+		return getAttr(RequestAttr.TEMP_FILES, List.class);
+	}
+
+	@Override
+	public SessionEntity getAuthSession() {
+		return getAttr(RequestAttr.AUTH_SESSION, SessionEntity.class);
+	}
 
 	/** Достаём/создаём общий карман атрибутов. */
 	private Map<String, Object> attrs() {
@@ -139,5 +179,4 @@ public final class JavalinHttpContext implements HttpContext {
 		// короткий UUID (8 символов)
 		return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 	}
-
 }

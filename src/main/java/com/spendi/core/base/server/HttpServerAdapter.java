@@ -36,7 +36,7 @@ public interface HttpServerAdapter {
 	 * роутер-мидлвары.
 	 * Обычно вызывается для каждого роутера после его configure().
 	 */
-	void mount(List<Middleware> routerMiddlewares, List<Route> routes);
+	void mount(List<Middleware> routerMiddlewares, List<Route> routes, String basePath, String name);
 
 	/** Запуск/остановка сервера. */
 	void start(int port);

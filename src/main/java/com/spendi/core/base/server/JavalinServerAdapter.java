@@ -7,12 +7,7 @@
  * @see BaseRouter
  * @see Route
  * @see HttpMethod
- * @see Logger
- * @see LogData
- * @see LogOptions
  * @see EClassType
- * @see JavalinHttpRequest
- * @see JavalinHttpResponse
  *
  * @author Dmytro Shakh
  */
@@ -45,7 +40,6 @@ import com.spendi.core.base.http.MiddlewareChain;
 import com.spendi.core.base.http.RouteHandler;
 import com.spendi.core.base.router.Route;
 import com.spendi.core.base.server.javalin.JavalinHttpContext;
-import com.spendi.core.logger.types.LogOptions;
 import com.spendi.core.exceptions.DomainException;
 import com.spendi.core.exceptions.ErrorCode;
 import com.spendi.core.http.HttpMethod;
@@ -109,13 +103,13 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	/** Удобный метод: пробросить себя в роутер и смонтировать его содержимое. */
 	public void registerRouter(BaseRouter router) {
 		router.configure(this);
-		this.mount(router.middlewares(), router.routes());
+		this.mount(router.middlewares(), router.routes(), router.basePath(), router.getClassName());
 	}
 
 	public void setExceptionMapper(ExceptionMapper mapper) {
 		this.exceptionMapper = mapper;
-		this.info("ExceptionMapper installed", detailsOf(
-				"class", mapper.getClass().getSimpleName()));
+		this.info("ExceptionMapper installed", "none request id", detailsOf(
+				"class", mapper.getClass().getSimpleName()), true);
 	}
 
 	// ============================
@@ -128,8 +122,10 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		}
 		this.globalMiddleware.add(middleware);
 
-		this.info("Register global middleware", detailsOf(
-				"class", middleware.getClass().getSimpleName()));
+		this.info("Register middleware", "none request id", detailsOf(
+				"class", middleware.getClass().getSimpleName(),
+				"type", "before", "scope", "global"),
+				true);
 
 		this.app.before(ctx -> {
 			var httpCtx = new JavalinHttpContext(ctx);
@@ -154,8 +150,9 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		}
 		this.globalMiddleware.add(middleware);
 
-		this.info("Register AFTER middleware", detailsOf(
-				"class", middleware.getClass().getSimpleName()));
+		this.info("Register middleware", "none request id", detailsOf(
+				"class", middleware.getClass().getSimpleName(),
+				"type", "after", "scope", "global"), true);
 
 		this.app.after(ctx -> {
 			var httpCtx = new JavalinHttpContext(ctx);
@@ -172,45 +169,56 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	}
 
 	@Override
-	public void mount(List<Middleware> routerMiddlewares, List<Route> routes) {
-		// Router-level middlewares: onBefore для каждого пути (через AnyPath)
+	public void mount(List<Middleware> routerMiddlewares, List<Route> routes, String basePath, String name) {
 		if (routerMiddlewares != null) {
 			for (Middleware mw : routerMiddlewares) {
 				if (mw == null)
 					continue;
 
-				this.info("Register router middleware", detailsOf(
-						"class", mw.getClass().getSimpleName()));
+				this.info("Register middleware", "none request id", detailsOf(
+						"class", mw.getClass().getSimpleName(),
+						"type", "before",
+						"scope", "router",
+						"basePath", basePath), true);
 
-				this.app.before(ctx -> {
-					var httpCtx = new JavalinHttpContext(ctx);
-
-					var chain = new SingleMiddlewareChain(() -> {
-						/* next=ничего */});
-					try {
-						mw.handle(httpCtx, chain);
-					} catch (Exception e) {
-						logError(e, "Router middleware error", httpCtx.getRequestId());
-						throw e;
-					}
-				});
+				if (basePath == null || basePath.isBlank() || "/".equals(basePath)) {
+					// Fallback: глобальная регистрация (как было раньше)
+					this.app.before(ctx -> invokeRouterMiddleware(mw, ctx));
+				} else {
+					String base = basePath;
+					// на базовый путь
+					this.app.before(base, ctx -> invokeRouterMiddleware(mw, ctx));
+					// и на все вложенные пути
+					String wildcard = base.endsWith("/") ? base + "*" : base + "/*";
+					this.app.before(wildcard, ctx -> invokeRouterMiddleware(mw, ctx));
+				}
 			}
 		}
 
 		// Routes
 		if (routes != null) {
 			for (Route r : routes) {
-				registerRoute(r);
+				registerRoute(r, name);
 			}
-			this.info("Mounted routes", detailsOf("count", routes.size()));
+			this.info("Mounted routes", "none request id", detailsOf(
+					"count", routes.size()), true);
+		} else {
+			this.warn("Mounted routes", "none request id", detailsOf(
+					"count", 0), true);
 		}
 	}
 
 	@Override
 	public void start(int port) {
-		this.info("Starting HTTP server", detailsOf("port", port));
+
+		this.info("Starting server", "none request id", detailsOf(
+				"port", port,
+				"finished", false), true);
+
 		this.app.start(port);
-		this.info("HTTP server started", detailsOf("port", port));
+		this.info("Starting server", "none request id", detailsOf(
+				"port", port,
+				"finished", true), true);
 	}
 
 	@Override
@@ -221,15 +229,16 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	// ============================
 	// Внутренние хелперы
 	// ============================
-	private void registerRoute(Route r) {
+	private void registerRoute(Route r, String className) {
+
 		HttpMethod m = r.method();
 		String path = r.path();
 		RouteHandler handler = r.handler();
 		List<Middleware> locals = r.middlewares();
 
-		this.info("Register route", detailsOf(
-				"method", m.name(),
-				"path", path));
+		this.info("Register route " + className, "none request id", detailsOf(
+				"path", path,
+				"method", m.name()), true);
 
 		switch (m) {
 			case GET -> app.get(path, ctx -> handleWithChain(ctx, handler, locals));
@@ -247,8 +256,8 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 
 		// логируем входящий запрос
 		this.info("Incoming request", httpCtx.getRequestId(), detailsOf(
-				"method", httpCtx.req().method(),
 				"path", httpCtx.req().path(),
+				"method", httpCtx.req().method(),
 				"query", httpCtx.req().queryParams()), true);
 
 		// Выполняем локальные миддлы “по цепочке”, затем — handler
@@ -269,11 +278,24 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		chain.next();
 	}
 
+	private void invokeRouterMiddleware(Middleware mw, Context ctx) throws Exception {
+		var httpCtx = new JavalinHttpContext(ctx);
+		var chain = new SingleMiddlewareChain(() -> {
+			/* next=ничего */
+		});
+		try {
+			mw.handle(httpCtx, chain);
+		} catch (Exception e) {
+			logError(e, "Router middleware error", httpCtx.getRequestId());
+			throw e;
+		}
+	}
+
 	private void logError(Throwable e, String message, String requestId) {
 		this.error(message,
 				requestId,
 				Map.of("exception", e.getClass().getName(), "message", String.valueOf(e.getMessage())),
-				new LogOptions(true));
+				true);
 	}
 
 	/** Простейшая реализация цепочки для одного middleware. */

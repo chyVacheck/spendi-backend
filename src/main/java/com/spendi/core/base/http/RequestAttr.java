@@ -35,4 +35,9 @@ public final class RequestAttr {
 	 * (List<java.nio.file.Path>)
 	 */
 	public static final String TEMP_FILES = "tempFiles";
+
+	/**
+	 * Активная сессия (SessionEntity) после AuthMiddleware.
+	 */
+	public static final String AUTH_SESSION = "auth.session";
 }
