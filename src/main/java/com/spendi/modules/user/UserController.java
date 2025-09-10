@@ -27,6 +27,11 @@ import com.spendi.modules.session.SessionService;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.http.HttpStatusCode;
 import com.spendi.core.files.DownloadedFile;
+import com.spendi.modules.payment.PaymentMethodEntity;
+import com.spendi.modules.payment.PaymentMethodService;
+import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
+import com.spendi.modules.payment.dto.PaymentMethodIdParams;
+import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
 
 public class UserController extends BaseController {
 
@@ -35,6 +40,7 @@ public class UserController extends BaseController {
 	protected final UserService userService = UserService.getInstance();
 	protected final SessionService sessionService = SessionService.getInstance();
 	protected final FileService fileService = FileService.getInstance();
+	protected final PaymentMethodService paymentService = PaymentMethodService.getInstance();
 
 	protected UserController() {
 		super(UserController.class.getSimpleName());
@@ -192,6 +198,98 @@ public class UserController extends BaseController {
 					"avatar updated",
 					detailsOf("url", url)));
 		}
+	}
+
+	/**
+	 * ? === === Payment Methods === ===
+	 */
+
+	/**
+	 * POST /users/me/payment-methods
+	 */
+	public void addPaymentMethod(HttpContext ctx) {
+		SessionEntity s = ctx.getAuthSession();
+		PaymentMethodCreateDto dto = ctx.getValidBody(PaymentMethodCreateDto.class);
+
+		// Assemble entity
+		PaymentMethodEntity e = new PaymentMethodEntity();
+		var info = new PaymentMethodEntity.Info();
+		info.type = dto.info.type;
+		info.name = dto.info.name;
+		info.currency = dto.info.currency;
+		info.order = dto.info.order;
+		info.tags = dto.info.tags;
+		e.info = info;
+
+		var details = new PaymentMethodEntity.Details();
+		if (dto.details != null) {
+			if (dto.details.card != null) {
+				var c = new PaymentMethodEntity.Card();
+				c.brand = dto.details.card.brand;
+				c.last4 = dto.details.card.last4;
+				c.expMonth = dto.details.card.expMonth;
+				c.expYear = dto.details.card.expYear;
+				details.card = c;
+			}
+			if (dto.details.bank != null) {
+				var b = new PaymentMethodEntity.Bank();
+				b.bankName = dto.details.bank.bankName;
+				b.accountMasked = dto.details.bank.accountMasked;
+				details.bank = b;
+			}
+			if (dto.details.wallet != null) {
+				var w = new PaymentMethodEntity.Wallet();
+				w.provider = dto.details.wallet.provider;
+				w.handle = dto.details.wallet.handle;
+				details.wallet = w;
+			}
+		}
+		e.details = details;
+
+		var sys = new PaymentMethodEntity.System();
+		sys.status = PaymentMethodEntity.EPaymentMethodStatus.Active;
+		sys.meta = new PaymentMethodEntity.Meta();
+		e.system = sys;
+
+		var created = paymentService.createForUser(ctx.getRequestId(), s.userId.toHexString(), e).getData();
+
+		ctx.res().success(ApiSuccessResponse.created(
+				ctx.getRequestId(),
+				"payment method created",
+				created.getPublicData()));
+	}
+
+	/**
+	 * DELETE /users/me/payment-methods/{id}
+	 */
+	public void deletePaymentMethod(HttpContext ctx) {
+		SessionEntity s = ctx.getAuthSession();
+		var params = ctx.getValidParams(PaymentMethodIdParams.class);
+		String methodId = params.pmId;
+
+		paymentService.deleteForUser(ctx.getRequestId(), s.userId.toHexString(), methodId);
+
+		ctx.res().success(ApiSuccessResponse.ok(
+				ctx.getRequestId(),
+				"payment method deleted",
+				detailsOf("id", methodId)));
+	}
+
+	/**
+	 * PUT /users/me/payment-methods/{id}/order
+	 */
+	public void updatePaymentMethodOrder(HttpContext ctx) {
+		SessionEntity s = ctx.getAuthSession();
+		var params = ctx.getValidParams(PaymentMethodIdParams.class);
+		String methodId = params.pmId;
+		PaymentMethodOrderDto dto = ctx.getValidBody(PaymentMethodOrderDto.class);
+
+		var updated = paymentService.updateOrder(ctx.getRequestId(), s.userId.toHexString(), methodId, dto.order);
+
+		ctx.res().success(ApiSuccessResponse.ok(
+				ctx.getRequestId(),
+				"payment method order updated",
+				updated.getData().getPublicData()));
 	}
 
 	/**

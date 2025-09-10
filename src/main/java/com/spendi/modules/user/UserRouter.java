@@ -20,12 +20,18 @@ import com.spendi.core.middleware.AuthMiddleware;
 import com.spendi.core.middleware.FileValidationMiddleware;
 import com.spendi.core.middleware.ParamsValidationMiddleware;
 import com.spendi.core.middleware.TempFilesCleanupMiddleware;
+import com.spendi.core.middleware.BodyValidationMiddleware;
+import com.spendi.core.middleware.JsonBodyParserMiddleware;
 // core ->files
 import com.spendi.core.files.validation.FileValidationRules;
 // core -> router
 import com.spendi.core.router.ApiRouter;
 // user -> dto
 import com.spendi.modules.user.dto.UserIdParams;
+// payment -> dto
+import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
+import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
+import com.spendi.modules.payment.dto.PaymentMethodIdParams;
 
 public class UserRouter extends ApiRouter {
 	public UserController controller = UserController.getInstance();
@@ -74,6 +80,24 @@ public class UserRouter extends ApiRouter {
 
 		// Удалить аватар авторизованого сотрудника
 		this.delete("/me/avatar", controller::deleteMeAvatar);
+
+		// ? === Payment methods ===
+
+		this.post("/me/payment-methods",
+				controller::addPaymentMethod,
+				new JsonBodyParserMiddleware(),
+				BodyValidationMiddleware.of(PaymentMethodCreateDto.class));
+
+
+		this.delete("/me/payment-methods/{pmId}",
+				controller::deletePaymentMethod,
+				ParamsValidationMiddleware.of(PaymentMethodIdParams.class));
+
+		this.put("/me/payment-methods/{pmId}/order",
+				controller::updatePaymentMethodOrder,
+				ParamsValidationMiddleware.of(PaymentMethodIdParams.class),
+				new JsonBodyParserMiddleware(),
+				BodyValidationMiddleware.of(PaymentMethodOrderDto.class));
 
 	}
 }
