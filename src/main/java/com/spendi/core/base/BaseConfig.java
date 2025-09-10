@@ -33,6 +33,8 @@ public abstract class BaseConfig {
 	public BaseConfig() {
 	}
 
+	abstract public String toString();
+
 	protected String getenv(Dotenv dotenv, String key, String defaultValue) {
 		String val = dotenv.get(key);
 		if (val == null || val.isBlank()) {

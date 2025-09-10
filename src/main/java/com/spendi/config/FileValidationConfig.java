@@ -173,4 +173,25 @@ public final class FileValidationConfig extends BaseConfig {
 	public boolean isPdfForbidEncrypted() {
 		return pdfForbidEncrypted;
 	}
+
+	@Override
+	public String toString() {
+		return ("FileValidationConfig{" +
+				"allowedMimes=" + allowedMimes +
+				", allowedMimePrefixes=" + allowedMimePrefixes +
+				", deniedMimes=" + deniedMimes +
+				", deniedMimePrefixes=" + deniedMimePrefixes +
+				", allowedExtensions=" + allowedExtensions +
+				", limits=[" + minFiles + ".." + maxFiles +
+				", perFile=" + maxPerFileBytes + "B, total=" + maxTotalBytes + "B, name<=" + maxFilenameLength + "]" +
+				", sanitize=" + sanitizeFilenames +
+				", sniffing=" + contentSniffing +
+				", onMismatch=" + onMismatchPolicy +
+				", sha256=" + computeSha256 +
+				", image=[min=" + imageMinWidth + "x" + imageMinHeight +
+				", max=" + imageMaxWidth + "x" + imageMaxHeight +
+				", maxMP=" + imageMaxMegapixels + "]" +
+				", pdf=[maxPages=" + pdfMaxPages + ", forbidEncrypted=" + pdfForbidEncrypted + "]" +
+				"}");
+	}
 }
