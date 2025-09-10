@@ -157,28 +157,14 @@ public abstract class BaseClass extends CoreClass {
 		log(ELogLevel.INFO, message, requestId, details, options);
 	}
 
+	/** Полная форма + save-флаг, вместо log опций */
 	protected final void info(String message, String requestId, Map<String, Object> details, boolean save) {
 		log(ELogLevel.INFO, message, requestId, details, new LogOptions(save));
 	}
 
-	/** Только сообщение. */
-	protected final void info(String message) {
-		log(ELogLevel.INFO, message, null, null, null);
-	}
-
-	/** Сообщение + save-флаг. */
-	protected final void info(String message, boolean save) {
-		log(ELogLevel.INFO, message, null, null, new LogOptions(save));
-	}
-
-	/** Сообщение + details. */
-	protected final void info(String message, Map<String, Object> details) {
-		log(ELogLevel.INFO, message, null, details, null);
-	}
-
-	/** Только details (сообщение дефолтное). */
-	protected final void info(Map<String, Object> details) {
-		log(ELogLevel.INFO, null, null, details, null);
+	/** Форма, без log опций */
+	protected final void info(String message, String requestId, Map<String, Object> details) {
+		log(ELogLevel.INFO, message, requestId, details, null);
 	}
 
 	/*
@@ -192,29 +178,19 @@ public abstract class BaseClass extends CoreClass {
 		log(ELogLevel.DEBUG, message, requestId, details, options);
 	}
 
-	/** Только сообщение. */
+	/** Полная форма + save-флаг, вместо log опций */
+	protected final void debug(String message, String requestId, Map<String, Object> details, boolean save) {
+		log(ELogLevel.DEBUG, message, requestId, details, new LogOptions(save));
+	}
+
+	/** Форма, без log опций */
+	protected final void debug(String message, String requestId, Map<String, Object> details) {
+		log(ELogLevel.DEBUG, message, requestId, details, null);
+	}
+
+	/** Только сообщение */
 	protected final void debug(String message) {
 		log(ELogLevel.DEBUG, message, null, null, null);
-	}
-
-	/** Сообщение + save-флаг. */
-	protected final void debug(String message, boolean save) {
-		log(ELogLevel.DEBUG, message, null, null, new LogOptions(save));
-	}
-
-	/** Сообщение + details. */
-	protected final void debug(String message, Map<String, Object> details) {
-		log(ELogLevel.DEBUG, message, null, details, null);
-	}
-
-	/** Только details (сообщение дефолтное). */
-	protected final void debug(Map<String, Object> details) {
-		log(ELogLevel.DEBUG, null, null, details, null);
-	}
-
-	/** Без всего (полностью дефолтное сообщение). */
-	protected final void debug() {
-		log(ELogLevel.DEBUG, null, null, null, null);
 	}
 
 	/*
@@ -223,36 +199,19 @@ public abstract class BaseClass extends CoreClass {
 	 * =========================
 	 */
 
-	protected final void warn(String message) {
-		log(ELogLevel.WARN, message, null, null, null);
+	/** Полная форма. */
+	protected final void warn(String message, String requestId, Map<String, Object> details, LogOptions options) {
+		log(ELogLevel.WARN, message, requestId, details, options);
 	}
 
-	protected final void warn(String message, String requestId) {
-		log(ELogLevel.WARN, message, requestId, null, null);
-	}
-
+	/** Полная форма + save-флаг, вместо log опций */
 	protected final void warn(String message, String requestId, Map<String, Object> details, boolean save) {
 		log(ELogLevel.WARN, message, requestId, details, new LogOptions(save));
 	}
 
-	protected final void warn(String message, boolean save) {
-		log(ELogLevel.WARN, message, null, null, new LogOptions(save));
-	}
-
-	protected final void warn(String message, String requestId, boolean save) {
-		log(ELogLevel.WARN, message, requestId, null, new LogOptions(save));
-	}
-
+	/** Форма, без log опций */
 	protected final void warn(String message, String requestId, Map<String, Object> details) {
 		log(ELogLevel.WARN, message, requestId, details, null);
-	}
-
-	protected final void warn(String message, Map<String, Object> details) {
-		log(ELogLevel.WARN, message, null, details, null);
-	}
-
-	protected final void warn(Map<String, Object> details) {
-		log(ELogLevel.WARN, null, null, details, null);
 	}
 
 	/*
@@ -261,28 +220,19 @@ public abstract class BaseClass extends CoreClass {
 	 * =========================
 	 */
 
+	/** Полная форма. */
 	protected final void error(String message, String requestId, Map<String, Object> details, LogOptions options) {
 		log(ELogLevel.ERROR, message, requestId, details, options);
 	}
 
-	protected final void error(String message) {
-		log(ELogLevel.ERROR, message, null, null, null);
+	/** Полная форма + save-флаг, вместо log опций */
+	protected final void error(String message, String requestId, Map<String, Object> details, boolean save) {
+		log(ELogLevel.ERROR, message, requestId, details, new LogOptions(save));
 	}
 
-	protected final void error(String message, boolean save) {
-		log(ELogLevel.ERROR, message, null, null, new LogOptions(save));
-	}
-
-	protected final void error(String message, Map<String, Object> details) {
-		log(ELogLevel.ERROR, message, null, details, null);
-	}
-
-	protected final void error(Map<String, Object> details) {
-		log(ELogLevel.ERROR, null, null, details, null);
-	}
-
-	protected final void error() {
-		log(ELogLevel.ERROR, null, null, null, null);
+	/** Форма, без log опций */
+	protected final void error(String message, String requestId, Map<String, Object> details) {
+		log(ELogLevel.ERROR, message, requestId, details, null);
 	}
 
 	/*
@@ -291,27 +241,18 @@ public abstract class BaseClass extends CoreClass {
 	 * =========================
 	 */
 
+	/** Полная форма. */
 	protected final void fatal(String message, String requestId, Map<String, Object> details, LogOptions options) {
 		log(ELogLevel.FATAL, message, requestId, details, options);
 	}
 
-	protected final void fatal(String message) {
-		log(ELogLevel.FATAL, message, null, null, null);
+	/** Полная форма + save-флаг, вместо log опций */
+	protected final void fatal(String message, String requestId, Map<String, Object> details, boolean save) {
+		log(ELogLevel.FATAL, message, requestId, details, new LogOptions(save));
 	}
 
-	protected final void fatal(String message, boolean save) {
-		log(ELogLevel.FATAL, message, null, null, new LogOptions(save));
-	}
-
-	protected final void fatal(String message, Map<String, Object> details) {
-		log(ELogLevel.FATAL, message, null, details, null);
-	}
-
-	protected final void fatal(Map<String, Object> details) {
-		log(ELogLevel.FATAL, null, null, details, null);
-	}
-
-	protected final void fatal() {
-		log(ELogLevel.FATAL, null, null, null, null);
+	/** Форма, без log опций */
+	protected final void fatal(String message, String requestId, Map<String, Object> details) {
+		log(ELogLevel.FATAL, message, requestId, details, null);
 	}
 }
