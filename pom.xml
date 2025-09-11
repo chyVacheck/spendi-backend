@@ -119,6 +119,15 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>3.5.0</version>
+				<configuration>
+					<!-- Указываем главный класс приложения -->
+					<mainClass>com.spendi.App</mainClass>
+					<!-- Аргументы JVM для разработки -->
+					<options>
+						<option>-Dfile.encoding=UTF-8</option>
+						<option>-Xmx512m</option>
+					</options>
+				</configuration>
 			</plugin>
 
 			<plugin>

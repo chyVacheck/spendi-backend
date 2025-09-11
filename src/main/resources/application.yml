@@ -1,5 +1,0 @@
-app.port: 6070
-app.env: dev
-
-mongo.uri: mongodb://localhost:27017
-mongo.db: spendi
