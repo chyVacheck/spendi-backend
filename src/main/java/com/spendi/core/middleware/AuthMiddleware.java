@@ -10,6 +10,11 @@
 package com.spendi.core.middleware;
 
 /**
+ * ! java imports
+ */
+import java.util.Map;
+
+/**
  * ! my imports
  */
 import com.spendi.config.AuthConfig;
@@ -22,12 +27,12 @@ import com.spendi.core.utils.CookieUtils;
 import com.spendi.modules.session.SessionEntity;
 import com.spendi.modules.session.SessionService;
 
-public class AuthMiddleware extends BaseMiddleware {
+public final class AuthMiddleware extends BaseMiddleware {
 
 	private final static AuthMiddleware INSTANCE = new AuthMiddleware();
 
 	private final AuthConfig authCfg = new AuthConfig();
-	private final SessionService sessions = SessionService.getInstance();
+	private final SessionService sessionService = SessionService.getInstance();
 
 	protected AuthMiddleware() {
 		super(AuthMiddleware.class.getSimpleName());
@@ -42,15 +47,15 @@ public class AuthMiddleware extends BaseMiddleware {
 		String sid = CookieUtils.readCookie(ctx.req(), authCfg.getCookieName());
 		if (sid == null || sid.isBlank()) {
 			throw new UnauthorizedException("Auth cookie is missing",
-					java.util.Map.of("cookie", authCfg.getCookieName()));
+					Map.of("cookie", authCfg.getCookieName()));
 		}
 
 		// Найти активную сессию (проверяет revoked и expiresAt)
-		SessionEntity s = sessions.getActiveById(sid).getData();
+		SessionEntity s = this.sessionService.getActiveById(sid).getData();
 
 		// Опционально обновим lastSeenAt
 		try {
-			sessions.touch(s.id.toHexString());
+			this.sessionService.touch(s.id.toHexString());
 		} catch (RuntimeException ignore) {
 		}
 

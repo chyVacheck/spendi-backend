@@ -23,7 +23,6 @@ import com.spendi.core.response.ApiSuccessResponse;
 import com.spendi.core.types.ServiceProcessType;
 import com.spendi.modules.files.FileService;
 import com.spendi.modules.session.SessionEntity;
-import com.spendi.modules.session.SessionService;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.http.HttpStatusCode;
 import com.spendi.core.files.DownloadedFile;
@@ -37,10 +36,9 @@ public class UserController extends BaseController {
 
 	protected static UserController INSTANCE = new UserController();
 
-	protected final UserService userService = UserService.getInstance();
-	protected final SessionService sessionService = SessionService.getInstance();
-	protected final FileService fileService = FileService.getInstance();
-	protected final PaymentMethodService paymentService = PaymentMethodService.getInstance();
+	private final UserService userService = UserService.getInstance();
+	private final FileService fileService = FileService.getInstance();
+	private final PaymentMethodService paymentService = PaymentMethodService.getInstance();
 
 	protected UserController() {
 		super(UserController.class.getSimpleName());
@@ -125,7 +123,7 @@ public class UserController extends BaseController {
 			return;
 		}
 
-		var fileResp = fileService.downloadOne(ctx.getRequestId(), u.profile.avatarFileId);
+		var fileResp = this.fileService.downloadOne(ctx.getRequestId(), u.profile.avatarFileId);
 		DownloadedFile file = fileResp.getData();
 
 		String disposition = "inline; filename=\""
@@ -153,7 +151,7 @@ public class UserController extends BaseController {
 			ctx.res().status(HttpStatusCode.NO_CONTENT.getCode());
 			return;
 		}
-		var fileResp = fileService.downloadOne(ctx.getRequestId(), u.profile.avatarFileId);
+		var fileResp = this.fileService.downloadOne(ctx.getRequestId(), u.profile.avatarFileId);
 		DownloadedFile file = fileResp.getData();
 
 		String disposition = "inline; filename=\""
@@ -251,7 +249,7 @@ public class UserController extends BaseController {
 		sys.meta = new PaymentMethodEntity.Meta();
 		e.system = sys;
 
-		var created = paymentService.createForUser(ctx.getRequestId(), s.userId.toHexString(), e).getData();
+		var created = this.paymentService.createForUser(ctx.getRequestId(), s.userId.toHexString(), e).getData();
 
 		ctx.res().success(ApiSuccessResponse.created(
 				ctx.getRequestId(),
@@ -265,14 +263,13 @@ public class UserController extends BaseController {
 	public void deletePaymentMethod(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
 		var params = ctx.getValidParams(PaymentMethodIdParams.class);
-		String methodId = params.pmId;
 
-		paymentService.deleteForUser(ctx.getRequestId(), s.userId.toHexString(), methodId);
+		this.paymentService.deleteForUser(ctx.getRequestId(), s.userId.toHexString(), params.pmId);
 
 		ctx.res().success(ApiSuccessResponse.ok(
 				ctx.getRequestId(),
 				"payment method deleted",
-				detailsOf("id", methodId)));
+				detailsOf("id", params.pmId)));
 	}
 
 	/**
@@ -281,10 +278,10 @@ public class UserController extends BaseController {
 	public void updatePaymentMethodOrder(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
 		var params = ctx.getValidParams(PaymentMethodIdParams.class);
-		String methodId = params.pmId;
 		PaymentMethodOrderDto dto = ctx.getValidBody(PaymentMethodOrderDto.class);
 
-		var updated = paymentService.updateOrder(ctx.getRequestId(), s.userId.toHexString(), methodId, dto.order);
+		var updated = this.paymentService.updateOrder(ctx.getRequestId(), s.userId.toHexString(), params.pmId,
+				dto.order);
 
 		ctx.res().success(ApiSuccessResponse.ok(
 				ctx.getRequestId(),

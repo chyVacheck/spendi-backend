@@ -32,40 +32,40 @@ import com.spendi.core.utils.CookieUtils;
 public class AuthController extends BaseController {
 
 	protected static AuthController INSTANCE = new AuthController();
-	protected final UserService userService = UserService.getInstance();
-	protected final SessionService sessionService = SessionService.getInstance();
+	private final UserService userService = UserService.getInstance();
+	private final SessionService sessionService = SessionService.getInstance();
 	protected final AuthConfig authCfg = new AuthConfig();
 
 	protected AuthController() {
 		super(AuthController.class.getSimpleName());
 	}
 
-    public static AuthController getInstance() {
-        return INSTANCE;
-    }
+	public static AuthController getInstance() {
+		return INSTANCE;
+	}
 
-    public void register(HttpContext ctx) {
-        LoginDto dto = ctx.getValidBody(LoginDto.class);
+	public void register(HttpContext ctx) {
+		LoginDto dto = ctx.getValidBody(LoginDto.class);
 
-        // Лог: запрос регистрации (несохраненный)
-        this.info("register requested", ctx.getRequestId(), detailsOf("email", dto.email));
+		// Лог: запрос регистрации (несохраненный)
+		this.info("register requested", ctx.getRequestId(), detailsOf("email", dto.email));
 
-        // Сборка минимального UserCreateDto из email/password
-        var createDto = new UserCreateDto();
-        var profile = new UserCreateDto.ProfileBlock();
-        profile.email = dto.email;
-        createDto.profile = profile;
-        var sec = new UserCreateDto.SecurityBlock();
-        sec.password = dto.password;
-        createDto.security = sec;
+		// Сборка минимального UserCreateDto из email/password
+		var createDto = new UserCreateDto();
+		var profile = new UserCreateDto.ProfileBlock();
+		profile.email = dto.email;
+		createDto.profile = profile;
+		var sec = new UserCreateDto.SecurityBlock();
+		sec.password = dto.password;
+		createDto.security = sec;
 
-        var created = userService.create(ctx.getRequestId(), createDto).getData();
+		var created = this.userService.create(ctx.getRequestId(), createDto).getData();
 
-        ctx.res().success(ApiSuccessResponse.created(
-                ctx.getRequestId(),
-                "User registered",
-                created.getPublicData()));
-    }
+		ctx.res().success(ApiSuccessResponse.created(
+				ctx.getRequestId(),
+				"User registered",
+				created.getPublicData()));
+	}
 
 	public void login(HttpContext ctx) {
 		LoginDto dto = ctx.getValidBody(LoginDto.class);
@@ -73,11 +73,11 @@ public class AuthController extends BaseController {
 		// Лог: запрос логина (несохраненный)
 		this.info("login requested", ctx.getRequestId(), detailsOf("email", dto.email));
 
-        // Поиск пользователя по почте (выбрасывает исключение если не найден)
-        UserEntity user = userService.getByEmail(dto.email).getData();
+		// Поиск пользователя по почте (выбрасывает исключение если не найден)
+		UserEntity user = this.userService.getByEmail(dto.email).getData();
 
 		// Verify password
-        boolean ok = CryptoUtils.verifyPassword(dto.password, user.security.passwordHash);
+		boolean ok = CryptoUtils.verifyPassword(dto.password, user.security.passwordHash);
 		if (!ok) {
 			// Лог: неверные учётные данные (сохраняем)
 			this.warn("login failed: invalid credentials", ctx.getRequestId(),
@@ -87,12 +87,12 @@ public class AuthController extends BaseController {
 
 		// Single active session policy: отзываем предыдущие активные сессии
 		// сотрудника
-		sessionService.revokeActiveByUser(ctx.getRequestId(), user.id.toHexString());
+		this.sessionService.revokeActiveByUser(ctx.getRequestId(), user.id.toHexString());
 
 		// Создание новой сессии
 		String ip = ctx.req().remoteAddress().orElse(null);
 		String ua = ctx.req().header("User-Agent").orElse("");
-		var s = sessionService
+		var s = this.sessionService
 				.create(ctx.getRequestId(), user.id.toHexString(), ip, ua)
 				.getData();
 
@@ -102,14 +102,14 @@ public class AuthController extends BaseController {
 		ctx.res().header("Set-Cookie", cookie);
 
 		// Лог: успешный логин
-        this.info("login success", ctx.getRequestId(),
-                detailsOf("userId", user.id.toHexString(), "sessionId", s.id.toHexString()), true);
+		this.info("login success", ctx.getRequestId(),
+				detailsOf("userId", user.id.toHexString(), "sessionId", s.id.toHexString()), true);
 
-        ctx.res().success(ApiSuccessResponse.ok(
-                ctx.getRequestId(),
-                "User " + user.getEmail() + " logged",
-                user.getPublicData()));
-    }
+		ctx.res().success(ApiSuccessResponse.ok(
+				ctx.getRequestId(),
+				"User " + user.getEmail() + " logged",
+				user.getPublicData()));
+	}
 
 	public void logout(HttpContext ctx) {
 		SessionEntity session = ctx.getAuthSession();
@@ -119,7 +119,7 @@ public class AuthController extends BaseController {
 				"sessionId", session.id.toHexString()));
 
 		try {
-			sessionService.revokeById(ctx.getRequestId(), session.id.toHexString());
+			this.sessionService.revokeById(ctx.getRequestId(), session.id.toHexString());
 			// Лог: успешный logout
 			this.info("logout success", ctx.getRequestId(), detailsOf("sessionId", session.id.toHexString()), true);
 		} catch (RuntimeException ignore) {

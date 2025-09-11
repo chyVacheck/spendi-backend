@@ -31,7 +31,7 @@ import com.spendi.core.files.DownloadedFile;
 public class FileService extends BaseRepositoryService<FileRepository, FileEntity> {
 
 	private static volatile FileService INSTANCE;
-	protected final FileStorage fileStorage = FileStorage.getInstance();
+	private final FileStorage fileStorage = FileStorage.getInstance();
 
 	protected FileService(FileRepository repository) {
 		super(FileService.class.getSimpleName(), repository);
@@ -99,13 +99,13 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 			throw new EntityNotFoundException("File", "id", id);
 		}
 
-		if (!fileStorage.exists(e.relativePath)) {
+		if (!this.fileStorage.exists(e.relativePath)) {
 			this.info("file content not found", requestId, detailsOf("id", id), false);
 
 			throw new EntityNotFoundException("FileContent", "relativePath", e.relativePath);
 		}
 
-		byte[] content = fileStorage.read(requestId, e.relativePath);
+		byte[] content = this.fileStorage.read(requestId, e.relativePath);
 		String filename = (e.originalName != null && !e.originalName.isBlank()) ? e.originalName : e.filename;
 
 		DownloadedFile dto = new DownloadedFile(content, filename, e.contentType);
@@ -121,7 +121,7 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 		// try delete physical file (best-effort)
 		try {
 			if (e != null && e.relativePath != null) {
-				fileStorage.delete(requestId, e.relativePath);
+				this.fileStorage.delete(requestId, e.relativePath);
 				this.info("file deleted", requestId, detailsOf("relative", e.relativePath), true);
 			}
 		} catch (RuntimeException ignore) {

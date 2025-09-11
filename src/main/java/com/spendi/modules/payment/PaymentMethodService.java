@@ -12,6 +12,7 @@ package com.spendi.modules.payment;
  */
 import org.bson.types.ObjectId;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import com.spendi.modules.user.UserService;
 public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRepository, PaymentMethodEntity> {
 
 	private static volatile PaymentMethodService INSTANCE;
+	private final UserService userService = UserService.getInstance();
 
 	public PaymentMethodService(PaymentMethodRepository repository) {
 		super(PaymentMethodService.class.getSimpleName(), repository);
@@ -66,17 +68,16 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		var created = super.createOne(entity);
 
 		// append to user's finance.paymentMethodIds
-		UserService users = UserService.getInstance();
-		var user = users.getById(userId).getData();
+		var user = this.userService.getById(userId).getData();
 		List<String> list = user.finance != null && user.finance.paymentMethodIds != null
 				? user.finance.paymentMethodIds
 				: List.of();
-		var updated = new java.util.ArrayList<>(list);
+		var updated = new ArrayList<>(list);
 		updated.add(entity.id.toHexString());
 		Map<String, Object> updates = new HashMap<>();
 		updates.put("finance.paymentMethodIds", updated);
 		updates.put("system.meta.updatedAt", Date.from(now));
-		users.updateById(userId, updates);
+		this.userService.updateById(userId, updates);
 
 		return created;
 	}
@@ -87,17 +88,16 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		var deleted = this.deleteById(methodId);
 
 		// pull from user's list
-		UserService users = UserService.getInstance();
-		var user = users.getById(userId).getData();
+		var user = this.userService.getById(userId).getData();
 		List<String> list = user.finance != null && user.finance.paymentMethodIds != null
 				? user.finance.paymentMethodIds
 				: List.of();
-		var updated = new java.util.ArrayList<>(list);
+		var updated = new ArrayList<>(list);
 		updated.remove(methodId);
 		Map<String, Object> updates = new HashMap<>();
 		updates.put("finance.paymentMethodIds", updated);
 		updates.put("system.meta.updatedAt", Date.from(Instant.now()));
-		users.updateById(userId, updates);
+		this.userService.updateById(userId, updates);
 
 		return deleted;
 	}

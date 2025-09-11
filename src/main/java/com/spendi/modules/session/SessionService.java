@@ -16,6 +16,7 @@ import org.bson.types.ObjectId;
  * ! java imports
  */
 import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -70,7 +71,7 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 	public ServiceResponse<SessionEntity> touch(String id) {
 		var now = Instant.now();
 		var updates = Map.<String, Object>of(
-				"lastSeenAt", java.util.Date.from(now));
+				"lastSeenAt", Date.from(now));
 		return this.updateById(id, updates);
 	}
 

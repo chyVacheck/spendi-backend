@@ -27,7 +27,7 @@ import com.spendi.modules.files.dto.FileDownloadQuery;
 public class FileController extends BaseController {
 
 	protected static FileController INSTANCE = new FileController();
-	protected final FileService fileService = FileService.getInstance();
+    private final FileService fileService = FileService.getInstance();
 
 	protected FileController() {
 		super(FileController.class.getSimpleName());

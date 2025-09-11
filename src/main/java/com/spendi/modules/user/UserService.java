@@ -44,7 +44,7 @@ import com.spendi.modules.user.dto.UserCreateDto;
 public class UserService extends BaseRepositoryService<UserRepository, UserEntity> {
 
 	private static volatile UserService INSTANCE;
-	private volatile FileService fileService = FileService.getInstance();
+	private final FileService fileService = FileService.getInstance();
 
 	public UserService(UserRepository repository) {
 		super(UserService.class.getSimpleName(), repository);

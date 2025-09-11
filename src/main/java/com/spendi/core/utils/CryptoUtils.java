@@ -24,6 +24,7 @@ import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 
@@ -73,7 +74,7 @@ public final class CryptoUtils {
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			throw new IllegalStateException(e);
 		} finally {
-			java.util.Arrays.fill(chars, '\0');
+			Arrays.fill(chars, '\0');
 		}
 	}
 

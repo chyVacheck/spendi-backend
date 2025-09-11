@@ -11,6 +11,17 @@
 package com.spendi.core.middleware;
 
 /**
+ * ! lib imports
+ */
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+
+/**
+ * ! java imports
+ */
+import java.util.Map;
+
+/**
  * ! my imports
  */
 import com.spendi.core.base.BaseMiddleware;
@@ -22,8 +33,6 @@ import com.spendi.core.exceptions.InvalidJsonException;
 import com.spendi.core.exceptions.JsonMappingException;
 import com.spendi.core.json.Jsons;
 import com.spendi.core.utils.StringUtils;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Миддлвара для парсинга JSON-тела запроса.
@@ -59,7 +68,7 @@ public class JsonBodyParserMiddleware extends BaseMiddleware {
 			node = Jsons.mapper().readTree(body);
 		} catch (JsonParseException e) {
 			// Синтаксис JSON поломан
-			throw new InvalidJsonException("Invalid JSON syntax", java.util.Map.of(
+			throw new InvalidJsonException("Invalid JSON syntax", Map.of(
 					"message", e.getOriginalMessage(),
 					"location", e.getLocation() != null ? e.getLocation().toString() : null));
 
@@ -69,13 +78,13 @@ public class JsonBodyParserMiddleware extends BaseMiddleware {
 			String path = e.getPath() != null && !e.getPath().isEmpty()
 					? e.getPathReference()
 					: "$";
-			throw new JsonMappingException("JSON mapping error", java.util.Map.of(
+			throw new JsonMappingException("JSON mapping error", Map.of(
 					"path", path,
 					"message", e.getOriginalMessage()));
 
 		} catch (Exception e) {
 			// Непредвиденная ошибка парсинга
-			throw new InvalidJsonException("Unable to parse JSON", java.util.Map.of(
+			throw new InvalidJsonException("Unable to parse JSON", Map.of(
 					"message", e.getMessage()));
 		}
 
