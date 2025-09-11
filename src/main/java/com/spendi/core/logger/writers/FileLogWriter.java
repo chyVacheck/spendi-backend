@@ -43,8 +43,8 @@ import com.spendi.core.logger.model.CompressedLog;
 import com.spendi.core.utils.DateUtils;
 
 public final class FileLogWriter extends CoreClass {
-	/** Глобальный конфиг */
-	private static final LoggerConfig CONFIG = LoggerConfig.DEFAULT;
+    /** Глобальный конфиг */
+    private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
 	/** Синглтон */
 	private static final FileLogWriter INSTANCE = new FileLogWriter();
 

@@ -52,15 +52,15 @@ public class App {
 		// ? --- Конфигурация ----------------------------------------------------
 		// Конфиг сервера (порт, хост и пр.). Источник значений инкапсулирован
 		// внутри ServerConfig (например, .env/переменные окружения/файлы свойств).
-		ServerConfig serverConfig = new ServerConfig();
+		ServerConfig serverConfig = ServerConfig.getConfig();
 
 		// Конфиг API (например, общий префикс /api/v1). Единая точка изменения
 		// префикса помогает избежать «магических строк» в роутерах.
-		ApiConfig apiConfig = new ApiConfig();
+		ApiConfig apiConfig = ApiConfig.getConfig();
 
 		// Конфиг авторизации/сессий. Источник значений точка изменения
 		// времени жизни сессии, названия ключа для cookie и т.д.
-		AuthConfig authConfig = new AuthConfig();
+		AuthConfig authConfig = AuthConfig.getConfig();
 
 		// Отладочная печать загруженных параметров
 		// (полезно при старте в разных средах).

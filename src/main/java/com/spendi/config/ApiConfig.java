@@ -14,10 +14,15 @@ package com.spendi.config;
 import com.spendi.core.base.BaseConfig;
 
 public class ApiConfig extends BaseConfig {
+	private static final ApiConfig INSTANCE = new ApiConfig();
 	private final String apiPrefix;
 
-	public ApiConfig() {
+	private ApiConfig() {
 		this.apiPrefix = this.getenv(this.dotenv, "SPENDI_API_PREFIX", "/api/v1");
+	}
+
+	public static ApiConfig getConfig() {
+		return INSTANCE;
 	}
 
 	public String getApiPrefix() {

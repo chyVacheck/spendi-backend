@@ -20,6 +20,7 @@ import com.spendi.core.base.BaseConfig;
 
 /** Конфиг для подключения к MongoDB. */
 public final class MongoConfig extends BaseConfig {
+	private static final MongoConfig INSTANCE = new MongoConfig();
 	public final String uri; // mongodb://user:pass@host:port/db?opts
 	public final String dbName; // имя базы
 
@@ -29,7 +30,7 @@ public final class MongoConfig extends BaseConfig {
 	public final Duration socketTimeout;
 	public final Duration serverSelectionTimeout;
 
-	public MongoConfig() {
+	private MongoConfig() {
 		this.uri = getenv(this.dotenv, "SPENDI_MONGO_URI", "mongodb://localhost:27017");
 		this.dbName = getenv(this.dotenv, "SPENDI_MONGO_DB", "ems");
 
@@ -42,6 +43,10 @@ public final class MongoConfig extends BaseConfig {
 				.ofSeconds(parseLong(getenv(this.dotenv, "SPENDI_MONGO_SOCKET_TIMEOUT_SEC", "30"), 30));
 		this.serverSelectionTimeout = Duration
 				.ofSeconds(parseLong(getenv(this.dotenv, "SPENDI_MONGO_SELECTION_TIMEOUT_SEC", "5"), 5));
+	}
+
+	public static MongoConfig getConfig() {
+		return INSTANCE;
 	}
 
 	// getters

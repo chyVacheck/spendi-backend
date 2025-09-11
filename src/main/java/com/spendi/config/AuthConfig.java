@@ -15,6 +15,7 @@ import com.spendi.core.base.BaseConfig;
  * Источники: .env → System.getenv → дефолты.
  */
 public final class AuthConfig extends BaseConfig {
+	private static final AuthConfig INSTANCE = new AuthConfig();
 
 	private final String cookieName;
 	private final int sessionTtlSec;
@@ -24,7 +25,7 @@ public final class AuthConfig extends BaseConfig {
 	private final String cookiePath;
 	private final String cookieDomain; // nullable
 
-	public AuthConfig() {
+	private AuthConfig() {
 		this.cookieName = getenv(this.dotenv, "SPENDI_AUTH_COOKIE", "ems.sid");
 		this.sessionTtlSec = (int) parseLong(getenv(this.dotenv, "SPENDI_AUTH_TTL_SEC", "36000"), 10 * 3600); // 10h
 		this.cookieSecure = parseBool(getenv(this.dotenv, "SPENDI_AUTH_COOKIE_SECURE", "true"), true);
@@ -32,6 +33,10 @@ public final class AuthConfig extends BaseConfig {
 		this.cookieSameSite = getenv(this.dotenv, "SPENDI_AUTH_COOKIE_SAMESITE", "Lax");
 		this.cookiePath = getenv(this.dotenv, "SPENDI_AUTH_COOKIE_PATH", "/");
 		this.cookieDomain = getenv(this.dotenv, "SPENDI_AUTH_COOKIE_DOMAIN", null);
+	}
+
+	public static AuthConfig getConfig() {
+		return INSTANCE;
 	}
 
 	public String getCookieName() {

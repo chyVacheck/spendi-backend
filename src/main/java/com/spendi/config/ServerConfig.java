@@ -19,12 +19,17 @@ package com.spendi.config;
 import com.spendi.core.base.BaseConfig;
 
 public class ServerConfig extends BaseConfig {
+	private static final ServerConfig INSTANCE = new ServerConfig();
 	private final String host;
 	private final int port;
 
-	public ServerConfig() {
+	private ServerConfig() {
 		this.host = getenv(this.dotenv, "SPENDI_SERVER_HOST", "0.0.0.0");
 		this.port = Integer.parseInt(getenv(dotenv, "SPENDI_SERVER_PORT", "6070"));
+	}
+
+	public static ServerConfig getConfig() {
+		return INSTANCE;
 	}
 
 	public String getHost() {

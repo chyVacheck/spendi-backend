@@ -51,7 +51,7 @@ import com.spendi.core.logger.model.CompressedLog;
 import com.spendi.core.types.EClassType;
 
 public final class LogReader extends CoreClass {
-	private static final LoggerConfig CONFIG = LoggerConfig.DEFAULT;
+    private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
 	private static final LogReader INSTANCE = new LogReader();
 
 	private final ObjectMapper mapper = new ObjectMapper()

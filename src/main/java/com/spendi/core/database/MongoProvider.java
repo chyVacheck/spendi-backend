@@ -51,7 +51,7 @@ public final class MongoProvider {
 			if (database != null)
 				return;
 
-			MongoConfig cfg = new MongoConfig();
+            MongoConfig cfg = MongoConfig.getConfig();
 			ConnectionString cs = new ConnectionString(cfg.getUri());
 			MongoClientSettings settings = MongoClientSettings.builder()
 					.applyConnectionString(cs)

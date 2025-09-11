@@ -34,7 +34,7 @@ public class AuthController extends BaseController {
 	protected static AuthController INSTANCE = new AuthController();
 	private final UserService userService = UserService.getInstance();
 	private final SessionService sessionService = SessionService.getInstance();
-	protected final AuthConfig authCfg = new AuthConfig();
+	protected final AuthConfig authCfg = AuthConfig.getConfig();
 
 	protected AuthController() {
 		super(AuthController.class.getSimpleName());

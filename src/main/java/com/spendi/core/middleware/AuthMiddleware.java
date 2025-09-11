@@ -31,7 +31,7 @@ public final class AuthMiddleware extends BaseMiddleware {
 
 	private final static AuthMiddleware INSTANCE = new AuthMiddleware();
 
-	private final AuthConfig authCfg = new AuthConfig();
+	private final AuthConfig authCfg = AuthConfig.getConfig();
 	private final SessionService sessionService = SessionService.getInstance();
 
 	protected AuthMiddleware() {

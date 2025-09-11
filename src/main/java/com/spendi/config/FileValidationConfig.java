@@ -22,6 +22,7 @@ import com.spendi.core.base.BaseConfig;
 import com.spendi.core.files.validation.FileValidationRules;
 
 public final class FileValidationConfig extends BaseConfig {
+	private static final FileValidationConfig INSTANCE = new FileValidationConfig();
 
 	// --- MIME / Extensions ---
 	private final Set<String> allowedMimes;
@@ -54,7 +55,7 @@ public final class FileValidationConfig extends BaseConfig {
 	private final Integer pdfMaxPages;
 	private final boolean pdfForbidEncrypted;
 
-	public FileValidationConfig() {
+	private FileValidationConfig() {
 
 		this.allowedMimes = parseCsvSet(getenv(this.dotenv, "SPENDI_FILE_ALLOWED_MIMES", ""));
 		this.allowedMimePrefixes = parseCsvSet(getenv(this.dotenv, "SPENDI_FILE_ALLOWED_MIME_PREFIXES", "image/"));
@@ -87,6 +88,10 @@ public final class FileValidationConfig extends BaseConfig {
 
 		this.pdfMaxPages = (int) parseLong(getenv(this.dotenv, "SPENDI_FILE_PDF_MAX_PAGES", "50"), 50);
 		this.pdfForbidEncrypted = parseBool(getenv(this.dotenv, "SPENDI_FILE_PDF_FORBID_ENCRYPTED", "true"), true);
+	}
+
+	public static FileValidationConfig getConfig() {
+		return INSTANCE;
 	}
 
 	// --- getters ---

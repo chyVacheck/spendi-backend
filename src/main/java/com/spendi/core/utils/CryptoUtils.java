@@ -37,7 +37,7 @@ public final class CryptoUtils {
 	private CryptoUtils() {
 	}
 
-	private static final CryptoConfig CFG = new CryptoConfig();
+    private static final CryptoConfig CFG = CryptoConfig.getConfig();
 	private static final String PEPPER = CFG.getPepper();
 	private static final int ITERATIONS = CFG.getIterations();
 	private static final int KEY_LENGTH_BITS = CFG.getKeyLengthBits();

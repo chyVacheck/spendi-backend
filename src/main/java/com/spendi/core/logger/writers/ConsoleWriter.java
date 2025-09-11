@@ -32,12 +32,11 @@ import com.spendi.core.utils.DateUtils;
 import com.spendi.core.utils.StringUtils;
 
 /**
- * Работает в static-стиле и читает настройки из глобального
- * LoggerConfig.DEFAULT.
+ * Работает в static-стиле и читает настройки из глобального LoggerConfig.getConfig().
  */
 public final class ConsoleWriter {
 
-	private static final LoggerConfig CONFIG = LoggerConfig.DEFAULT;
+    private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	private ConsoleWriter() {

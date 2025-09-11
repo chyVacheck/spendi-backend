@@ -35,7 +35,7 @@ public class FileStorage extends BaseClass {
 	 */
 	public FileStorage() {
 		super(EClassType.SYSTEM, FileStorage.class.getSimpleName());
-		FileStorageConfig cfg = new FileStorageConfig();
+        FileStorageConfig cfg = FileStorageConfig.getConfig();
 		// Важно: используем абсолютный путь, чтобы не зависеть от текущей рабочей
 		// директории процесса
 		this.baseDir = Paths.get(cfg.getBaseDir()).toAbsolutePath().normalize();

@@ -43,12 +43,12 @@ public class UserRouter extends ApiRouter {
 	@Override
 	public void configure(HttpServerAdapter http) {
 		// Rules for avatar images: 1 file, common image extensions
-		FileValidationRules avatarRules = FileValidationRules
-				.builderFromConfig(new FileValidationConfig())
-				.minFiles(1)
-				.maxFiles(1)
-				.allowedExtensions(".jpg", ".jpeg", ".png", ".gif")
-				.build();
+        FileValidationRules avatarRules = FileValidationRules
+                .builderFromConfig(FileValidationConfig.getConfig())
+                .minFiles(1)
+                .maxFiles(1)
+                .allowedExtensions(".jpg", ".jpeg", ".png", ".gif")
+                .build();
 
 		// Подключаем AuthMiddleware на весь роутер
 		this.use(AuthMiddleware.getInstance());

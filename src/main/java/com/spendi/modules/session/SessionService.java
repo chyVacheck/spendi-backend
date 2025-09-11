@@ -30,7 +30,7 @@ import com.spendi.core.exceptions.UnauthorizedException;
 public class SessionService extends BaseRepositoryService<SessionRepository, SessionEntity> {
 
 	private static volatile SessionService INSTANCE;
-	private final AuthConfig authCfg = new AuthConfig();
+	private final AuthConfig authCfg = AuthConfig.getConfig();
 
 	public SessionService(SessionRepository repository) {
 		super(SessionService.class.getSimpleName(), repository);

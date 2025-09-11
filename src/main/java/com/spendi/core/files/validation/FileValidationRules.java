@@ -299,7 +299,7 @@ public final class FileValidationRules {
 
 	// --- Defaults from .env ---
 	public static FileValidationRules defaultsFromEnv() {
-		var cfg = new FileValidationConfig();
+		var cfg = FileValidationConfig.getConfig();
 		return builderFromConfig(cfg).build();
 	}
 
