@@ -19,11 +19,10 @@ import com.mongodb.client.model.Indexes;
 /**
  * ! java imports
  */
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 
 import com.spendi.core.base.BaseRepository;
+import com.spendi.core.utils.InstantUtils;
 
 public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity> {
 
@@ -117,12 +116,9 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 					Object ca = m.get("createdAt");
 					Object ua = m.get("updatedAt");
 					Object aa = m.get("archivedAt");
-					meta.createdAt = (ca instanceof Date) ? ((Date) ca).toInstant()
-							: (ca instanceof Instant ? (Instant) ca : null);
-					meta.updatedAt = (ua instanceof Date) ? ((Date) ua).toInstant()
-							: (ua instanceof Instant ? (Instant) ua : null);
-					meta.archivedAt = (aa instanceof Date) ? ((Date) aa).toInstant()
-							: (aa instanceof Instant ? (Instant) aa : null);
+					meta.createdAt = InstantUtils.getInstantOrNull(ca);
+					meta.updatedAt = InstantUtils.getInstantOrNull(ua);
+					meta.archivedAt = InstantUtils.getInstantOrNull(aa);
 				}
 				s.meta = meta;
 			}
@@ -188,9 +184,9 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 				d.put("status", e.system.status != null ? e.system.status.name() : null);
 				Document m = new Document();
 				if (e.system.meta != null) {
-					m.put("createdAt", e.system.meta.createdAt != null ? Date.from(e.system.meta.createdAt) : null);
-					m.put("updatedAt", e.system.meta.updatedAt != null ? Date.from(e.system.meta.updatedAt) : null);
-					m.put("archivedAt", e.system.meta.archivedAt != null ? Date.from(e.system.meta.archivedAt) : null);
+					m.put("createdAt", e.system.meta.createdAt);
+					m.put("updatedAt", e.system.meta.updatedAt);
+					m.put("archivedAt", e.system.meta.archivedAt);
 				}
 				d.put("meta", m);
 			}

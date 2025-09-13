@@ -26,8 +26,6 @@ import com.mongodb.client.model.Indexes;
 /**
  * ! java imports
  */
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +33,7 @@ import java.util.Optional;
  * ! my imports
  */
 import com.spendi.core.base.BaseRepository;
+import com.spendi.core.utils.InstantUtils;
 
 public class UserRepository extends BaseRepository<UserEntity> {
 
@@ -114,9 +113,9 @@ public class UserRepository extends BaseRepository<UserEntity> {
 					Object ca = m.get("createdAt");
 					Object ua = m.get("updatedAt");
 					Object la = m.get("lastLoginAt");
-					meta.createdAt = toInstant(ca);
-					meta.updatedAt = toInstant(ua);
-					meta.lastLoginAt = toInstant(la);
+					meta.createdAt = InstantUtils.getInstantOrNull(ca);
+					meta.updatedAt = InstantUtils.getInstantOrNull(ua);
+					meta.lastLoginAt = InstantUtils.getInstantOrNull(la);
 				}
 				s.meta = meta;
 			}
@@ -173,12 +172,9 @@ public class UserRepository extends BaseRepository<UserEntity> {
 			if (e.system != null) {
 				Document m = new Document();
 				if (e.system.meta != null) {
-					m.put("createdAt",
-							e.system.meta.createdAt != null ? Date.from(e.system.meta.createdAt) : null);
-					m.put("updatedAt",
-							e.system.meta.updatedAt != null ? Date.from(e.system.meta.updatedAt) : null);
-					m.put("lastLoginAt",
-							e.system.meta.lastLoginAt != null ? Date.from(e.system.meta.lastLoginAt) : null);
+					m.put("createdAt", e.system.meta.createdAt);
+					m.put("updatedAt", e.system.meta.updatedAt);
+					m.put("lastLoginAt", e.system.meta.lastLoginAt);
 				}
 				d.put("meta", m);
 			}
@@ -186,16 +182,6 @@ public class UserRepository extends BaseRepository<UserEntity> {
 		}
 
 		return doc;
-	}
-
-	private static Instant toInstant(Object o) {
-		if (o == null)
-			return null;
-		if (o instanceof Instant i)
-			return i;
-		if (o instanceof Date d)
-			return d.toInstant();
-		return null;
 	}
 
 	// =========================

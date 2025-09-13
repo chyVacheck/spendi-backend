@@ -22,7 +22,6 @@ import org.bson.types.ObjectId;
  * ! java imports
  */
 import java.time.Instant;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,7 +151,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public ServiceResponse<UserEntity> changePassword(String requestId, String userId, String newPassword) {
 		var updates = Map.<String, Object>of(
 				"security.passwordHash", CryptoUtils.hashPassword(newPassword),
-				"system.meta.updatedAt", Date.from(Instant.now()));
+				"system.meta.updatedAt", Instant.now());
 		var res = this.updateById(userId, updates);
 		this.info("user password changed", requestId, detailsOf("userId", userId), true);
 		return res;
@@ -162,7 +161,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * Проставить lastLoginAt = now (можно вызывать после успешного логина).
 	 */
 	public ServiceResponse<UserEntity> touchLastLogin(String requestId, String userId) {
-		Date now = Date.from(Instant.now());
+		Instant now = Instant.now();
 
 		var res = this.updateById(userId, Map.<String, Object>of(
 				"system.meta.lastLoginAt", now));
@@ -189,7 +188,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 		String url = user.getAvatarUrl();
 
 		// update employee (persist only new file id)
-		Date now = Date.from(Instant.now());
+		Instant now = Instant.now();
 		var updates = Map.<String, Object>of(
 				"profile.avatarFileId", stored.id.toHexString(),
 				"system.meta.updatedAt", now);
@@ -228,7 +227,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 		var updates = new HashMap<String, Object>();
 		updates.put("profile.avatarFileId", null);
-		updates.put("system.meta.updatedAt", Date.from(Instant.now()));
+		updates.put("system.meta.updatedAt", Instant.now());
 
 		// Clear reference in employee
 		this.updateById(userId, updates);

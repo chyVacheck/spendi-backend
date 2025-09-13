@@ -34,8 +34,12 @@ public final class StringUtils {
 	 * @return строка с дополнением пробелами
 	 */
 	public static String padString(String str, int width) {
-		if (str == null)
+		if (str == null && width > 0)
 			return " ".repeat(width);
+		if (str == null)
+			return null;
+		if (width <= 0)
+			return str;
 		return String.format("%-" + width + "s", str);
 	}
 

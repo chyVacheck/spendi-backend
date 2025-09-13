@@ -40,11 +40,11 @@ import com.spendi.config.LoggerConfig;
 import com.spendi.core.base.CoreClass;
 import com.spendi.core.types.EClassType;
 import com.spendi.core.logger.model.CompressedLog;
-import com.spendi.core.utils.DateUtils;
+import com.spendi.core.utils.InstantUtils;
 
 public final class FileLogWriter extends CoreClass {
-    /** Глобальный конфиг */
-    private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
+	/** Глобальный конфиг */
+	private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
 	/** Синглтон */
 	private static final FileLogWriter INSTANCE = new FileLogWriter();
 
@@ -71,8 +71,8 @@ public final class FileLogWriter extends CoreClass {
 		this.maxFileSize = CONFIG.file().maxSize();
 		this.baseDir = CONFIG.file().path();
 
-		this.currentDate = DateUtils.getCurrentStrictDateString();
-		this.currentHour = DateUtils.getCurrentHourString();
+		this.currentDate = InstantUtils.getCurrentStrictDateString();
+		this.currentHour = InstantUtils.getCurrentHourString();
 		this.currentFileIndex = 1;
 		this.currentFileSize = 0;
 
@@ -141,8 +141,8 @@ public final class FileLogWriter extends CoreClass {
 	 * Проверяет смену даты/часа и сбрасывает индексы при необходимости.
 	 */
 	private void updateStateIfNeeded() {
-		String newDate = DateUtils.getCurrentStrictDateString();
-		String newHour = DateUtils.getCurrentHourString();
+		String newDate = InstantUtils.getCurrentStrictDateString();
+		String newHour = InstantUtils.getCurrentHourString();
 
 		boolean dateChanged = !currentDate.equals(newDate);
 		boolean hourChanged = !currentHour.equals(newHour);

@@ -16,12 +16,13 @@ import com.mongodb.client.MongoDatabase;
 /**
  * ! java imports
  */
-import java.util.Date;
+import java.time.Instant;
 
 /**
  * ! my imports
  */
 import com.spendi.core.base.BaseRepository;
+import com.spendi.core.utils.InstantUtils;
 
 public class FileRepository extends BaseRepository<FileEntity> {
 
@@ -44,7 +45,7 @@ public class FileRepository extends BaseRepository<FileEntity> {
 		e.filename = doc.getString("filename");
 		e.relativePath = doc.getString("relativePath");
 		Object ca = doc.get("createdAt");
-		e.createdAt = (ca instanceof Date) ? ((Date) ca).toInstant() : null;
+		e.createdAt = InstantUtils.getInstantOrNull(ca);
 		return e;
 	}
 
@@ -58,7 +59,7 @@ public class FileRepository extends BaseRepository<FileEntity> {
 		d.put("size", e.size);
 		d.put("filename", e.filename);
 		d.put("relativePath", e.relativePath);
-		d.put("createdAt", e.createdAt != null ? Date.from(e.createdAt) : null);
+		d.put("createdAt", e.createdAt != null ? Instant.from(e.createdAt) : null);
 		return d;
 	}
 }

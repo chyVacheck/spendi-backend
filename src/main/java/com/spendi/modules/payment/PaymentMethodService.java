@@ -13,7 +13,6 @@ package com.spendi.modules.payment;
 import org.bson.types.ObjectId;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +75,7 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		updated.add(entity.id.toHexString());
 		Map<String, Object> updates = new HashMap<>();
 		updates.put("finance.paymentMethodIds", updated);
-		updates.put("system.meta.updatedAt", Date.from(now));
+		updates.put("system.meta.updatedAt", now);
 		this.userService.updateById(userId, updates);
 
 		return created;
@@ -96,7 +95,7 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		updated.remove(methodId);
 		Map<String, Object> updates = new HashMap<>();
 		updates.put("finance.paymentMethodIds", updated);
-		updates.put("system.meta.updatedAt", Date.from(Instant.now()));
+		updates.put("system.meta.updatedAt", Instant.now());
 		this.userService.updateById(userId, updates);
 
 		return deleted;
@@ -114,7 +113,7 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		}
 		var updates = Map.<String, Object>of(
 				"info.order", order,
-				"system.meta.updatedAt", Date.from(Instant.now()));
+				"system.meta.updatedAt", Instant.now());
 		return this.updateById(methodId, updates);
 	}
 }

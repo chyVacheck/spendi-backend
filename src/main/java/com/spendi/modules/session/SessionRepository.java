@@ -20,7 +20,6 @@ import com.mongodb.client.model.Indexes;
  * ! java imports
  */
 import java.time.Instant;
-import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  * ! my imports
  */
 import com.spendi.core.base.BaseRepository;
+import com.spendi.core.utils.InstantUtils;
 
 public class SessionRepository extends BaseRepository<SessionEntity> {
 
@@ -56,9 +56,9 @@ public class SessionRepository extends BaseRepository<SessionEntity> {
 		Object ca = doc.get("createdAt");
 		Object la = doc.get("lastSeenAt");
 		Object ea = doc.get("expiresAt");
-		s.createdAt = toInstant(ca);
-		s.lastSeenAt = toInstant(la);
-		s.expiresAt = toInstant(ea);
+		s.createdAt = InstantUtils.getInstantOrNull(ca);
+		s.lastSeenAt = InstantUtils.getInstantOrNull(la);
+		s.expiresAt = InstantUtils.getInstantOrNull(ea);
 		Object rev = doc.get("revoked");
 		s.revoked = rev instanceof Boolean ? (Boolean) rev : false;
 		s.ip = doc.getString("ip");
@@ -73,23 +73,13 @@ public class SessionRepository extends BaseRepository<SessionEntity> {
 			d.put("_id", e.id);
 		if (e.userId != null)
 			d.put("userId", e.userId);
-		d.put("createdAt", e.createdAt != null ? Date.from(e.createdAt) : null);
-		d.put("lastSeenAt", e.lastSeenAt != null ? Date.from(e.lastSeenAt) : null);
-		d.put("expiresAt", e.expiresAt != null ? Date.from(e.expiresAt) : null);
+		d.put("createdAt", e.createdAt);
+		d.put("lastSeenAt", e.lastSeenAt);
+		d.put("expiresAt", e.expiresAt);
 		d.put("revoked", e.revoked);
 		d.put("ip", e.ip);
 		d.put("userAgent", e.userAgent);
 		return d;
-	}
-
-	private static Instant toInstant(Object o) {
-		if (o == null)
-			return null;
-		if (o instanceof Instant i)
-			return i;
-		if (o instanceof Date d)
-			return d.toInstant();
-		return null;
 	}
 
 	public Optional<SessionEntity> findActiveById(String id) {
