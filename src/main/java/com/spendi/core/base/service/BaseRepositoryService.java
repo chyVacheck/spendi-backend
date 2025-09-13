@@ -126,7 +126,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 		return this.repository.findDocById(id)
 				.map(doc -> ServiceResponse.founded(doc))
 				.orElseThrow(() -> new EntityNotFoundException(
-						this.repository.getEntityClass().getName(),
+						this.repository.getEntityClass().getSimpleName(),
 						Map.of("id", id)));
 	}
 
@@ -137,7 +137,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 		return this.repository.findById(id)
 				.map(entity -> ServiceResponse.founded(entity))
 				.orElseThrow(() -> new EntityNotFoundException(
-						this.repository.getEntityClass().getName(),
+						this.repository.getEntityClass().getSimpleName(),
 						Map.of("id", id)));
 	}
 

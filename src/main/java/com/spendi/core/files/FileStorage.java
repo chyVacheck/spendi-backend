@@ -15,7 +15,7 @@ package com.spendi.core.files;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import com.spendi.core.utils.InstantUtils;
 
 /**
  * ! my imports
@@ -69,12 +69,10 @@ public class FileStorage extends BaseClass {
 		String ext = FileUtils.getFileExtension(f.getOriginalName());
 		String name = idHex + (ext == null ? ".bin" : ext);
 
-		// Дата-каталог: yyyy/MM/dd
-		LocalDate today = LocalDate.now();
-		Path rel = Paths.get(String.valueOf(today.getYear()),
-				String.format("%02d", today.getMonthValue()),
-				String.format("%02d", today.getDayOfMonth()),
-				name);
+		// Дата-каталог: YYYY-MM-DD/HH
+		String currentDate = InstantUtils.getCurrentStrictDateString();
+		String currentHour = InstantUtils.getCurrentHourString();
+		Path rel = Paths.get(currentDate, currentHour, name);
 		Path dst = baseDir.resolve(rel).normalize();
 
 		// Перенос

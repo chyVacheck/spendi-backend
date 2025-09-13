@@ -44,12 +44,12 @@ public class FileRouter extends ApiRouter {
 		this.use(AuthMiddleware.getInstance());
 
 		// Базовые правила на один файл для тестов
-        FileValidationRules rules = FileValidationRules
-                .builderFromConfig(FileValidationConfig.getConfig())
-                .minFiles(1)
-                .maxFiles(1)
-                .allowedExtensions(".jpg", ".gif")
-                .build();
+		FileValidationRules rules = FileValidationRules
+				.builderFromConfig(FileValidationConfig.getConfig())
+				.minFiles(1)
+				.maxFiles(1)
+				.allowedExtensions(".jpg", ".gif", ".png")
+				.build();
 
 		this.post("/",
 				controller::createOne,
