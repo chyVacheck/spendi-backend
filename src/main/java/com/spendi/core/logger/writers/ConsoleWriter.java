@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * ! java imports
  */
-import java.util.Date;
 import java.util.Map;
 
 /**
@@ -26,24 +25,27 @@ import java.util.Map;
 import com.spendi.config.LoggerConfig;
 import com.spendi.core.logger.types.ELogLevel;
 import com.spendi.core.logger.model.Log;
+import com.spendi.core.logger.types.LogOptions;
 import com.spendi.core.types.AnsiColor;
 import com.spendi.core.types.EClassType;
-import com.spendi.core.utils.DateUtils;
+import com.spendi.core.utils.InstantUtils;
 import com.spendi.core.utils.StringUtils;
 
 /**
- * Работает в static-стиле и читает настройки из глобального LoggerConfig.getConfig().
+ * Работает в static-стиле и читает настройки из глобального
+ * LoggerConfig.getConfig().
  */
 public final class ConsoleWriter {
 
-    private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
+	private static final LoggerConfig CONFIG = LoggerConfig.getConfig();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	private ConsoleWriter() {
 	}
 
 	/**
-	 * Вариант как в TS: печать по полям.
+	 * Перегруженный метод для обратной совместимости.
+	 * Использует настройки логирования по умолчанию.
 	 */
 	public static void write(
 			ELogLevel level,
@@ -52,6 +54,32 @@ public final class ConsoleWriter {
 			String message,
 			String requestId,
 			Map<String, Object> details) {
+		write(level, moduleType, moduleName, message, requestId, details, new LogOptions(true));
+	}
+
+	/**
+	 * Вариант как в TS: печать по полям с настройками логирования.
+	 */
+	/**
+	 * Записывает сообщение в консоль с учетом переданных параметров логирования.
+	 *
+	 * @param level      уровень логирования
+	 * @param moduleType тип модуля
+	 * @param moduleName имя модуля
+	 * @param message    сообщение для логирования
+	 * @param requestId  идентификатор запроса
+	 * @param details    дополнительные детали (могут быть null)
+	 * @param options    настройки логирования (если null, используются значения по
+	 *                   умолчанию)
+	 */
+	public static void write(
+			ELogLevel level,
+			EClassType moduleType,
+			String moduleName,
+			String message,
+			String requestId,
+			Map<String, Object> details,
+			LogOptions options) {
 
 		// [LEVEL]
 		final String paddedLevel = AnsiColor.WHITE.getCode()
@@ -63,7 +91,7 @@ public final class ConsoleWriter {
 
 		// time
 		final String paddedTime = AnsiColor.GRAY.getCode()
-				+ StringUtils.padString(DateUtils.get24HourTime(new Date()), CONFIG.getMaxCurrentTimeWidth())
+				+ StringUtils.padString(InstantUtils.get24HourTime(), CONFIG.getMaxCurrentTimeWidth())
 				+ AnsiColor.WHITE.getCode();
 
 		// classType
@@ -86,7 +114,7 @@ public final class ConsoleWriter {
 				getLevelColor(level),
 				message) + AnsiColor.WHITE.getCode();
 
-		// Details (если есть) — новой строкой
+		// Details (если есть и включены в настройках) — новой строкой
 		if (details != null && !details.isEmpty()) {
 			logMessage += "\nDetails: "
 					+ AnsiColor.GRAY.getCode()
@@ -94,8 +122,8 @@ public final class ConsoleWriter {
 					+ AnsiColor.WHITE.getCode();
 		}
 
-		// RequestId (если есть) — новой строкой
-		if (requestId != null && !requestId.isBlank()) {
+		// RequestId (если есть и включен в настройках) — новой строкой
+		if (requestId != null) {
 			logMessage += "\nRequestId: "
 					+ AnsiColor.GRAY.getCode()
 					+ requestId
