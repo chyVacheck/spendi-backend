@@ -1,21 +1,36 @@
+
 package com.spendi.core.utils;
 
+/**
+ * ! lib imports
+ */
 import org.junit.jupiter.api.Test;
+import org.bson.BsonDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * ! java imports
+ */
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-
-import org.bson.BsonDateTime;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 public class InstantUtilsTest {
 
+    @Test
+    void constructor_shouldThrowUnsupportedOperationException() throws NoSuchMethodException {
+        Constructor<InstantUtils> constructor = InstantUtils.class.getDeclaredConstructor();
+        assertTrue(java.lang.reflect.Modifier.isPrivate(constructor.getModifiers()));
+        constructor.setAccessible(true);
+        assertThrows(InvocationTargetException.class, constructor::newInstance);
+    }
+
     /**
      * ? getInstantOrNull
      */
-
     @Test
     void getInstantOrNull_shouldReturnNullForNullInput() {
         assertNull(InstantUtils.getInstantOrNull(null));
@@ -54,7 +69,6 @@ public class InstantUtilsTest {
         Instant expectedInstant = Instant.parse(instantString);
         assertEquals(expectedInstant, InstantUtils.getInstantOrNull(instantString));
     }
-
 
     /**
      * ? get24HourTime

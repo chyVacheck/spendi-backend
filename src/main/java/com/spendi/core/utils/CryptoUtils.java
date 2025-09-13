@@ -35,9 +35,10 @@ import java.util.Objects;
 public final class CryptoUtils {
 	/** Приватный конструктор, чтобы предотвратить создание экземпляра */
 	private CryptoUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
-    private static final CryptoConfig CFG = CryptoConfig.getConfig();
+	private static final CryptoConfig CFG = CryptoConfig.getConfig();
 	private static final String PEPPER = CFG.getPepper();
 	private static final int ITERATIONS = CFG.getIterations();
 	private static final int KEY_LENGTH_BITS = CFG.getKeyLengthBits();

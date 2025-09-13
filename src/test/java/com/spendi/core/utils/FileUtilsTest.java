@@ -1,19 +1,35 @@
 
 package com.spendi.core.utils;
 
+/**
+ * ! lib imports
+ */
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * ! java imports
+ */
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 public class FileUtilsTest {
+
+	@Test
+	void constructor_shouldThrowUnsupportedOperationException() throws NoSuchMethodException {
+		Constructor<InstantUtils> constructor = InstantUtils.class.getDeclaredConstructor();
+		assertTrue(java.lang.reflect.Modifier.isPrivate(constructor.getModifiers()));
+		constructor.setAccessible(true);
+		assertThrows(InvocationTargetException.class, constructor::newInstance);
+	}
 
 	@TempDir
 	Path tempDir;

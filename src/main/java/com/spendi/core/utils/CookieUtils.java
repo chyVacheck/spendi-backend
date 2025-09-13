@@ -14,6 +14,7 @@ import com.spendi.core.base.http.HttpRequest;
 public final class CookieUtils {
 
 	private CookieUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
 	/** Прочитать значение cookie по имени. */

@@ -1,15 +1,31 @@
 
 package com.spendi.core.utils;
 
+/**
+ * ! lib imports
+ */
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * ! java imports
+ */
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class SetUtilsTest {
+
+	@Test
+	void constructor_shouldThrowUnsupportedOperationException() throws NoSuchMethodException {
+		Constructor<InstantUtils> constructor = InstantUtils.class.getDeclaredConstructor();
+		assertTrue(java.lang.reflect.Modifier.isPrivate(constructor.getModifiers()));
+		constructor.setAccessible(true);
+		assertThrows(InvocationTargetException.class, constructor::newInstance);
+	}
 
 	@Test
 	void ofNonNull_varargs_withNullItspendi() {

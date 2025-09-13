@@ -22,6 +22,11 @@ import java.util.Properties;
 public class AppVersion {
 	private static final String VERSION;
 
+	/** Приватный конструктор, чтобы предотвратить создание экземпляра */
+	private AppVersion() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+	}
+
 	static {
 		String version = null;
 

@@ -17,6 +17,7 @@ import java.util.Set;
 public final class SetUtils {
 
 	private SetUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
 	/**

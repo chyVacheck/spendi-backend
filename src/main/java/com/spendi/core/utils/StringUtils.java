@@ -24,6 +24,7 @@ public final class StringUtils {
 
 	/** Приватный конструктор, чтобы предотвратить создание экземпляра */
 	private StringUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
 	/**

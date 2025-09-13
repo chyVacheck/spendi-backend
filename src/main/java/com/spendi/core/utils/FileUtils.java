@@ -27,6 +27,7 @@ public final class FileUtils {
 
 	/** Приватный конструктор, чтобы предотвратить создание экземпляра */
 	private FileUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
 	/**
