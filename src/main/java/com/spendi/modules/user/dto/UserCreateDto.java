@@ -39,9 +39,11 @@ public class UserCreateDto {
 		public String email;
 
 		@Size(max = 80)
+		@NotBlank
 		public String firstName;
 
 		@Size(max = 80)
+		@NotBlank
 		public String lastName;
 	}
 
