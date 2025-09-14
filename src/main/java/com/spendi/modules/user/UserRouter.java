@@ -97,6 +97,8 @@ public class UserRouter extends ApiRouter {
 				controller::deletePaymentMethod,
 				ParamsValidationMiddleware.of(PaymentMethodIdParams.class));
 
+		// TODO добавить проверку на "авторство" метода оплаты, как в DELETE
+		// /me/payment-methods/{pmId}
 		this.put("/me/payment-methods/{pmId}/order",
 				controller::updatePaymentMethodOrder,
 				ParamsValidationMiddleware.of(PaymentMethodIdParams.class),

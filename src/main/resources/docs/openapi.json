@@ -1,0 +1,1400 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "Spendi API",
+		"version": "0.0.1"
+	},
+	"servers": [
+		{
+			"url": "/api/v1"
+		}
+	],
+	"components": {
+		"securitySchemes": {
+			"SessionCookie": {
+				"type": "apiKey",
+				"in": "cookie",
+				"name": "ems.sid"
+			}
+		},
+		"parameters": {
+			"IdParam": {
+				"name": "id",
+				"in": "path",
+				"required": true,
+				"schema": {
+					"type": "string",
+					"pattern": "^[a-fA-F0-9]{24}$"
+				}
+			},
+			"PmIdParam": {
+				"name": "pmId",
+				"in": "path",
+				"required": true,
+				"schema": {
+					"type": "string",
+					"pattern": "^[a-fA-F0-9]{24}$"
+				}
+			},
+			"DownloadQuery": {
+				"name": "download",
+				"in": "query",
+				"required": false,
+				"schema": {
+					"type": "boolean"
+				},
+				"description": "Force Content-Disposition: attachment"
+			}
+		},
+		"schemas": {
+			"UserRegistrationRequest": {
+				"type": "object",
+				"required": [
+					"profile",
+					"security"
+				],
+				"properties": {
+					"profile": {
+						"type": "object",
+						"required": [
+							"email",
+							"firstName",
+							"lastName"
+						],
+						"properties": {
+							"email": {
+								"type": "string",
+								"format": "email",
+								"description": "User's email address"
+							},
+							"firstName": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 80,
+								"description": "User's first name"
+							},
+							"lastName": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 80,
+								"description": "User's last name"
+							}
+						}
+					},
+					"security": {
+						"type": "object",
+						"required": [
+							"password"
+						],
+						"properties": {
+							"password": {
+								"type": "string",
+								"minLength": 8,
+								"maxLength": 128,
+								"description": "User's password (8-128 characters)"
+							}
+						}
+					}
+				}
+			},
+			"ApiSuccessResponse": {
+				"type": "object",
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"details": {
+						"type": "object",
+						"additionalProperties": true
+					},
+					"data": {
+						"type": "object"
+					}
+				},
+				"required": [
+					"message",
+					"data"
+				]
+			},
+			"ApiErrorResponse": {
+				"type": "object",
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"details": {
+						"type": "object",
+						"additionalProperties": true
+					},
+					"errors": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						}
+					}
+				},
+				"required": [
+					"message"
+				]
+			},
+			"UnauthorizedException": {
+				"type": "object",
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"details": {
+						"type": "object",
+						"additionalProperties": true
+					},
+					"errors": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						}
+					}
+				},
+				"required": [
+					"message",
+					"errors"
+				]
+			},
+			"LoginDto": {
+				"type": "object",
+				"properties": {
+					"email": {
+						"type": "string",
+						"format": "email"
+					},
+					"password": {
+						"type": "string",
+						"minLength": 1
+					}
+				},
+				"required": [
+					"email",
+					"password"
+				]
+			},
+			"UserProfile": {
+				"type": "object",
+				"properties": {
+					"email": {
+						"type": "string",
+						"format": "email"
+					},
+					"firstName": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80,
+						"description": "User's first name"
+					},
+					"lastName": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80,
+						"description": "User's last name"
+					},
+					"hasAvatar": {
+						"type": "boolean"
+					},
+					"avatarUrl": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"email",
+					"firstName",
+					"lastName",
+					"hasAvatar"
+				]
+			},
+			"UserPublic": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"profile": {
+						"$ref": "#/components/schemas/UserProfile"
+					},
+					"system": {
+						"type": "object",
+						"properties": {
+							"meta": {
+								"type": "object",
+								"properties": {
+									"createdAt": {
+										"type": "string",
+										"format": "date-time"
+									},
+									"updatedAt": {
+										"type": "string",
+										"format": "date-time"
+									},
+									"lastLoginAt": {
+										"type": "string",
+										"format": "date-time"
+									}
+								}
+							}
+						}
+					}
+				},
+				"required": [
+					"id",
+					"profile",
+					"system"
+				]
+			},
+			"UserPrivate": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/UserPublic"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"finance": {
+								"type": "object",
+								"properties": {
+									"defaultAccountId": {
+										"type": "string"
+									},
+									"accountsCount": {
+										"type": "integer"
+									},
+									"paymentMethodIds": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				]
+			},
+			"PaymentMethod": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"info": {
+						"type": "object",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": [
+									"Cash",
+									"Card",
+									"BankAccount",
+									"EWallet",
+									"Other"
+								]
+							},
+							"name": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string",
+								"minLength": 3,
+								"maxLength": 3
+							},
+							"order": {
+								"type": "integer"
+							},
+							"tags": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"details": {
+						"type": "object",
+						"properties": {
+							"card": {
+								"type": "object",
+								"properties": {
+									"brand": {
+										"type": "string"
+									},
+									"last4": {
+										"type": "string"
+									},
+									"expMonth": {
+										"type": "integer"
+									},
+									"expYear": {
+										"type": "integer"
+									}
+								}
+							},
+							"bank": {
+								"type": "object",
+								"properties": {
+									"bankName": {
+										"type": "string"
+									},
+									"accountMasked": {
+										"type": "string"
+									}
+								}
+							},
+							"wallet": {
+								"type": "object",
+								"properties": {
+									"provider": {
+										"type": "string"
+									},
+									"handle": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"system": {
+						"type": "object",
+						"properties": {
+							"status": {
+								"type": "string",
+								"enum": [
+									"Active",
+									"Archived",
+									"Deleted"
+								]
+							},
+							"meta": {
+								"type": "object",
+								"properties": {
+									"createdAt": {
+										"type": "string",
+										"format": "date-time"
+									},
+									"updatedAt": {
+										"type": "string",
+										"format": "date-time"
+									},
+									"archivedAt": {
+										"type": "string",
+										"format": "date-time"
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"PaymentMethodCreateDto": {
+				"type": "object",
+				"properties": {
+					"info": {
+						"type": "object",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": [
+									"Cash",
+									"Card",
+									"BankAccount",
+									"EWallet",
+									"Other"
+								]
+							},
+							"name": {
+								"type": "string"
+							},
+							"currency": {
+								"type": "string",
+								"minLength": 3,
+								"maxLength": 3
+							},
+							"order": {
+								"type": "integer"
+							},
+							"tags": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						},
+						"required": [
+							"type",
+							"name",
+							"currency"
+						]
+					},
+					"details": {
+						"type": "object",
+						"properties": {
+							"card": {
+								"type": "object",
+								"properties": {
+									"brand": {
+										"type": "string"
+									},
+									"last4": {
+										"type": "string"
+									},
+									"expMonth": {
+										"type": "integer"
+									},
+									"expYear": {
+										"type": "integer"
+									}
+								}
+							},
+							"bank": {
+								"type": "object",
+								"properties": {
+									"bankName": {
+										"type": "string"
+									},
+									"accountMasked": {
+										"type": "string"
+									}
+								}
+							},
+							"wallet": {
+								"type": "object",
+								"properties": {
+									"provider": {
+										"type": "string"
+									},
+									"handle": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					}
+				},
+				"required": [
+					"info"
+				]
+			},
+			"PaymentMethodOrderDto": {
+				"type": "object",
+				"properties": {
+					"order": {
+						"type": "integer"
+					}
+				},
+				"required": [
+					"order"
+				]
+			},
+			"FileIdData": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id"
+				]
+			}
+		}
+	},
+	"paths": {
+		"/ping": {
+			"get": {
+				"summary": "Health check",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string",
+											"example": "ok"
+										}
+									},
+									"required": [
+										"status"
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/docs": {
+			"get": {
+				"summary": "ReDoc UI for API documentation",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"200": {
+						"description": "HTML page with ReDoc UI",
+						"content": {
+							"text/html": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/docs/openapi.json": {
+			"get": {
+				"summary": "OpenAPI specification file",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"200": {
+						"description": "OpenAPI JSON file",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/register": {
+			"post": {
+				"summary": "Register a new user",
+				"description": "Creates a new user account with the provided information",
+				"tags": [
+					"authentication"
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UserRegistrationRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "User registered successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse",
+									"properties": {
+										"data": {
+											"$ref": "#/components/schemas/UserPublic"
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"400": {
+					"description": "Invalid input data",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ApiErrorResponse"
+							}
+						}
+					}
+				},
+				"409": {
+					"description": "Email already exists",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ApiErrorResponse"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/login": {
+			"post": {
+				"summary": "Login",
+				"tags": [
+					"auth"
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid input",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/logout": {
+			"post": {
+				"summary": "Logout",
+				"tags": [
+					"auth"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/files": {
+			"post": {
+				"summary": "Upload single file",
+				"tags": [
+					"files"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created (file id)",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/ApiSuccessResponse"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"type": "object",
+													"properties": {
+														"count": {
+															"type": "integer"
+														},
+														"files": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"id": {
+																		"type": "string"
+																	},
+																	"originalName": {
+																		"type": "string"
+																	},
+																	"mimeType": {
+																		"type": "string"
+																	},
+																	"size": {
+																		"type": "integer"
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/files/{id}": { 
+			"get": {
+				"summary": "Get single file",
+				"tags": [
+					"files"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/IdParam"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"multipart/form-data": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"file": {
+											"type": "string",
+											"format": "binary"
+										}
+									},
+									"required": [
+										"file"
+									]
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/me": {
+			"get": {
+				"summary": "Get current user",
+				"tags": [
+					"users"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/ApiSuccessResponse"
+										}
+									]
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/{id}": {
+			"get": {
+				"summary": "Get user by id (public)",
+				"tags": [
+					"users"
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/IdParam"
+					}
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/me/avatar": {
+			"get": {
+				"summary": "Get current user avatar",
+				"tags": [
+					"users",
+					"avatar"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Inline image",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"204": {
+						"description": "No Content (no avatar)"
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"summary": "Upload current user avatar",
+				"tags": [
+					"users",
+					"avatar"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				},
+				"delete": {
+					"summary": "Delete current user avatar",
+					"tags": [
+						"users",
+						"avatar"
+					],
+					"security": [
+						{
+							"SessionCookie": []
+						}
+					],
+					"responses": {
+						"200": {
+							"description": "Deleted",
+							"content": {
+								"application/json": {
+									"schema": {
+										"$ref": "#/components/schemas/ApiSuccessResponse"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/{id}/avatar": {
+			"get": {
+				"summary": "Get user avatar by id",
+				"tags": [
+					"users",
+					"avatar"
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/IdParam"
+					}
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Inline image",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"204": {
+						"description": "No Content (no avatar)"
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/me/payment-methods": {
+			"post": {
+				"summary": "Add payment method",
+				"tags": [
+					"users",
+					"payment"
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PaymentMethodCreateDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid input data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/me/payment-methods/{pmId}": {
+			"delete": {
+				"summary": "Delete payment method",
+				"tags": [
+					"users",
+					"payment"
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/PmIdParam"
+					}
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Deleted",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/me/payment-methods/{pmId}/order": {
+			"put": {
+				"summary": "Update payment method order",
+				"tags": [
+					"users",
+					"payment"
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/PmIdParam"
+					}
+				],
+				"security": [
+					{
+						"SessionCookie": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PaymentMethodOrderDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiSuccessResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnauthorizedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		
+		"/*": {
+			"get": {
+				"summary": "Catch-all for undefined routes",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"summary": "Catch-all for undefined routes",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"summary": "Catch-all for undefined routes",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"summary": "Catch-all for undefined routes",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"summary": "Catch-all for undefined routes",
+				"tags": [
+					"system"
+				],
+				"responses": {
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

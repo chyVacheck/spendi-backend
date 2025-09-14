@@ -221,7 +221,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📌 Roadmap
 
-- [X] User authentication & roles
+- [X] User authentication
+- [ ] Docs
 - [ ] Budget planning and management
 - [ ] Statistics & analytics dashboard
 - [ ] Integration with bank APIs
@@ -229,3 +230,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Automated backups
 - [ ] Email notifications
 - [ ] Mobile app API endpoints
+- [ ] Cloud deployment
+- [ ] User feedback integration
+- [ ] Scalability improvements
+- [ ] Performance optimizations
+- [ ] Security enhancements
+- [ ] Code documentation
+- [ ] Community support

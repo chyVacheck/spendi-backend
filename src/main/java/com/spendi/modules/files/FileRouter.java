@@ -2,7 +2,7 @@
 /**
  * @file FileRouter.java
  * @module core/router
- *
+ * @dev тестовый роутер // todo позднее удалить или привязать к dev окружению
  * @author Dmytro Shakh
  */
 

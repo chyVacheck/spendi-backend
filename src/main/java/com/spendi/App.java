@@ -39,6 +39,7 @@ import com.spendi.core.router.PingRouter;
 import com.spendi.modules.auth.AuthRouter;
 import com.spendi.modules.files.FileRouter;
 import com.spendi.modules.user.UserRouter;
+import com.spendi.core.router.DocsRouter;
 
 public class App {
 	public static void main(String[] args) {
@@ -110,6 +111,9 @@ public class App {
 
 		// Аутентификация/авторизация
 		server.registerRouter(new AuthRouter(apiConfig.getApiPrefix()));
+
+		// Документация (ReDoc + static openapi.json)
+		server.registerRouter(new DocsRouter(apiConfig.getApiPrefix()));
 
 		// Пользователи
 		server.registerRouter(new UserRouter(apiConfig.getApiPrefix()));
