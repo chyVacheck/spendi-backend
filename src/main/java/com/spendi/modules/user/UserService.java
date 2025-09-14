@@ -316,6 +316,14 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * @return обновлённый пользователь с удалённым способом оплаты
 	 */
 	public ServiceResponse<UserEntity> deletePaymentMethod(String requestId, String userId, String methodId) {
+
+		UserEntity user = this.getById(userId).getData();
+
+		// проверка на наличие метода оплаты у пользователя
+		if (!user.finance.paymentMethodIds.contains(methodId)) {
+			throw new EntityNotFoundException("PaymentMethod", "PaymentMethods", user.finance.paymentMethodIds);
+		}
+
 		// удаляем метод оплаты
 		this.paymentMethodService.deleteById(methodId);
 
