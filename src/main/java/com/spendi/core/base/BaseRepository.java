@@ -352,11 +352,11 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param id      ObjectId в строковом виде
 	 * @param updates карта полей для $set
 	 */
-	public Optional<Document> updateDocById(String id, Map<String, Object> updates) {
+	public Optional<Document> updateDocById(String id, Document updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 		Document updated = collection.findOneAndUpdate(
 				Filters.eq("_id", new ObjectId(id)),
-				new Document("$set", new Document(updates)),
+				updates,
 				opts);
 		return Optional.ofNullable(updated);
 	}
@@ -369,7 +369,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param updates карта полей для $set
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateById(String id, Map<String, Object> updates) {
+	public Optional<TEntity> updateById(String id, Document updates) {
 		return this.updateDocById(id, updates) // Optional<Document>
 				.map(this::toEntity); // Optional<TEntity>
 	}
@@ -381,11 +381,11 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param filter  карта условий
 	 * @param updates карта полей для $set
 	 */
-	public Optional<Document> updateDocOne(Map<String, Object> filter, Map<String, Object> updates) {
+	public Optional<Document> updateDocOne(Map<String, Object> filter, Document updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 		Document updated = collection.findOneAndUpdate(
 				new Document(filter),
-				new Document("$set", new Document(updates)),
+				updates,
 				opts);
 		return Optional.ofNullable(updated);
 	}
@@ -398,7 +398,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param updates карта полей для $set
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateOne(Map<String, Object> filter, Map<String, Object> updates) {
+	public Optional<TEntity> updateOne(Map<String, Object> filter, Document updates) {
 		return this.updateDocOne(filter, updates)
 				.map(this::toEntity);
 	}
@@ -411,11 +411,11 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param value   значение
 	 * @param updates карта полей для $set
 	 */
-	public Optional<Document> updateDocOne(String key, Object value, Map<String, Object> updates) {
+	public Optional<Document> updateDocOne(String key, Object value, Document updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 		Document updated = collection.findOneAndUpdate(
 				Filters.eq(key, value),
-				new Document("$set", new Document(updates)),
+				updates,
 				opts);
 		return Optional.ofNullable(updated);
 	}
@@ -429,7 +429,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param updates карта полей для $set
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateOne(String key, Object value, Map<String, Object> updates) {
+	public Optional<TEntity> updateOne(String key, Object value, Document updates) {
 		return this.updateDocOne(key, value, updates)
 				.map(this::toEntity);
 	}
@@ -445,10 +445,10 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param filter  карта условий
 	 * @param updates карта полей для $set
 	 */
-	public UpdateResult updateManyDocs(Map<String, Object> filter, Map<String, Object> updates) {
+	public UpdateResult updateManyDocs(Map<String, Object> filter, Document updates) {
 		return collection.updateMany(
 				new Document(filter),
-				new Document("$set", new Document(updates)));
+				updates);
 	}
 
 	/**
@@ -459,10 +459,10 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param value   значение
 	 * @param updates карта полей для $set
 	 */
-	public UpdateResult updateManyDocs(String key, Object value, Map<String, Object> updates) {
+	public UpdateResult updateManyDocs(String key, Object value, Document updates) {
 		return collection.updateMany(
 				Filters.eq(key, value),
-				new Document("$set", new Document(updates)));
+				updates);
 	}
 
 	/**

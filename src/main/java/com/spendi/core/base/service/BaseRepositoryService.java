@@ -292,7 +292,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	/**
 	 * Быстрый апдейт по id (без детекции no-op). Возвращает UPDATED или NotFound.
 	 */
-	public ServiceResponse<TEntity> updateById(String id, Map<String, Object> updates) {
+	public ServiceResponse<TEntity> updateById(String id, Document updates) {
 		return repository.updateById(id, updates)
 				.map(ServiceResponse::updated)
 				.orElseThrow(() -> new EntityNotFoundException(
@@ -301,7 +301,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/** Быстрый апдейт по фильтру (первого подходящего). UPDATED или NotFound. */
-	public ServiceResponse<TEntity> updateOne(Map<String, Object> filter, Map<String, Object> updates) {
+	public ServiceResponse<TEntity> updateOne(Map<String, Object> filter, Document updates) {
 		return repository.updateOne(filter, updates)
 				.map(ServiceResponse::updated)
 				.orElseThrow(() -> new EntityNotFoundException(
@@ -312,7 +312,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	/**
 	 * Быстрый апдейт по key==value (первого подходящего). UPDATED или NotFound.
 	 */
-	public ServiceResponse<TEntity> updateOne(String key, Object value, Map<String, Object> updates) {
+	public ServiceResponse<TEntity> updateOne(String key, Object value, Document updates) {
 		return repository.updateOne(key, value, updates)
 				.map(ServiceResponse::updated)
 				.orElseThrow(() -> new EntityNotFoundException(
@@ -327,7 +327,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	/**
 	 * Обновить много по фильтру. Возвращает UPDATED(modifiedCount) или NOTHING(0).
 	 */
-	public ServiceResponse<Long> updateMany(Map<String, Object> filter, Map<String, Object> updates) {
+	public ServiceResponse<Long> updateMany(Map<String, Object> filter, Document updates) {
 		var res = repository.updateManyDocs(filter, updates);
 		long modified = res.getModifiedCount();
 		return (modified > 0)
@@ -339,7 +339,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	 * Обновить много по key==value. Возвращает UPDATED(modifiedCount) или
 	 * NOTHING(0).
 	 */
-	public ServiceResponse<Long> updateMany(String key, Object value, Map<String, Object> updates) {
+	public ServiceResponse<Long> updateMany(String key, Object value, Document updates) {
 		var res = repository.updateManyDocs(key, value, updates);
 		long modified = res.getModifiedCount();
 		return (modified > 0)

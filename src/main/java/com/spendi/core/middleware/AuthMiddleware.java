@@ -55,7 +55,7 @@ public final class AuthMiddleware extends BaseMiddleware {
 
 		// Опционально обновим lastSeenAt
 		try {
-			this.sessionService.touch(s.id.toHexString());
+			this.sessionService.touch(ctx.getRequestId(), s.id.toHexString());
 		} catch (RuntimeException ignore) {
 		}
 

@@ -105,6 +105,8 @@ public class AuthController extends BaseController {
 		this.info("login success", ctx.getRequestId(),
 				detailsOf("userId", user.id.toHexString(), "sessionId", s.id.toHexString()), true);
 
+		this.userService.touchLastLogin(ctx.getRequestId(), user.id.toHexString());
+
 		ctx.res().success(ApiSuccessResponse.ok(
 				ctx.getRequestId(),
 				"User " + user.getEmail() + " logged",

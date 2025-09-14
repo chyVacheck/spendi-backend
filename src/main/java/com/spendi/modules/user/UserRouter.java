@@ -43,12 +43,12 @@ public class UserRouter extends ApiRouter {
 	@Override
 	public void configure(HttpServerAdapter http) {
 		// Rules for avatar images: 1 file, common image extensions
-        FileValidationRules avatarRules = FileValidationRules
-                .builderFromConfig(FileValidationConfig.getConfig())
-                .minFiles(1)
-                .maxFiles(1)
-                .allowedExtensions(".jpg", ".jpeg", ".png", ".gif")
-                .build();
+		FileValidationRules avatarRules = FileValidationRules
+				.builderFromConfig(FileValidationConfig.getConfig())
+				.minFiles(1)
+				.maxFiles(1)
+				.allowedExtensions(".jpg", ".jpeg", ".png", ".gif")
+				.build();
 
 		// Подключаем AuthMiddleware на весь роутер
 		this.use(AuthMiddleware.getInstance());
@@ -82,12 +82,12 @@ public class UserRouter extends ApiRouter {
 		this.delete("/me/avatar", controller::deleteMeAvatar);
 
 		// ? === Payment methods ===
+		this.get("/me/payment-methods", controller::getMePaymentMethods);
 
 		this.post("/me/payment-methods",
 				controller::addPaymentMethod,
 				new JsonBodyParserMiddleware(),
 				BodyValidationMiddleware.of(PaymentMethodCreateDto.class));
-
 
 		this.delete("/me/payment-methods/{pmId}",
 				controller::deletePaymentMethod,

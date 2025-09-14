@@ -30,6 +30,7 @@ import com.spendi.core.base.BaseController;
 import com.spendi.core.base.http.HttpContext;
 import com.spendi.core.dto.IdDto;
 import com.spendi.core.response.ApiSuccessResponse;
+import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.types.ServiceProcessType;
 import com.spendi.modules.files.FileService;
 import com.spendi.modules.session.SessionEntity;
@@ -45,14 +46,16 @@ import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
 /**
  * Контроллер для управления пользователями и связанными с ними данными.
  * 
- * <p>Предоставляет REST API endpoints для:
+ * <p>
+ * Предоставляет REST API endpoints для:
  * <ul>
- *   <li>Получения информации о пользователях (публичной и приватной)</li>
- *   <li>Управления аватарами (загрузка, получение, удаление)</li>
- *   <li>Управления методами оплаты пользователей</li>
+ * <li>Получения информации о пользователях (публичной и приватной)</li>
+ * <li>Управления аватарами (загрузка, получение, удаление)</li>
+ * <li>Управления методами оплаты пользователей</li>
  * </ul>
  * 
- * <p>Все операции с пользовательскими данными требуют валидной сессии.
+ * <p>
+ * Все операции с пользовательскими данными требуют валидной сессии.
  * Контроллер использует паттерн Singleton для управления экземпляром.
  * 
  * @see UserService
@@ -95,20 +98,23 @@ public class UserController extends BaseController {
 	/**
 	 * Получить данные текущего авторизованного пользователя.
 	 * 
-	 * <p>Endpoint: {@code GET /users/me}
+	 * <p>
+	 * Endpoint: {@code GET /users/me}
 	 * 
-	 * <p>Возвращает приватные данные пользователя (включая email и другую
+	 * <p>
+	 * Возвращает приватные данные пользователя (включая email и другую
 	 * конфиденциальную информацию), доступные только самому пользователю.
 	 * 
-	 * <p>Требования:
+	 * <p>
+	 * Требования:
 	 * <ul>
-	 *   <li>Валидная сессия аутентификации</li>
-	 *   <li>Активный пользователь в системе</li>
+	 * <li>Валидная сессия аутентификации</li>
+	 * <li>Активный пользователь в системе</li>
 	 * </ul>
 	 * 
 	 * @param ctx HTTP контекст запроса с данными сессии
 	 * 
-	 * @throws UnauthorizedException если сессия невалидна
+	 * @throws UnauthorizedException   если сессия невалидна
 	 * @throws EntityNotFoundException если пользователь не найден
 	 * 
 	 * @apiNote Возвращает приватные данные пользователя
@@ -134,19 +140,22 @@ public class UserController extends BaseController {
 	/**
 	 * Получить публичные данные пользователя по его ID.
 	 * 
-	 * <p>Endpoint: {@code GET /users/{id}}
+	 * <p>
+	 * Endpoint: {@code GET /users/{id}}
 	 * 
-	 * <p>Возвращает только публичные данные пользователя (без конфиденциальной
+	 * <p>
+	 * Возвращает только публичные данные пользователя (без конфиденциальной
 	 * информации типа email). Доступно для всех аутентифицированных пользователей.
 	 * 
-	 * <p>Параметры URL:
+	 * <p>
+	 * Параметры URL:
 	 * <ul>
-	 *   <li>{@code id} - ObjectId пользователя в формате строки</li>
+	 * <li>{@code id} - ObjectId пользователя в формате строки</li>
 	 * </ul>
 	 * 
 	 * @param ctx HTTP контекст с параметрами запроса
 	 * 
-	 * @throws BadRequestException если ID имеет неверный формат
+	 * @throws BadRequestException     если ID имеет неверный формат
 	 * @throws EntityNotFoundException если пользователь не найден
 	 * 
 	 * @apiNote Возвращает только публичные данные пользователя
@@ -172,40 +181,33 @@ public class UserController extends BaseController {
 	}
 
 	/**
-	 * * Update
-	 */
-
-	/**
-	 * ? === === === Avatar === === ===
-	 */
-
-	/**
-	 * * Get
-	 */
-
-	/**
 	 * Получить аватар текущего авторизованного пользователя.
 	 * 
-	 * <p>Endpoint: {@code GET /users/me/avatar}
+	 * <p>
+	 * Endpoint: {@code GET /users/me/avatar}
 	 * 
-	 * <p>Возвращает бинарное содержимое файла аватара с соответствующими
-	 * HTTP заголовками для отображения в браузере (Content-Type, Content-Disposition).
+	 * <p>
+	 * Возвращает бинарное содержимое файла аватара с соответствующими
+	 * HTTP заголовками для отображения в браузере (Content-Type,
+	 * Content-Disposition).
 	 * 
-	 * <p>Поведение:
+	 * <p>
+	 * Поведение:
 	 * <ul>
-	 *   <li>Если аватар существует - возвращает файл с кодом 200</li>
-	 *   <li>Если аватар отсутствует - возвращает код 204 (No Content)</li>
+	 * <li>Если аватар существует - возвращает файл с кодом 200</li>
+	 * <li>Если аватар отсутствует - возвращает код 204 (No Content)</li>
 	 * </ul>
 	 * 
-	 * <p>HTTP заголовки ответа:
+	 * <p>
+	 * HTTP заголовки ответа:
 	 * <ul>
-	 *   <li>{@code Content-Type} - MIME тип файла</li>
-	 *   <li>{@code Content-Disposition: inline} - для отображения в браузере</li>
+	 * <li>{@code Content-Type} - MIME тип файла</li>
+	 * <li>{@code Content-Disposition: inline} - для отображения в браузере</li>
 	 * </ul>
 	 * 
 	 * @param ctx HTTP контекст запроса
 	 * 
-	 * @throws UnauthorizedException если сессия невалидна
+	 * @throws UnauthorizedException   если сессия невалидна
 	 * @throws EntityNotFoundException если пользователь не найден
 	 * 
 	 * @apiNote Возвращает бинарные данные файла или 204 если аватар отсутствует
@@ -238,7 +240,7 @@ public class UserController extends BaseController {
 		String disposition = "inline; filename=\""
 				+ (file.getFilename() == null ? u.id.toHexString() : file.getFilename())
 				+ "\"";
-		
+
 		// Отправляем файл клиенту с правильными заголовками
 		// Content-Type определяет MIME тип для корректного отображения
 		// Content-Disposition: inline позволяет отображать изображение в браузере
@@ -277,35 +279,56 @@ public class UserController extends BaseController {
 	}
 
 	/**
+	 * GET /users/me/payment-methods
+	 */
+	public void getMePaymentMethods(HttpContext ctx) {
+		// Получаем сессию для идентификации пользователя
+		SessionEntity s = ctx.getAuthSession();
+
+		// Загружаем данные пользователя для проверки существования
+		ServiceResponse<List<PaymentMethodEntity>> paymentMethods = this.userService
+				.getPaymentMethods(ctx.getRequestId(), s.userId.toHexString());
+
+		ctx.res().success(ApiSuccessResponse.ok(
+				ctx.getRequestId(),
+				"payment methods loaded",
+				paymentMethods.getData()));
+	}
+
+	/**
 	 * * Create
 	 */
 
 	/**
 	 * Загрузить или обновить аватар текущего пользователя.
 	 * 
-	 * <p>Endpoint: {@code POST /users/me/avatar}
+	 * <p>
+	 * Endpoint: {@code POST /users/me/avatar}
 	 * 
-	 * <p>Принимает multipart/form-data с файлом изображения и сохраняет его
+	 * <p>
+	 * Принимает multipart/form-data с файлом изображения и сохраняет его
 	 * как аватар пользователя. Если аватар уже существует - заменяет его.
 	 * 
-	 * <p>Требования к файлу:
+	 * <p>
+	 * Требования к файлу:
 	 * <ul>
-	 *   <li>Должен быть изображением (JPEG, PNG, GIF и т.д.)</li>
-	 *   <li>Размер файла ограничен конфигурацией системы</li>
-	 *   <li>Файл проходит валидацию через FileService</li>
+	 * <li>Должен быть изображением (JPEG, PNG, GIF и т.д.)</li>
+	 * <li>Размер файла ограничен конфигурацией системы</li>
+	 * <li>Файл проходит валидацию через FileService</li>
 	 * </ul>
 	 * 
-	 * <p>Ответ:
+	 * <p>
+	 * Ответ:
 	 * <ul>
-	 *   <li>201 Created - если аватар создан впервые</li>
-	 *   <li>200 OK - если аватар обновлен</li>
+	 * <li>201 Created - если аватар создан впервые</li>
+	 * <li>200 OK - если аватар обновлен</li>
 	 * </ul>
 	 * 
 	 * @param ctx HTTP контекст с multipart данными
 	 * 
-	 * @throws UnauthorizedException если сессия невалидна
-	 * @throws BadRequestException если файл отсутствует или невалиден
-	 * @throws FileValidationException если файл не прошел валидацию
+	 * @throws UnauthorizedException    если сессия невалидна
+	 * @throws BadRequestException      если файл отсутствует или невалиден
+	 * @throws FileValidationException  если файл не прошел валидацию
 	 * @throws PayloadTooLargeException если файл слишком большой
 	 * 
 	 * @apiNote Возвращает URL для доступа к загруженному аватару
@@ -331,7 +354,8 @@ public class UserController extends BaseController {
 		var resp = this.userService.uploadAvatar(ctx.getRequestId(), user.id.toHexString(), files.get(0));
 		String url = resp.getData();
 
-		// Определяем тип ответа на основе того, был ли аватар создан впервые или обновлен
+		// Определяем тип ответа на основе того, был ли аватар создан впервые или
+		// обновлен
 		// ServiceProcessType.CREATED означает, что аватар создан впервые
 		if (resp.getProcess() == ServiceProcessType.CREATED) {
 			// Возвращаем HTTP 201 Created для нового аватара
@@ -349,77 +373,21 @@ public class UserController extends BaseController {
 	}
 
 	/**
-	 * ? === === Payment Methods === ===
-	 */
-
-	/**
 	 * POST /users/me/payment-methods
 	 */
 	public void addPaymentMethod(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
 		PaymentMethodCreateDto dto = ctx.getValidBody(PaymentMethodCreateDto.class);
 
-		// Assemble entity
-		PaymentMethodEntity e = new PaymentMethodEntity();
-		var info = new PaymentMethodEntity.Info();
-		info.type = dto.info.type;
-		info.name = dto.info.name;
-		info.currency = dto.info.currency;
-		info.order = dto.info.order;
-		info.tags = dto.info.tags;
-		e.info = info;
+		var created = this.paymentService.createOne(ctx.getRequestId(), s.userId.toHexString(), dto).getData();
 
-		var details = new PaymentMethodEntity.Details();
-		if (dto.details != null) {
-			if (dto.details.card != null) {
-				var c = new PaymentMethodEntity.Card();
-				c.brand = dto.details.card.brand;
-				c.last4 = dto.details.card.last4;
-				c.expMonth = dto.details.card.expMonth;
-				c.expYear = dto.details.card.expYear;
-				details.card = c;
-			}
-			if (dto.details.bank != null) {
-				var b = new PaymentMethodEntity.Bank();
-				b.bankName = dto.details.bank.bankName;
-				b.accountMasked = dto.details.bank.accountMasked;
-				details.bank = b;
-			}
-			if (dto.details.wallet != null) {
-				var w = new PaymentMethodEntity.Wallet();
-				w.provider = dto.details.wallet.provider;
-				w.handle = dto.details.wallet.handle;
-				details.wallet = w;
-			}
-		}
-		e.details = details;
-
-		var sys = new PaymentMethodEntity.System();
-		sys.status = PaymentMethodEntity.EPaymentMethodStatus.Active;
-		sys.meta = new PaymentMethodEntity.Meta();
-		e.system = sys;
-
-		var created = this.paymentService.createForUser(ctx.getRequestId(), s.userId.toHexString(), e).getData();
+		var updated = this.userService.addPaymentMethod(ctx.getRequestId(),
+				s.userId.toHexString(), created).getData();
 
 		ctx.res().success(ApiSuccessResponse.created(
 				ctx.getRequestId(),
 				"payment method created",
-				created.getPublicData()));
-	}
-
-	/**
-	 * DELETE /users/me/payment-methods/{id}
-	 */
-	public void deletePaymentMethod(HttpContext ctx) {
-		SessionEntity s = ctx.getAuthSession();
-		var params = ctx.getValidParams(PaymentMethodIdParams.class);
-
-		this.paymentService.deleteForUser(ctx.getRequestId(), s.userId.toHexString(), params.pmId);
-
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"payment method deleted",
-				detailsOf("id", params.pmId)));
+				updated.getPrivateData()));
 	}
 
 	/**
@@ -444,6 +412,21 @@ public class UserController extends BaseController {
 	 */
 
 	/**
+	 * DELETE /users/me/payment-methods/{id}
+	 */
+	public void deletePaymentMethod(HttpContext ctx) {
+		SessionEntity s = ctx.getAuthSession();
+		var params = ctx.getValidParams(PaymentMethodIdParams.class);
+
+		this.userService.deletePaymentMethod(ctx.getRequestId(), s.userId.toHexString(), params.pmId);
+
+		ctx.res().success(ApiSuccessResponse.ok(
+				ctx.getRequestId(),
+				"payment method deleted",
+				detailsOf("id", params.pmId)));
+	}
+
+	/**
 	 * DELETE /users/me/avatar: полностью удаляет аватар авторизованого пользователя
 	 */
 	public void deleteMeAvatar(HttpContext ctx) {
@@ -464,7 +447,4 @@ public class UserController extends BaseController {
 				detailsOf("url", url)));
 	}
 
-	/**
-	 * ? === === === Avatar === === ===
-	 */
 }

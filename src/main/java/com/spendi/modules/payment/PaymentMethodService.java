@@ -7,14 +7,12 @@
 
 package com.spendi.modules.payment;
 
+import org.bson.Document;
 /**
  * ! lib imports
  */
 import org.bson.types.ObjectId;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,12 +20,11 @@ import java.util.Map;
  */
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.response.ServiceResponse;
-import com.spendi.modules.user.UserService;
+import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
 
 public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRepository, PaymentMethodEntity> {
 
 	private static volatile PaymentMethodService INSTANCE;
-	private final UserService userService = UserService.getInstance();
 
 	public PaymentMethodService(PaymentMethodRepository repository) {
 		super(PaymentMethodService.class.getSimpleName(), repository);
@@ -48,57 +45,67 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		return ref;
 	}
 
-	/** Создать способ оплаты для пользователя и добавить id в пользователя. */
-	public ServiceResponse<PaymentMethodEntity> createForUser(String requestId, String userId,
-			PaymentMethodEntity entity) {
+	/**
+	 * Создать способ оплаты для пользователя.
+	 * 
+	 * @param requestId request-id для корреляции логов
+	 * @param userId    строковый ObjectId пользователя
+	 * @param dto       данные для создания способа оплаты
+	 * @return созданный способ оплаты
+	 */
+	public ServiceResponse<PaymentMethodEntity> createOne(String requestId, String userId,
+			PaymentMethodCreateDto dto) {
 		var now = Instant.now();
-		entity.id = new ObjectId();
-		entity.userId = new ObjectId(userId);
-		if (entity.system == null)
-			entity.system = new PaymentMethodEntity.System();
-		if (entity.system.meta == null)
-			entity.system.meta = new PaymentMethodEntity.Meta();
-		entity.system.status = entity.system.status == null
-				? PaymentMethodEntity.EPaymentMethodStatus.Active
-				: entity.system.status;
-		entity.system.meta.createdAt = now;
-		entity.system.meta.updatedAt = now;
 
-		var created = super.createOne(entity);
+		// Assemble entity
+		PaymentMethodEntity e = new PaymentMethodEntity();
+		var info = new PaymentMethodEntity.Info();
+		info.type = dto.info.type;
+		info.name = dto.info.name;
+		info.currency = dto.info.currency;
+		info.order = dto.info.order;
+		info.tags = dto.info.tags;
+		e.info = info;
 
-		// append to user's finance.paymentMethodIds
-		var user = this.userService.getById(userId).getData();
-		List<String> list = user.finance != null && user.finance.paymentMethodIds != null
-				? user.finance.paymentMethodIds
-				: List.of();
-		var updated = new ArrayList<>(list);
-		updated.add(entity.id.toHexString());
-		Map<String, Object> updates = new HashMap<>();
-		updates.put("finance.paymentMethodIds", updated);
-		updates.put("system.meta.updatedAt", now);
-		this.userService.updateById(userId, updates);
+		var details = new PaymentMethodEntity.Details();
+		if (dto.details != null) {
+			if (dto.details.card != null) {
+				var c = new PaymentMethodEntity.Card();
+				c.brand = dto.details.card.brand;
+				c.last4 = dto.details.card.last4;
+				c.expMonth = dto.details.card.expMonth;
+				c.expYear = dto.details.card.expYear;
+				details.card = c;
+			}
+			if (dto.details.bank != null) {
+				var b = new PaymentMethodEntity.Bank();
+				b.bankName = dto.details.bank.bankName;
+				b.accountMasked = dto.details.bank.accountMasked;
+				details.bank = b;
+			}
+			if (dto.details.wallet != null) {
+				var w = new PaymentMethodEntity.Wallet();
+				w.provider = dto.details.wallet.provider;
+				w.handle = dto.details.wallet.handle;
+				details.wallet = w;
+			}
+		}
+		e.details = details;
+
+		var sys = new PaymentMethodEntity.System();
+		sys.status = PaymentMethodEntity.EPaymentMethodStatus.Active;
+		sys.meta = new PaymentMethodEntity.Meta();
+		sys.meta.createdAt = now;
+		sys.meta.updatedAt = null;
+		sys.meta.archivedAt = null;
+		e.system = sys;
+
+		e.id = new ObjectId();
+		e.userId = new ObjectId(userId);
+
+		var created = super.createOne(e);
 
 		return created;
-	}
-
-	/** Удалить способ оплаты и убрать его id из пользователя. */
-	public ServiceResponse<String> deleteForUser(String requestId, String userId, String methodId) {
-		// delete method
-		var deleted = this.deleteById(methodId);
-
-		// pull from user's list
-		var user = this.userService.getById(userId).getData();
-		List<String> list = user.finance != null && user.finance.paymentMethodIds != null
-				? user.finance.paymentMethodIds
-				: List.of();
-		var updated = new ArrayList<>(list);
-		updated.remove(methodId);
-		Map<String, Object> updates = new HashMap<>();
-		updates.put("finance.paymentMethodIds", updated);
-		updates.put("system.meta.updatedAt", Instant.now());
-		this.userService.updateById(userId, updates);
-
-		return deleted;
 	}
 
 	/** Обновить поле order у метода оплаты. */
@@ -111,9 +118,12 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 			throw new com.spendi.core.exceptions.EntityNotFoundException(
 					PaymentMethodEntity.class.getSimpleName(), Map.of("id", methodId, "userId", userId));
 		}
-		var updates = Map.<String, Object>of(
+		var fieldsToSet = Map.<String, Object>of(
 				"info.order", order,
 				"system.meta.updatedAt", Instant.now());
-		return this.updateById(methodId, updates);
+
+		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+
+		return this.updateById(methodId, updateDocument);
 	}
 }

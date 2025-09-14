@@ -37,8 +37,8 @@ public final class AppInitializer {
 
 		initFilesModule(db);
 		initSessionModule(db);
-		initUserModule(db);
 		initPaymentModule(db);
+		initUserModule(db);
 	}
 
 	/**

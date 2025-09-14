@@ -7,6 +7,7 @@
 
 package com.spendi.modules.session;
 
+import org.bson.Document;
 /**
  * ! lin imports
  */
@@ -67,10 +68,18 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		return created;
 	}
 
-	public ServiceResponse<SessionEntity> touch(String id) {
-		var updates = Map.<String, Object>of(
+	/**
+	 * Обновить время последнего посещения сессии.
+	 */
+	public ServiceResponse<SessionEntity> touch(String requestId, String id) {
+		// Обновление времени последнего посещения
+		var fieldsToSet = Map.<String, Object>of(
 				"lastSeenAt", Instant.now());
-		return this.updateById(id, updates);
+		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+
+		// Лог: обновлено время последнего посещения
+		this.info("session touched", requestId, detailsOf("sessionId", id));
+		return this.updateById(id, updateDocument);
 	}
 
 	/**
@@ -85,8 +94,12 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 	}
 
 	public ServiceResponse<String> revokeById(String requestId, String id) {
-		var updates = Map.<String, Object>of("revoked", true);
-		this.updateById(id, updates);
+		var fieldsToSet = Map.<String, Object>of(
+				"revoked", true);
+		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+
+		this.updateById(id, updateDocument);
+
 		// Лог: сессия отозвана
 		this.info("session revoked", requestId, detailsOf("sessionId", id), true);
 		return ServiceResponse.deleted(id);
@@ -104,8 +117,12 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		var filter = Map.<String, Object>of(
 				"userId", new ObjectId(userId),
 				"revoked", false);
-		var updates = Map.<String, Object>of("revoked", true);
-		var res = this.updateMany(filter, updates);
+
+		var fieldsToSet = Map.<String, Object>of(
+				"revoked", true);
+		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+
+		var res = this.updateMany(filter, updateDocument);
 		// Логируем количество закрытых сессий
 		this.info("sessions revoked by userId", requestId,
 				detailsOf("userId", userId, "count", String.valueOf(res.getData())), true);

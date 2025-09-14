@@ -108,7 +108,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 
 	public void setExceptionMapper(ExceptionMapper mapper) {
 		this.exceptionMapper = mapper;
-		this.info("ExceptionMapper installed", "none request id", detailsOf(
+		this.info("ExceptionMapper installed", "no-id", detailsOf(
 				"class", mapper.getClass().getSimpleName()), true);
 	}
 
@@ -122,7 +122,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		}
 		this.globalMiddleware.add(middleware);
 
-		this.info("Register middleware", "none request id", detailsOf(
+		this.info("Register middleware", "no-id", detailsOf(
 				"class", middleware.getClass().getSimpleName(),
 				"type", "before", "scope", "global"),
 				true);
@@ -150,7 +150,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		}
 		this.globalMiddleware.add(middleware);
 
-		this.info("Register middleware", "none request id", detailsOf(
+		this.info("Register middleware", "no-id", detailsOf(
 				"class", middleware.getClass().getSimpleName(),
 				"type", "after", "scope", "global"), true);
 
@@ -175,7 +175,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 				if (mw == null)
 					continue;
 
-				this.info("Register middleware", "none request id", detailsOf(
+				this.info("Register middleware", "no-id", detailsOf(
 						"class", mw.getClass().getSimpleName(),
 						"type", "before",
 						"scope", "router",
@@ -200,10 +200,10 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 			for (Route r : routes) {
 				registerRoute(r, name);
 			}
-			this.info("Mounted routes", "none request id", detailsOf(
+			this.info("Mounted routes", "no-id", detailsOf(
 					"count", routes.size()), true);
 		} else {
-			this.warn("Mounted routes", "none request id", detailsOf(
+			this.warn("Mounted routes", "no-id", detailsOf(
 					"count", 0), true);
 		}
 	}
@@ -211,12 +211,12 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	@Override
 	public void start(int port) {
 
-		this.info("Starting server", "none request id", detailsOf(
+		this.info("Starting server", "no-id", detailsOf(
 				"port", port,
 				"finished", false), true);
 
 		this.app.start(port);
-		this.info("Starting server", "none request id", detailsOf(
+		this.info("Starting server", "no-id", detailsOf(
 				"port", port,
 				"finished", true), true);
 	}
@@ -236,7 +236,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		RouteHandler handler = r.handler();
 		List<Middleware> locals = r.middlewares();
 
-		this.info("Register route " + className, "none request id", detailsOf(
+		this.info("Register route " + className, "no-id", detailsOf(
 				"path", path,
 				"method", m.name()), true);
 
