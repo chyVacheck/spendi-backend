@@ -12,18 +12,33 @@ package com.spendi.core.dto;
  */
 import jakarta.validation.constraints.Min;
 
+/**
+ * ! my imports
+ */
+import com.spendi.config.ApiConfig;
+
 public class PaginationQueryDto {
     @Min(value = 1, message = "Page must be at least 1")
-    public Integer page = 1;
+    public int page = ApiConfig.getConfig().getDefaultPage();
 
     @Min(value = 1, message = "Limit must be at least 1")
-    public Integer limit = 250;
+    public int limit = ApiConfig.getConfig().getDefaultLimit();
 
-    public Integer getPage() {
-        return page != null ? page : 1;
+    /**
+     * Получить значение страницы.
+     * 
+     * @return значение страницы
+     */
+    public int getPage() {
+        return page;
     }
 
-    public Integer getLimit() {
-        return limit != null ? limit : 250;
+    /**
+     * Получить значение лимита.
+     * 
+     * @return значение лимита
+     */
+    public int getLimit() {
+        return Math.max(limit, ApiConfig.getConfig().getMaxLimit());
     }
 }

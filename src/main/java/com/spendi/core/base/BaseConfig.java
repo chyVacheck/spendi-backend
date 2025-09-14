@@ -43,11 +43,16 @@ public abstract class BaseConfig {
 		return (val != null && !val.isBlank()) ? val : defaultValue;
 	}
 
-	// ==============================
-	// ======== HELPERS =============
-	// ==============================
+	// ? =================
+	// ? ==== HELPERS ====
+	// ? =================
 
-	/** Разобрать CSV-строку в set (trim + toLowerCase, без пустых). */
+	/**
+	 * Разобрать CSV-строку в set (trim + toLowerCase, без пустых).
+	 *
+	 * @param csv строка для парсинга
+	 * @return разобрать csv-строку в set (trim + toLowerCase, без пустых)
+	 */
 	protected static Set<String> parseCsvSet(String csv) {
 		if (csv == null || csv.isBlank())
 			return Set.of();
@@ -63,7 +68,13 @@ public abstract class BaseConfig {
 		return out;
 	}
 
-	/** Парсинг long с дефолтом. */
+	/**
+	 * Парсинг long с дефолтом.
+	 *
+	 * @param s   строка для парсинга
+	 * @param def значение по умолчанию
+	 * @return парсинг long с дефолтом
+	 */
 	protected static long parseLong(String s, long def) {
 		try {
 			return Long.parseLong(s);
@@ -72,7 +83,28 @@ public abstract class BaseConfig {
 		}
 	}
 
-	/** Парсинг boolean из строки (true/1/yes). */
+	/**
+	 * Парсинг int с дефолтом.
+	 *
+	 * @param s   строка для парсинга
+	 * @param def значение по умолчанию
+	 * @return парсинг int с дефолтом
+	 */
+	protected static int parseInt(String s, int def) {
+		try {
+			return Integer.parseInt(s);
+		} catch (Exception e) {
+			return def;
+		}
+	}
+
+	/**
+	 * Парсинг boolean из строки (true/1/yes).
+	 *
+	 * @param s   строка для парсинга
+	 * @param def значение по умолчанию
+	 * @return парсинг boolean из строки (true/1/yes)
+	 */
 	protected static boolean parseBool(String s, boolean def) {
 		if (s == null)
 			return def;
@@ -84,7 +116,12 @@ public abstract class BaseConfig {
 		return def;
 	}
 
-	/** Nullable Integer из строки. */
+	/**
+	 * Nullable Integer из строки.
+	 *
+	 * @param s строка для парсинга
+	 * @return nullable integer из строки
+	 */
 	protected static Integer parseNullableInt(String s) {
 		if (s == null || s.isBlank())
 			return null;
@@ -95,7 +132,12 @@ public abstract class BaseConfig {
 		}
 	}
 
-	/** Nullable Double из строки. */
+	/**
+	 * Nullable Double из строки.
+	 *
+	 * @param s строка для парсинга
+	 * @return nullable double из строки
+	 */
 	protected static Double parseNullableDouble(String s) {
 		if (s == null || s.isBlank())
 			return null;
@@ -106,7 +148,13 @@ public abstract class BaseConfig {
 		}
 	}
 
-	/** Парсинг enum с дефолтом, case-insensitive. */
+	/**
+	 * Парсинг enum с дефолтом, case-insensitive.
+	 *
+	 * @param s   строка для парсинга
+	 * @param def значение по умолчанию
+	 * @return парсинг enum с дефолтом, case-insensitive
+	 */
 	protected static <E extends Enum<E>> E parseEnum(String s, E def) {
 		if (s == null || s.isBlank())
 			return def;
