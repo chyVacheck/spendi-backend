@@ -39,6 +39,6 @@ public class PaginationQueryDto {
      * @return значение лимита
      */
     public int getLimit() {
-        return Math.max(limit, ApiConfig.getConfig().getMaxLimit());
+        return Math.min(limit, ApiConfig.getConfig().getMaxLimit());
     }
 }
