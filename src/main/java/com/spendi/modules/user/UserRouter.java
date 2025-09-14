@@ -15,10 +15,12 @@ import com.spendi.config.FileValidationConfig;
 // core -> base
 import com.spendi.core.base.server.HttpServerAdapter;
 import com.spendi.core.base.server.javalin.middleware.JavalinMultipartParserMiddleware;
+import com.spendi.core.dto.PaginationQueryDto;
 // core -> middleware
 import com.spendi.core.middleware.AuthMiddleware;
 import com.spendi.core.middleware.FileValidationMiddleware;
 import com.spendi.core.middleware.ParamsValidationMiddleware;
+import com.spendi.core.middleware.QueryValidationMiddleware;
 import com.spendi.core.middleware.TempFilesCleanupMiddleware;
 import com.spendi.core.middleware.BodyValidationMiddleware;
 import com.spendi.core.middleware.JsonBodyParserMiddleware;
@@ -82,7 +84,9 @@ public class UserRouter extends ApiRouter {
 		this.delete("/me/avatar", controller::deleteMeAvatar);
 
 		// ? === Payment methods ===
-		this.get("/me/payment-methods", controller::getMePaymentMethods);
+		this.get("/me/payment-methods",
+				controller::getMePaymentMethods,
+				QueryValidationMiddleware.of(PaginationQueryDto.class));
 
 		this.post("/me/payment-methods",
 				controller::addPaymentMethod,

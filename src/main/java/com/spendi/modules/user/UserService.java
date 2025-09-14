@@ -41,6 +41,7 @@ import com.spendi.modules.files.FileEntity;
 import com.spendi.modules.payment.PaymentMethodEntity;
 import com.spendi.modules.payment.PaymentMethodService;
 import com.spendi.modules.user.dto.UserCreateDto;
+import com.spendi.core.dto.PaginationQueryDto;
 
 public class UserService extends BaseRepositoryService<UserRepository, UserEntity> {
 
@@ -153,13 +154,15 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * @param userId    строковый ObjectId пользователя
 	 * @return все способы оплаты пользователя
 	 */
-	public ServiceResponse<List<Object>> getPaymentMethods(String requestId, String userId) {
-		this.info("get payment methods by user id", requestId, detailsOf("userId", userId));
+	public ServiceResponse<List<Map<String, Object>>> getPaymentMethods(String requestId, String userId,
+			PaginationQueryDto paginationDto) {
+		this.info("get payment methods by user id", requestId,
+				detailsOf("userId", userId, "page", paginationDto.getPage(), "limit", paginationDto.getLimit()));
 
 		ServiceResponse<List<PaymentMethodEntity>> paymentMethodRes = this.paymentMethodService
-				.getMany("userId", new ObjectId(userId), 1, 250);
+				.getMany("userId", new ObjectId(userId), paginationDto.getPage(), paginationDto.getLimit());
 
-		List<Object> publicPaymentMethods = paymentMethodRes.getData().stream()
+		List<Map<String, Object>> publicPaymentMethods = paymentMethodRes.getData().stream()
 				.map(PaymentMethodEntity::getPublicData)
 				.collect(Collectors.toList());
 

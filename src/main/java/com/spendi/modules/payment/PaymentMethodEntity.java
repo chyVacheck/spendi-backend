@@ -95,7 +95,7 @@ public class PaymentMethodEntity {
 		Active, Archived, Deleted
 	}
 
-	public Object getPublicData() {
+	public Map<String, Object> getPublicData() {
 		Map<String, Object> out = new HashMap<>(6);
 		out.put("id", id.toHexString());
 		Map<String, Object> i = new HashMap<>(5);

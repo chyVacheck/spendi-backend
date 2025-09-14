@@ -22,6 +22,7 @@ package com.spendi.modules.user;
  * ! java imports
  */
 import java.util.List;
+import java.util.Map;
 
 /**
  * ! my imports
@@ -41,6 +42,7 @@ import com.spendi.modules.payment.PaymentMethodService;
 import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
 import com.spendi.modules.payment.dto.PaymentMethodIdParams;
 import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
+import com.spendi.core.dto.PaginationQueryDto;
 
 /**
  * Контроллер для управления пользователями и связанными с ними данными.
@@ -284,9 +286,12 @@ public class UserController extends BaseController {
 		// Получаем сессию для идентификации пользователя
 		SessionEntity s = ctx.getAuthSession();
 
+		// Получаем и валидируем параметры пагинации из запроса
+		PaginationQueryDto query = ctx.getValidQuery(PaginationQueryDto.class);
+
 		// Загружаем данные пользователя для проверки существования
-		ServiceResponse<List<Object>> paymentMethods = this.userService
-				.getPaymentMethods(ctx.getRequestId(), s.userId.toHexString());
+		ServiceResponse<List<Map<String, Object>>> paymentMethods = this.userService
+				.getPaymentMethods(ctx.getRequestId(), s.userId.toHexString(), query);
 
 		ctx.res().success(ApiSuccessResponse.ok(
 				ctx.getRequestId(),
