@@ -67,6 +67,10 @@ public class ApiSuccessResponse<T> extends InnerResponse {
 		return new ApiSuccessResponse<>(HttpStatusCode.OK, requestId, message, Map.of(), data);
 	}
 
+	public static <T> ApiSuccessResponse<T> ok(String requestId, String message, T data, Map<String, Object> details) {
+		return new ApiSuccessResponse<>(HttpStatusCode.OK, requestId, message, details, data);
+	}
+
 	public static <T> ApiSuccessResponse<T> created(String requestId, String message, T data) {
 		return new ApiSuccessResponse<>(HttpStatusCode.CREATED, requestId, message, Map.of(), data);
 	}

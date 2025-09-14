@@ -37,7 +37,6 @@ import com.spendi.modules.session.SessionEntity;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.http.HttpStatusCode;
 import com.spendi.core.files.DownloadedFile;
-import com.spendi.modules.payment.PaymentMethodEntity;
 import com.spendi.modules.payment.PaymentMethodService;
 import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
 import com.spendi.modules.payment.dto.PaymentMethodIdParams;
@@ -286,13 +285,14 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 
 		// Загружаем данные пользователя для проверки существования
-		ServiceResponse<List<PaymentMethodEntity>> paymentMethods = this.userService
+		ServiceResponse<List<Object>> paymentMethods = this.userService
 				.getPaymentMethods(ctx.getRequestId(), s.userId.toHexString());
 
 		ctx.res().success(ApiSuccessResponse.ok(
 				ctx.getRequestId(),
 				"payment methods loaded",
-				paymentMethods.getData()));
+				paymentMethods.getData(),
+				paymentMethods.getPaginationOrThrow().toMap()));
 	}
 
 	/**

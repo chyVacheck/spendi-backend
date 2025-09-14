@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
  */
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Map;
 
 /**
@@ -152,10 +153,17 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * @param userId    строковый ObjectId пользователя
 	 * @return все способы оплаты пользователя
 	 */
-	public ServiceResponse<List<PaymentMethodEntity>> getPaymentMethods(String requestId, String userId) {
+	public ServiceResponse<List<Object>> getPaymentMethods(String requestId, String userId) {
 		this.info("get payment methods by user id", requestId, detailsOf("userId", userId));
 
-		return this.paymentMethodService.getMany(userId, new ObjectId(userId), 1, 250);
+		ServiceResponse<List<PaymentMethodEntity>> paymentMethodRes = this.paymentMethodService
+				.getMany("userId", new ObjectId(userId), 1, 250);
+
+		List<Object> publicPaymentMethods = paymentMethodRes.getData().stream()
+				.map(PaymentMethodEntity::getPublicData)
+				.collect(Collectors.toList());
+
+		return ServiceResponse.founded(publicPaymentMethods, paymentMethodRes.getPaginationOrThrow());
 	}
 
 	/**

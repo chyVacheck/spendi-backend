@@ -27,6 +27,16 @@
 package com.spendi.core.types;
 
 /**
+ * ! lib imports
+ */
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * ! java imports
+ */
+import java.util.Map;
+
+/**
  * Класс пагинации для ответа сервисов.
  *
  * @param page       текущая страница (начиная с 1)
@@ -39,4 +49,18 @@ public record Pagination(
 		long total,
 		int limit,
 		int totalPages) {
+
+	/**
+	 * Преобразует пагинацию в карту для сериализации в JSON.
+	 *
+	 * @return карта с данными пагинации
+	 */
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	public Map<String, Object> toMap() {
+		return Map.of(
+				"page", page,
+				"total", total,
+				"limit", limit,
+				"totalPages", totalPages);
+	}
 }
