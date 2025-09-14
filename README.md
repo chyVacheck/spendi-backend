@@ -13,7 +13,6 @@ Spendi Backend is a robust, scalable server-side application for **Spendi** – 
 - **User Management** - Secure authentication and user profile management
 - **RESTful API** - Clean, consistent API design with proper HTTP status codes
 - **Documented** - Comprehensive JavaDoc and inline code documentation
-- **Container Ready** - Easy deployment with Docker
 
 ## 🛠 Tech Stack
 
@@ -21,11 +20,11 @@ Spendi Backend is a robust, scalable server-side application for **Spendi** – 
 - **Framework**: Javalin 5.6.2 (Lightweight web framework)
 - **Build Tool**: Maven 3.9+
 - **Database**: MongoDB (Document storage)
-- **Caching**: Redis (Session and data caching)
+- **Caching**: Redis (Session and data caching) (now work with mongodb)
 - **Validation**: Jakarta Bean Validation (Hibernate Validator)
-- **Architecture**: Clean layered architecture (Controller → Service → Repository)
+- **Architecture**: Clean layered architecture (Router → Controller → Service → Repository)
 - **Error Handling**: DomainException with unified API error responses
-- **API Documentation**: OpenAPI/Swagger (Planned)
+- **API Documentation**: ReDoc
 
 ## 📦 Prerequisites
 
@@ -55,12 +54,12 @@ Create a `.env` file in the project root with your configuration:
 
 ```env
 # MongoDB Configuration
-MONGODB_URI=mongodb://localhost:27017/
-MONGODB_DB=spendi
+SPENDI_MONGO_URI=mongodb://localhost:27017/
+SPENDI_MONGO_DB=spendi
 
 # Server Configuration
-SERVER_PORT=6070
-NODE_ENV=development
+SPENDI_SERVER_HOST=0.0.0.0
+SPENDI_SERVER_PORT=6070
 ```
 
 ### 4. Run the Application
@@ -123,7 +122,7 @@ spendi-backend/
 │   │       └── application.yml # Main configuration
 │   └── test/                   # Unit and integration tests
 ├── .gitignore                 # Git ignore rules
-├── dev.sh                     # Development utility script
+├── speidn.sh                  # Development utility script
 ├── pom.xml                    # Maven configuration
 └── README.md                  # This file
 ```
@@ -143,19 +142,19 @@ Use the `dev.sh` script for common development tasks:
 
 ```bash
 # Build the project
-./dev.sh build
+./spendi.sh build
 
 # Run tests
-./dev.sh test
+./spendi.sh test
 
-# Format code (using Google Java Format)
-./dev.sh format
+# Run project
+./spendi.sh run:fg
 
-# Run checkstyle
-./dev.sh checkstyle
+# Run project in background
+./spendi.sh run
 
-# Clean build artifacts
-./dev.sh clean
+# Stop project, if was started in background
+./spendi.sh stop
 ```
 
 ### Code Style
@@ -172,32 +171,7 @@ mvn com.coveo:fmt-maven-plugin:format
 
 ## 📚 API Documentation
 
-API documentation is available at `/api-docs` when running in development mode. (Planned)
-
-## 🐳 Docker Support
-
-### Using Docker Compose (Recommended)
-
-```bash
-# Start MongoDB and Redis
-# docker-compose -f docker-compose.dev.yml up -d
-
-# Build and run the application
-# docker-compose -f docker-compose.yml up --build
-```
-
-### Building a Docker Image
-
-```bash
-# Build the application JAR
-mvn clean package
-
-# Build the Docker image
-docker build -t spendi-backend:latest .
-
-# Run the container
-docker run -p 7000:7000 --env-file .env spendi-backend:latest
-```
+API documentation is available at `/api/v1/docs` when running in development mode.
 
 ## 🤝 Contributing
 
