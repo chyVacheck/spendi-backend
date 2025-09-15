@@ -2,7 +2,6 @@
 /**
  * @file CryptoConfig.java
  * @module config
- *
  * @author Dmytro Shakh
  */
 
@@ -47,7 +46,7 @@ public final class CryptoConfig extends BaseConfig {
 
 	@Override
 	public String toString() {
-		return "CryptoConfig{iterations=%d, keyLenBits=%d, saltBytes=%d}".formatted(
-				iterations, keyLengthBits, saltBytes);
+		return "CryptoConfig{iterations=%d, keyLenBits=%d, saltBytes=%d}".formatted(iterations, keyLengthBits,
+				saltBytes);
 	}
 }

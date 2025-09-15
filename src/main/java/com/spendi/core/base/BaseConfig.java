@@ -1,13 +1,9 @@
 /**
  * @file BaseConfig.java
  * @module config
- *
- * @description
- * класс базовой конфигурация. Загружает переменные из .env (через dotenv-java)
- * или из системных переменных (System.getenv).
- *
- * Приоритет: .env > System.getenv > значения по умолчанию.
- *
+ * @description класс базовой конфигурация. Загружает переменные из .env (через dotenv-java) или из
+ *              системных переменных (System.getenv). Приоритет: .env > System.getenv > значения по
+ *              умолчанию.
  * @author Dmytro Shakh
  */
 
@@ -19,19 +15,17 @@ package com.spendi.core.base;
 import io.github.cdimascio.dotenv.Dotenv;
 
 /**
-* ! java imports
-*/
+ * ! java imports
+ */
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class BaseConfig {
-	protected Dotenv dotenv = Dotenv.configure()
-			.ignoreIfMissing() // чтобы не падало, если .env нет
+	protected Dotenv dotenv = Dotenv.configure().ignoreIfMissing() // чтобы не падало, если .env нет
 			.load();
 
-	public BaseConfig() {
-	}
+	public BaseConfig() {}
 
 	abstract public String toString();
 

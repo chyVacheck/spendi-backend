@@ -1,12 +1,14 @@
+
 /**
  * @file ServerConfig.java
  * @module config
- *
  * @description
- * Конфигурация сервера. Загружает переменные из .env (через dotenv-java)
- * или из системных переменных (System.getenv).
- *
- * Приоритет: .env > System.getenv > значения по умолчанию.
+ * Конфигурация сервера.
+ * Берёт значения из .env / System.getenv через BaseConfig.
+ * Значения по умолчанию подобраны для удобства разработки.
+ * Переменные окружения (пример):
+ * - SPENDI_SERVER_HOST=0.0.0.0
+ * - SPENDI_SERVER_PORT=6070
  *
  * @author Dmytro Shakh
  */
@@ -25,7 +27,7 @@ public class ServerConfig extends BaseConfig {
 
 	private ServerConfig() {
 		this.host = getenv(this.dotenv, "SPENDI_SERVER_HOST", "0.0.0.0");
-		this.port = Integer.parseInt(getenv(dotenv, "SPENDI_SERVER_PORT", "6070"));
+		this.port = parseInt(getenv(dotenv, "SPENDI_SERVER_PORT", "6070"), 6070);
 	}
 
 	public static ServerConfig getConfig() {

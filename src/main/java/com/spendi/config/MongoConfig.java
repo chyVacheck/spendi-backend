@@ -1,8 +1,21 @@
-
 /**
  * @file MongoConfig.java
  * @module config
+ * @description
+ * Конфиг для подключения к MongoDB.
+ * Берёт значения из .env / System.getenv через BaseConfig.
+ * Значения по умолчанию подобраны для удобства разработки.
+ * Переменные окружения (пример):
+ * - SPENDI_MONGO_URI=mongodb://user:pass@host:port/db?opts
+ * - SPENDI_MONGO_DB=spendi
+ * - SPENDI_MONGO_MIN_POOL=0
+ * - SPENDI_MONGO_MAX_POOL=50
+ * - SPENDI_MONGO_CONNECT_TIMEOUT_SEC=10
+ * - SPENDI_MONGO_SOCKET_TIMEOUT_SEC=30
+ * - SPENDI_MONGO_SELECTION_TIMEOUT_SEC=5
  *
+ * @see BaseConfig
+ * 
  * @author Dmytro Shakh
  */
 
@@ -18,7 +31,9 @@ import java.time.Duration;
  */
 import com.spendi.core.base.BaseConfig;
 
-/** Конфиг для подключения к MongoDB. */
+/**
+ * Конфиг для подключения к MongoDB.
+ */
 public final class MongoConfig extends BaseConfig {
 	private static final MongoConfig INSTANCE = new MongoConfig();
 	public final String uri; // mongodb://user:pass@host:port/db?opts
@@ -80,8 +95,9 @@ public final class MongoConfig extends BaseConfig {
 
 	@Override
 	public String toString() {
-		return "MongoConfig{uri='%s', db='%s', pool=[%d..%d]}".formatted(
-				uri, dbName, minPoolSize, maxPoolSize);
+		return "MongoConfig{uri='%s', db='%s', pool=[%d..%d], timeout=%d, socketTimeout=%d, serverSelectionTimeout=%d}"
+				.formatted(uri, dbName, minPoolSize, maxPoolSize, connectTimeout.toSeconds(), socketTimeout.toSeconds(),
+						serverSelectionTimeout.toSeconds());
 	}
 
 }

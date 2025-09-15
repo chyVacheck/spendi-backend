@@ -1,10 +1,7 @@
 /**
  * @file FileValidationConfig.java
- * @module config
- *
- * Конфигурация правил валидации файлов.
- * Источники: .env → System.getenv → значения по умолчанию.
- * 
+ * @module config Конфигурация правил валидации файлов. Источники: .env → System.getenv → значения
+ *         по умолчанию.
  * @author Dmytro Shakh
  */
 
@@ -63,11 +60,11 @@ public final class FileValidationConfig extends BaseConfig {
 		this.deniedMimePrefixes = parseCsvSet(getenv(this.dotenv, "SPENDI_FILE_DENIED_PREFIXES", ""));
 		this.allowedExtensions = parseCsvSet(getenv(this.dotenv, "SPENDI_FILE_ALLOWED_EXTS", ".png,.jpg,.jpeg,.pdf"));
 
-		this.minFiles = (int) parseLong(getenv(this.dotenv, "SPENDI_FILE_MIN_COUNT", "1"), 1);
-		this.maxFiles = (int) parseLong(getenv(this.dotenv, "SPENDI_FILE_MAX_COUNT", "10"), 10);
+		this.minFiles = parseInt(getenv(this.dotenv, "EMS_FILE_MIN_COUNT", "1"), 1);
+		this.maxFiles = parseInt(getenv(this.dotenv, "EMS_FILE_MAX_COUNT", "10"), 10);
+
 		this.maxPerFileBytes = parseLong(
-				getenv(this.dotenv, "SPENDI_FILE_MAX_PER_BYTES", String.valueOf(5L * 1024 * 1024)),
-				5L * 1024 * 1024);
+				getenv(this.dotenv, "SPENDI_FILE_MAX_PER_BYTES", String.valueOf(5L * 1024 * 1024)), 5L * 1024 * 1024);
 		this.maxTotalBytes = parseLong(
 				getenv(this.dotenv, "SPENDI_FILE_MAX_TOTAL_BYTES", String.valueOf(20L * 1024 * 1024)),
 				20L * 1024 * 1024);
@@ -86,7 +83,7 @@ public final class FileValidationConfig extends BaseConfig {
 		this.imageMaxHeight = parseNullableInt(getenv(this.dotenv, "SPENDI_FILE_IMAGE_MAX_H", null));
 		this.imageMaxMegapixels = parseNullableDouble(getenv(this.dotenv, "SPENDI_FILE_IMAGE_MAX_MP", "50"));
 
-		this.pdfMaxPages = (int) parseLong(getenv(this.dotenv, "SPENDI_FILE_PDF_MAX_PAGES", "50"), 50);
+		this.pdfMaxPages = parseInt(getenv(this.dotenv, "SPENDI_FILE_PDF_MAX_PAGES", "50"), 50);
 		this.pdfForbidEncrypted = parseBool(getenv(this.dotenv, "SPENDI_FILE_PDF_FORBID_ENCRYPTED", "true"), true);
 	}
 
@@ -181,22 +178,13 @@ public final class FileValidationConfig extends BaseConfig {
 
 	@Override
 	public String toString() {
-		return ("FileValidationConfig{" +
-				"allowedMimes=" + allowedMimes +
-				", allowedMimePrefixes=" + allowedMimePrefixes +
-				", deniedMimes=" + deniedMimes +
-				", deniedMimePrefixes=" + deniedMimePrefixes +
-				", allowedExtensions=" + allowedExtensions +
-				", limits=[" + minFiles + ".." + maxFiles +
-				", perFile=" + maxPerFileBytes + "B, total=" + maxTotalBytes + "B, name<=" + maxFilenameLength + "]" +
-				", sanitize=" + sanitizeFilenames +
-				", sniffing=" + contentSniffing +
-				", onMismatch=" + onMismatchPolicy +
-				", sha256=" + computeSha256 +
-				", image=[min=" + imageMinWidth + "x" + imageMinHeight +
-				", max=" + imageMaxWidth + "x" + imageMaxHeight +
-				", maxMP=" + imageMaxMegapixels + "]" +
-				", pdf=[maxPages=" + pdfMaxPages + ", forbidEncrypted=" + pdfForbidEncrypted + "]" +
-				"}");
+		return ("FileValidationConfig{" + "allowedMimes=" + allowedMimes + ", allowedMimePrefixes="
+				+ allowedMimePrefixes + ", deniedMimes=" + deniedMimes + ", deniedMimePrefixes=" + deniedMimePrefixes
+				+ ", allowedExtensions=" + allowedExtensions + ", limits=[" + minFiles + ".." + maxFiles + ", perFile="
+				+ maxPerFileBytes + "B, total=" + maxTotalBytes + "B, name<=" + maxFilenameLength + "]" + ", sanitize="
+				+ sanitizeFilenames + ", sniffing=" + contentSniffing + ", onMismatch=" + onMismatchPolicy + ", sha256="
+				+ computeSha256 + ", image=[min=" + imageMinWidth + "x" + imageMinHeight + ", max=" + imageMaxWidth
+				+ "x" + imageMaxHeight + ", maxMP=" + imageMaxMegapixels + "]" + ", pdf=[maxPages=" + pdfMaxPages
+				+ ", forbidEncrypted=" + pdfForbidEncrypted + "]" + "}");
 	}
 }

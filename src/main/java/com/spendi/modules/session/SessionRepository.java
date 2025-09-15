@@ -1,6 +1,6 @@
 /**
  * @file SessionRepository.java
- * @module modules/auth
+ * @module modules/session
  * 
  * @author Dmytro Shakh
  */

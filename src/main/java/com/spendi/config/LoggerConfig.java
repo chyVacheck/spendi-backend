@@ -3,19 +3,19 @@
  * @file LoggerConfig.java
  * @module config
  * @description
- * Конфигурация логгера. Берёт значения из .env / System.getenv через BaseConfig.
+ * Конфигурация логгера.
+ * Берёт значения из .env / System.getenv через BaseConfig.
  * Значения по умолчанию подобраны для удобства разработки.
- *
  * Переменные окружения (пример):
- *  - SPENDI_LOG_LEVEL=INFO|DEBUG|WARN|ERROR|FATAL
- *  - SPENDI_LOG_FILE_ENABLED=true
- *  - SPENDI_LOG_FILE_MAX_SIZE=1048576
- *  - SPENDI_LOG_PATH=storage/logs
- *  - SPENDI_LOG_WIDTH_LEVEL=5
- *  - SPENDI_LOG_WIDTH_TIME=12
- *  - SPENDI_LOG_WIDTH_TYPE=12
- *  - SPENDI_LOG_WIDTH_NAME=26
- *
+ * - SPENDI_LOG_LEVEL=INFO|DEBUG|WARN|ERROR|FATAL
+ * - SPENDI_LOG_FILE_ENABLED=true
+ * - SPENDI_LOG_FILE_MAX_SIZE=1048576
+ * - SPENDI_LOG_PATH=storage/logs
+ * - SPENDI_LOG_WIDTH_LEVEL=5
+ * - SPENDI_LOG_WIDTH_TIME=12
+ * - SPENDI_LOG_WIDTH_TYPE=12
+ * - SPENDI_LOG_WIDTH_NAME=26
+ * 
  * @author Dmytro Shakh
  */
 
@@ -30,8 +30,7 @@ import com.spendi.core.logger.types.ELogLevel;
 public class LoggerConfig extends BaseConfig {
 	private static final LoggerConfig INSTANCE = new LoggerConfig();
 
-	public static record FileConfig(boolean enabled, long maxSize, String path) {
-	}
+	public static record FileConfig(boolean enabled, long maxSize, String path) {}
 
 	private final FileConfig file;
 	private final ELogLevel minLogLevel;
@@ -73,6 +72,9 @@ public class LoggerConfig extends BaseConfig {
 		return minLogLevel;
 	}
 
+	/**
+	 * @return the maxLevelWidth
+	 */
 	public int getMaxLevelWidth() {
 		return maxLevelWidth;
 	}
@@ -91,7 +93,7 @@ public class LoggerConfig extends BaseConfig {
 
 	@Override
 	public String toString() {
-		return "LoggerConfig{file.enabled=%s,file.maxSize=%d,file.path='%s',level=%s}".formatted(
-				file.enabled(), file.maxSize(), file.path(), minLogLevel.name());
+		return "LoggerConfig{file.enabled=%s,file.maxSize=%d,file.path='%s',level=%s}".formatted(file.enabled(),
+				file.maxSize(), file.path(), minLogLevel.name());
 	}
 }

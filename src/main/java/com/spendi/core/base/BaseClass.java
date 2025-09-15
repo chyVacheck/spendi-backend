@@ -47,8 +47,7 @@ public abstract class BaseClass extends CoreClass {
 	/**
 	 * Конструктор базового класса.
 	 *
-	 * @param classType тип класса {@link EClassType} (например, SERVICE,
-	 *                  REPOSITORY, CONTROLLER)
+	 * @param classType тип класса {@link EClassType} (например, SERVICE, REPOSITORY, CONTROLLER)
 	 * @param className имя класса
 	 */
 	protected BaseClass(EClassType classType, String className) {
@@ -56,35 +55,22 @@ public abstract class BaseClass extends CoreClass {
 	}
 
 	/*
-	 * =========================
-	 * ВНУТРЕННИЕ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-	 * =========================
+	 * === === === ВНУТРЕННИЕ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ === === ===
 	 */
 
 	/**
 	 * Собирает {@link LogData} с учётом дефолтов и контекста класса.
 	 */
-	private LogData buildLogData(ELogLevel level,
-			String message,
-			String requestId,
-			Map<String, Object> details,
+	private LogData buildLogData(ELogLevel level, String message, String requestId, Map<String, Object> details,
 			LogOptions options) {
 
-		final String msg = (message == null || message.isBlank())
-				? defaultMessage(level)
-				: message;
+		final String msg = (message == null || message.isBlank()) ? defaultMessage(level) : message;
 
 		final Map<String, Object> safeDetails = details == null ? Collections.emptyMap() : Map.copyOf(details);
 
 		final LogOptions safeOptions = (options == null) ? new LogOptions(false) : options;
 
-		return new LogData(
-				msg,
-				requestId,
-				safeDetails,
-				safeOptions,
-				this.getClassName(),
-				this.getClassType());
+		return new LogData(msg, requestId, safeDetails, safeOptions, this.getClassName(), this.getClassType());
 	}
 
 	/**
@@ -92,17 +78,16 @@ public abstract class BaseClass extends CoreClass {
 	 */
 	private String defaultMessage(ELogLevel level) {
 		return switch (level) {
-			case DEBUG -> "debug log";
-			case INFO -> "info log";
-			case WARN -> "warn log";
-			case ERROR -> "error log";
-			case FATAL -> "fatal log";
+		case DEBUG -> "debug log";
+		case INFO -> "info log";
+		case WARN -> "warn log";
+		case ERROR -> "error log";
+		case FATAL -> "fatal log";
 		};
 	}
 
 	/**
-	 * Удобный конструктор details из varargs пар ключ-значение.
-	 * Пример: detailsOf("userId", id, "attempt", 3)
+	 * Удобный конструктор details из varargs пар ключ-значение. Пример: detailsOf("userId", id, "attempt", 3)
 	 *
 	 * @throws IllegalArgumentException если передано нечётное число аргументов
 	 */
@@ -124,32 +109,25 @@ public abstract class BaseClass extends CoreClass {
 	}
 
 	/*
-	 * =========================
-	 * БАЗОВЫЙ ВЫЗОВ ПО УРОВНЮ
-	 * =========================
+	 * === === === БАЗОВЫЙ ВЫЗОВ ПО УРОВНЮ === === ===
 	 */
 
-	private void log(ELogLevel level,
-			String message,
-			String requestId,
-			Map<String, Object> details,
+	private void log(ELogLevel level, String message, String requestId, Map<String, Object> details,
 			LogOptions options) {
 
 		LogData data = buildLogData(level, message, requestId, details, options);
 
 		switch (level) {
-			case DEBUG -> Logger.debug(data);
-			case INFO -> Logger.info(data);
-			case WARN -> Logger.warn(data);
-			case ERROR -> Logger.error(data);
-			case FATAL -> Logger.fatal(data);
+		case DEBUG -> Logger.debug(data);
+		case INFO -> Logger.info(data);
+		case WARN -> Logger.warn(data);
+		case ERROR -> Logger.error(data);
+		case FATAL -> Logger.fatal(data);
 		}
 	}
 
 	/*
-	 * =========================
-	 * INFO
-	 * =========================
+	 * === === === INFO === === ===
 	 */
 
 	/** Полная форма. */
@@ -168,9 +146,7 @@ public abstract class BaseClass extends CoreClass {
 	}
 
 	/*
-	 * =========================
-	 * DEBUG
-	 * =========================
+	 * === === === DEBUG === === ===
 	 */
 
 	/** Полная форма. */
@@ -194,9 +170,7 @@ public abstract class BaseClass extends CoreClass {
 	}
 
 	/*
-	 * =========================
-	 * WARN
-	 * =========================
+	 * === === === WARN === === ===
 	 */
 
 	/** Полная форма. */
@@ -215,9 +189,7 @@ public abstract class BaseClass extends CoreClass {
 	}
 
 	/*
-	 * =========================
-	 * ERROR
-	 * =========================
+	 * === === === ERROR === === ===
 	 */
 
 	/** Полная форма. */
@@ -236,9 +208,7 @@ public abstract class BaseClass extends CoreClass {
 	}
 
 	/*
-	 * =========================
-	 * FATAL
-	 * =========================
+	 * === === === FATAL === === ===
 	 */
 
 	/** Полная форма. */
