@@ -82,8 +82,13 @@ public class SessionRepository extends BaseRepository<SessionEntity> {
 		return d;
 	}
 
+	/**
+	 * Находит активную сессию по её идентификатору.
+	 *
+	 * @param id идентификатор сессии
+	 * @return активная сессия, если она существует
+	 */
 	public Optional<SessionEntity> findActiveById(String id) {
-		return this.findOne("_id", new ObjectId(id))
-				.filter(s -> !s.revoked && (s.expiresAt == null || s.expiresAt.isAfter(Instant.now())));
+		return this.findOne("_id", new ObjectId(id)).filter(s -> !s.revoked && s.expiresAt.isAfter(Instant.now()));
 	}
 }
