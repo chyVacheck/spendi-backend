@@ -20,7 +20,7 @@ Spendi Backend is a robust, scalable server-side application for **Spendi** – 
 - **Framework**: Javalin 5.6.2 (Lightweight web framework)
 - **Build Tool**: Maven 3.9+
 - **Database**: MongoDB (Document storage)
-- **Caching**: Redis (Session and data caching) (now work with mongodb)
+- **Caching**: MongoDB (now work with mongodb)
 - **Validation**: Jakarta Bean Validation (Hibernate Validator)
 - **Architecture**: Clean layered architecture (Router → Controller → Service → Repository)
 - **Error Handling**: DomainException with unified API error responses
@@ -45,12 +45,12 @@ cd spendi-backend
 ### 2. Build the Application
 
 ```bash
-mvn clean install
+./spendi.sh build
 ```
 
 ### 3. Configure the Application
 
-Create a `.env` file in the project root with your configuration:
+Create a `.env` file in the project root based on `.env.example` with your configuration:
 
 ```env
 # MongoDB Configuration
@@ -68,10 +68,7 @@ SPENDI_SERVER_PORT=6070
 
 ```bash
 # macOS/Linux
-./start.sh
-
-# Windows
-start.bat
+./spendi.sh
 ```
 
 #### Option 2: Using Maven Directly
@@ -89,16 +86,13 @@ java -jar target/spendi-1.0-SNAPSHOT.jar
 
 ```bash
 # Make the script executable (first time only)
-chmod +x dev.sh
+chmod +x spendi.sh
 
 # Show all available commands
-./dev.sh
+./spendi.sh
 
-# Start the application
-./dev.sh start
-
-# Run in development mode with hot-reload
-./dev.sh dev
+# Start the application in foreground
+./spendi.sh run:fg
 ```
 
 ## 🏗 Project Structure
@@ -122,7 +116,7 @@ spendi-backend/
 │   │       └── application.yml # Main configuration
 │   └── test/                   # Unit and integration tests
 ├── .gitignore                 # Git ignore rules
-├── speidn.sh                  # Development utility script
+├── spendi.sh                  # Development utility script
 ├── pom.xml                    # Maven configuration
 └── README.md                  # This file
 ```
@@ -138,7 +132,7 @@ Configuration is managed through multiple sources with the following priority (h
 
 ### Available Scripts
 
-Use the `dev.sh` script for common development tasks:
+Use the `spendi.sh` script for common development tasks:
 
 ```bash
 # Build the project
@@ -211,3 +205,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Security enhancements
 - [ ] Code documentation
 - [ ] Community support
+- [ ] Redis (Session and data caching)
