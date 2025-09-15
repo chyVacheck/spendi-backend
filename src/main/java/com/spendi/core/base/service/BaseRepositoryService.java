@@ -38,6 +38,7 @@ import java.util.Objects;
  * ! my imports
  */
 import com.spendi.core.base.BaseRepository;
+import com.spendi.core.base.database.GenericUpdate;
 import com.spendi.core.exceptions.EntityNotFoundException;
 import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.types.Pagination;
@@ -56,9 +57,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/**
-	 * ! ===================
-	 * ! ===== PRIVATE =====
-	 * ! ===================
+	 * ! === === === PRIVATE === === ===
 	 */
 
 	/** Собрать фильтр из пары key/value. Допускает null в значении. */
@@ -78,9 +77,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/**
-	 * ? =================
-	 * ? ===== COUNT =====
-	 * ? =================
+	 * ? === === === COUNT === === ===
 	 */
 
 	/** Подсчитать количество по фильтру. */
@@ -96,9 +93,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== EXISTS =====
-	 * ? ==================
+	 * ? === === === EXISTS === === ===
 	 */
 
 	/** Проверить существование по фильтру. */
@@ -114,53 +109,39 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/**
-	 * ? ================
-	 * ? ===== READ =====
-	 * ? ================
+	 * ? === === === READ === === ===
 	 */
 
 	/**
 	 * Получить документ по id.
 	 */
 	public ServiceResponse<Document> getDocById(String id) {
-		return this.repository.findDocById(id)
-				.map(doc -> ServiceResponse.founded(doc))
-				.orElseThrow(() -> new EntityNotFoundException(
-						this.repository.getEntityClass().getSimpleName(),
-						Map.of("id", id)));
+		return this.repository.findDocById(id).map(doc -> ServiceResponse.founded(doc)).orElseThrow(
+				() -> new EntityNotFoundException(this.repository.getEntityClass().getSimpleName(), Map.of("id", id)));
 	}
 
 	/**
 	 * Получить сущность по id.
 	 */
 	public ServiceResponse<TEntity> getById(String id) {
-		return this.repository.findById(id)
-				.map(entity -> ServiceResponse.founded(entity))
-				.orElseThrow(() -> new EntityNotFoundException(
-						this.repository.getEntityClass().getSimpleName(),
-						Map.of("id", id)));
+		return this.repository.findById(id).map(entity -> ServiceResponse.founded(entity)).orElseThrow(
+				() -> new EntityNotFoundException(this.repository.getEntityClass().getSimpleName(), Map.of("id", id)));
 	}
 
 	/**
 	 * Единичный документ по фильтру (ядро).
 	 */
 	protected ServiceResponse<Document> getOneDocByFilter(Map<String, Object> filter) {
-		return repository.findOneDoc(filter)
-				.map(ServiceResponse::founded)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						filter));
+		return repository.findOneDoc(filter).map(ServiceResponse::founded)
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), filter));
 	}
 
 	/**
 	 * Единичная сущность по фильтру (ядро).
 	 */
 	protected ServiceResponse<TEntity> getOneByFilter(Map<String, Object> filter) {
-		return repository.findOne(filter)
-				.map(ServiceResponse::founded)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						filter));
+		return repository.findOne(filter).map(ServiceResponse::founded)
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), filter));
 	}
 
 	/**
@@ -242,9 +223,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== CREATE =====
-	 * ? ==================
+	 * ? === === === CREATE === === ===
 	 */
 
 	/**
@@ -284,40 +263,53 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== UPDATE =====
-	 * ? ==================
+	 * ? === === === UPDATE === === ===
 	 */
 
 	/**
-	 * Быстрый апдейт по id (без детекции no-op). Возвращает UPDATED или NotFound.
+	 * Быстрый апдейт по id (без детекции no-op). Возвращает UPDATED.
+	 * 
+	 * @param id      строковый ObjectId сущности
+	 * @param updates обновления
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return обновлённая сущность
 	 */
-	public ServiceResponse<TEntity> updateById(String id, Document updates) {
-		return repository.updateById(id, updates)
-				.map(ServiceResponse::updated)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						Map.of("id", id)));
-	}
-
-	/** Быстрый апдейт по фильтру (первого подходящего). UPDATED или NotFound. */
-	public ServiceResponse<TEntity> updateOne(Map<String, Object> filter, Document updates) {
-		return repository.updateOne(filter, updates)
-				.map(ServiceResponse::updated)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						filter));
+	public ServiceResponse<TEntity> updateById(String id, GenericUpdate updates) {
+		return repository.updateById(id, updates).map(ServiceResponse::updated).orElseThrow(
+				() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), Map.of("id", id)));
 	}
 
 	/**
-	 * Быстрый апдейт по key==value (первого подходящего). UPDATED или NotFound.
+	 * Быстрый апдейт по фильтру (первого подходящего). Возвращает UPDATED.
+	 * 
+	 * @param id      строковый ObjectId сущности
+	 * @param updates обновления
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return обновлённая сущность
 	 */
-	public ServiceResponse<TEntity> updateOne(String key, Object value, Document updates) {
-		return repository.updateOne(key, value, updates)
-				.map(ServiceResponse::updated)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						Map.of(key, value)));
+	public ServiceResponse<TEntity> updateOne(Map<String, Object> filter, GenericUpdate updates) {
+		return repository.updateOne(filter, updates).map(ServiceResponse::updated)
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), filter));
+	}
+
+	/**
+	 * Быстрый апдейт по key==value (первого подходящего). Возвращает UPDATED.
+	 * 
+	 * @param key     строковый ключ
+	 * @param value   значение
+	 * @param updates обновления
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return обновлённая сущность
+	 */
+	public ServiceResponse<TEntity> updateOne(String key, Object value, GenericUpdate updates) {
+		return repository.updateOne(key, value, updates).map(ServiceResponse::updated).orElseThrow(
+				() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), Map.of(key, value)));
 	}
 
 	/**
@@ -326,65 +318,78 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 
 	/**
 	 * Обновить много по фильтру. Возвращает UPDATED(modifiedCount) или NOTHING(0).
+	 * 
+	 * @param filter  фильтр
+	 * @param updates обновления
+	 * 
+	 * @return обновлённое количество документов
 	 */
-	public ServiceResponse<Long> updateMany(Map<String, Object> filter, Document updates) {
+	public ServiceResponse<Long> updateMany(Map<String, Object> filter, GenericUpdate updates) {
 		var res = repository.updateManyDocs(filter, updates);
 		long modified = res.getModifiedCount();
-		return (modified > 0)
-				? ServiceResponse.updated(modified)
-				: ServiceResponse.nothingWrite(0L);
+		return (modified > 0) ? ServiceResponse.updated(modified) : ServiceResponse.nothingWrite(0L);
 	}
 
 	/**
-	 * Обновить много по key==value. Возвращает UPDATED(modifiedCount) или
-	 * NOTHING(0).
+	 * Обновить много по key==value. Возвращает UPDATED(modifiedCount) или NOTHING(0).
+	 * 
+	 * @param key     строковый ключ
+	 * @param value   значение
+	 * @param updates обновления
+	 * 
+	 * @return обновлённое количество документов
 	 */
-	public ServiceResponse<Long> updateMany(String key, Object value, Document updates) {
+	public ServiceResponse<Long> updateMany(String key, Object value, GenericUpdate updates) {
 		var res = repository.updateManyDocs(key, value, updates);
 		long modified = res.getModifiedCount();
-		return (modified > 0)
-				? ServiceResponse.updated(modified)
-				: ServiceResponse.nothingWrite(0L);
+		return (modified > 0) ? ServiceResponse.updated(modified) : ServiceResponse.nothingWrite(0L);
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== DELETE =====
-	 * ? ==================
+	 * ? === === === DELETE === === ===
 	 */
 
 	/**
 	 * Удалить документ по id. Возвращает удалённый id или NotFound.
+	 * 
+	 * @param id строковый ObjectId сущности
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return удалённый id
 	 */
 	public ServiceResponse<String> deleteById(String id) {
-		return repository.deleteById(id)
-				.map(ServiceResponse::deleted) // успех: DELETED + id
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
+		return repository.deleteById(id).map(ServiceResponse::deleted) // успех: DELETED + id
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(),
 						Map.of("id", id)));
 	}
 
 	/**
 	 * Удалить один документ по фильтру. Возвращает удалённый id или NotFound.
+	 * 
+	 * @param filter фильтр
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return удалённый id
 	 */
 	public ServiceResponse<String> deleteOne(Map<String, Object> filter) {
-		return repository.deleteOne(filter)
-				.map(ServiceResponse::deleted)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						filter));
+		return repository.deleteOne(filter).map(ServiceResponse::deleted)
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), filter));
 	}
 
 	/**
-	 * Удалить один документ по условию (key == value). Возвращает удалённый id или
-	 * NotFound.
+	 * Удалить один документ по условию (key == value). Возвращает удалённый id или NotFound.
+	 * 
+	 * @param filter фильтр
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return удалённый id
 	 */
 	public ServiceResponse<String> deleteOne(String key, Object value) {
-		return repository.deleteOne(key, value)
-				.map(ServiceResponse::deleted)
-				.orElseThrow(() -> new EntityNotFoundException(
-						repository.getEntityClass().getSimpleName(),
-						Map.of(key, value)));
+		return repository.deleteOne(key, value).map(ServiceResponse::deleted).orElseThrow(
+				() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), Map.of(key, value)));
 	}
 
 	/**
@@ -392,26 +397,20 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	 */
 
 	/**
-	 * Удалить несколько документов по фильтру.
-	 * Если что-то удалили — DELETED(totalDeleted),
-	 * если нет — NOTHING(0) как бизнес-неуспех delete-операции.
+	 * Удалить несколько документов по фильтру. Если что-то удалили — DELETED(totalDeleted), если нет — NOTHING(0) как
+	 * бизнес-неуспех delete-операции.
 	 */
 	public ServiceResponse<Long> deleteMany(Map<String, Object> filter) {
 		long deleted = repository.deleteMany(filter);
-		return (deleted > 0)
-				? ServiceResponse.deleted(deleted)
-				: ServiceResponse.nothingDeleted(0L);
+		return (deleted > 0) ? ServiceResponse.deleted(deleted) : ServiceResponse.nothingDeleted(0L);
 	}
 
 	/**
-	 * Удалить несколько документов по условию (key == value).
-	 * Если что-то удалили — DELETED(totalDeleted),
-	 * если нет — NOTHING(0).
+	 * Удалить несколько документов по условию (key == value). Если что-то удалили — DELETED(totalDeleted), если нет —
+	 * NOTHING(0).
 	 */
 	public ServiceResponse<Long> deleteMany(String key, Object value) {
 		long deleted = repository.deleteMany(key, value);
-		return (deleted > 0)
-				? ServiceResponse.deleted(deleted)
-				: ServiceResponse.nothingDeleted(0L);
+		return (deleted > 0) ? ServiceResponse.deleted(deleted) : ServiceResponse.nothingDeleted(0L);
 	}
 }

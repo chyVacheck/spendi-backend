@@ -45,12 +45,8 @@ public class UserRouter extends ApiRouter {
 	@Override
 	public void configure(HttpServerAdapter http) {
 		// Rules for avatar images: 1 file, common image extensions
-		FileValidationRules avatarRules = FileValidationRules
-				.builderFromConfig(FileValidationConfig.getConfig())
-				.minFiles(1)
-				.maxFiles(1)
-				.allowedExtensions(".jpg", ".jpeg", ".png", ".gif")
-				.build();
+		FileValidationRules avatarRules = FileValidationRules.builderFromConfig(FileValidationConfig.getConfig())
+				.minFiles(1).maxFiles(1).allowedExtensions(".jpg", ".jpeg", ".png", ".gif").build();
 
 		// Подключаем AuthMiddleware на весь роутер
 		this.use(AuthMiddleware.getInstance());
@@ -61,48 +57,34 @@ public class UserRouter extends ApiRouter {
 		// Доп. маршруты по необходимости (terms отключен)
 
 		// Получить данные о сотруднике по id
-		this.get("/{id}",
-				controller::getOneById,
-				ParamsValidationMiddleware.of(UserIdParams.class));
+		this.get("/{id}", controller::getOneById, ParamsValidationMiddleware.of(UserIdParams.class));
 
 		// Посмотреть свой аватар
 		this.get("/me/avatar", controller::getMeAvatar);
 
 		// Посмотреть аватар
-		this.get("/{id}/avatar",
-				controller::getAvatar,
-				ParamsValidationMiddleware.of(UserIdParams.class));
+		this.get("/{id}/avatar", controller::getAvatar, ParamsValidationMiddleware.of(UserIdParams.class));
 
 		// Загрузить аватар для авторизованого сотрудника
-		this.post("/me/avatar",
-				controller::uploadMeAvatar,
-				new JavalinMultipartParserMiddleware(),
-				new FileValidationMiddleware(avatarRules),
-				TempFilesCleanupMiddleware.getInstance());
+		this.post("/me/avatar", controller::uploadMeAvatar, new JavalinMultipartParserMiddleware(),
+				new FileValidationMiddleware(avatarRules), TempFilesCleanupMiddleware.getInstance());
 
 		// Удалить аватар авторизованого сотрудника
 		this.delete("/me/avatar", controller::deleteMeAvatar);
 
 		// ? === Payment methods ===
-		this.get("/me/payment-methods",
-				controller::getMePaymentMethods,
+		this.get("/me/payment-methods", controller::getMePaymentMethods,
 				QueryValidationMiddleware.of(PaginationQueryDto.class));
 
-		this.post("/me/payment-methods",
-				controller::addPaymentMethod,
-				new JsonBodyParserMiddleware(),
+		this.post("/me/payment-methods", controller::addPaymentMethod, new JsonBodyParserMiddleware(),
 				BodyValidationMiddleware.of(PaymentMethodCreateDto.class));
 
-		this.delete("/me/payment-methods/{pmId}",
-				controller::deletePaymentMethod,
+		this.delete("/me/payment-methods/{pmId}", controller::deletePaymentMethod,
 				ParamsValidationMiddleware.of(PaymentMethodIdParams.class));
 
-		// TODO добавить проверку на "авторство" метода оплаты, как в DELETE
 		// /me/payment-methods/{pmId}
-		this.put("/me/payment-methods/{pmId}/order",
-				controller::updatePaymentMethodOrder,
-				ParamsValidationMiddleware.of(PaymentMethodIdParams.class),
-				new JsonBodyParserMiddleware(),
+		this.put("/me/payment-methods/{pmId}/order", controller::updatePaymentMethodOrder,
+				ParamsValidationMiddleware.of(PaymentMethodIdParams.class), new JsonBodyParserMiddleware(),
 				BodyValidationMiddleware.of(PaymentMethodOrderDto.class));
 
 	}

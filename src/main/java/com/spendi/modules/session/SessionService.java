@@ -1,13 +1,12 @@
 /**
  * @file SessionService.java
- * @module modules/auth
+ * @module modules/session
  * 
  * @author Dmytro Shakh
  */
 
 package com.spendi.modules.session;
 
-import org.bson.Document;
 /**
  * ! lin imports
  */
@@ -23,6 +22,7 @@ import java.util.Map;
  * ! my imports
  */
 import com.spendi.config.AuthConfig;
+import com.spendi.core.base.database.MongoUpdateBuilder;
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.exceptions.UnauthorizedException;
@@ -64,22 +64,27 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		var created = super.createOne(s);
 		// Лог: создана сессия
 		this.info("session created", requestId,
-				detailsOf("sessionId", s.id.toHexString(), "userId", userId), true);
+				detailsOf("sessionId", s.id.toHexString(), "expiresAt", s.expiresAt.toString(), "userId", userId),
+				true);
 		return created;
 	}
 
 	/**
 	 * Обновить время последнего посещения сессии.
+	 * 
+	 * @param requestId request-id для корреляции логов
+	 * 
+	 * @throws EntityNotFoundException если сессия не найдена, в теории никогда не должно быть
+	 * 
+	 * @param id строковый ObjectId сессии
 	 */
 	public ServiceResponse<SessionEntity> touch(String requestId, String id) {
-		// Обновление времени последнего посещения
-		var fieldsToSet = Map.<String, Object>of(
-				"lastSeenAt", Instant.now());
-		Document updateDocument = new Document("$set", new Document(fieldsToSet));
-
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.currentDate("lastSeenAt");
+		updateBuilder.set("expiresAt", Instant.now().plusSeconds(authCfg.getSessionTtlSec()));
 		// Лог: обновлено время последнего посещения
 		this.info("session touched", requestId, detailsOf("sessionId", id));
-		return this.updateById(id, updateDocument);
+		return this.updateById(id, updateBuilder.build());
 	}
 
 	/**
@@ -94,11 +99,10 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 	}
 
 	public ServiceResponse<String> revokeById(String requestId, String id) {
-		var fieldsToSet = Map.<String, Object>of(
-				"revoked", true);
-		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.set("revoked", true);
 
-		this.updateById(id, updateDocument);
+		this.updateById(id, updateBuilder.build());
 
 		// Лог: сессия отозвана
 		this.info("session revoked", requestId, detailsOf("sessionId", id), true);
@@ -106,23 +110,21 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 	}
 
 	/**
-	 * Отозвать все активные сессии пользователя (revoked=false).
-	 * Не трогаем уже отозванные сессии, чтобы сохранялась история.
+	 * Отозвать все активные сессии пользователя (revoked=false). Не трогаем уже отозванные сессии, чтобы сохранялась
+	 * история.
 	 *
 	 * @param requestId request-id для корреляции логов
 	 * @param userId    строковый ObjectId пользователя
 	 * @return количество затронутых сессий
 	 */
 	public ServiceResponse<Long> revokeActiveByUser(String requestId, String userId) {
-		var filter = Map.<String, Object>of(
-				"userId", new ObjectId(userId),
-				"revoked", false);
+		var filter = Map.<String, Object>of("userId", new ObjectId(userId), "revoked", false);
 
-		var fieldsToSet = Map.<String, Object>of(
-				"revoked", true);
-		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.set("revoked", true);
 
-		var res = this.updateMany(filter, updateDocument);
+		var res = this.updateMany(filter, updateBuilder.build());
+
 		// Логируем количество закрытых сессий
 		this.info("sessions revoked by userId", requestId,
 				detailsOf("userId", userId, "count", String.valueOf(res.getData())), true);

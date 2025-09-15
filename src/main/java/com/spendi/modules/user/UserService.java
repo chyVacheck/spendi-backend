@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
 
+import com.spendi.core.base.database.MongoUpdateBuilder;
 /**
  * ! my imports
  */
@@ -70,16 +71,13 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public static UserService getInstance() {
 		UserService ref = INSTANCE;
 		if (ref == null) {
-			throw new IllegalStateException(
-					"UserService not initialized. Call AppInitializer.initAll() in App.main");
+			throw new IllegalStateException("UserService not initialized. Call AppInitializer.initAll() in App.main");
 		}
 		return ref;
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== Create =====
-	 * ? ==================
+	 * ? === === === Create === === ===
 	 */
 
 	/**
@@ -88,8 +86,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public ServiceResponse<UserEntity> create(String requestId, UserCreateDto dto) {
 		// Уникальность по email
 		if (repository.existsByEmail(dto.profile.email)) {
-			throw new EntityAlreadyExistsException(
-					UserEntity.class.getSimpleName(),
+			throw new EntityAlreadyExistsException(UserEntity.class.getSimpleName(),
 					Map.of("profile.email", dto.profile.email));
 		}
 
@@ -128,22 +125,17 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 		entity.system = sys;
 
 		var created = super.createOne(entity);
-		this.info(
-				"user created",
-				requestId,
-				detailsOf("id", entity.id.toHexString(), "email", profile.email),
-				true);
+		this.info("user created", requestId, detailsOf("id", entity.id.toHexString(), "email", profile.email), true);
 		return created;
 	}
 
 	/**
-	 * ? ================
-	 * ? ===== Read =====
-	 * ? ================
+	 * ? === === === Read === === ===
 	 */
 
 	/** Найти по email. */
-	public ServiceResponse<UserEntity> getByEmail(String email) {
+	public ServiceResponse<UserEntity> getByEmail(String requestId, String email) {
+		this.info("get user by email", requestId, detailsOf("email", email));
 		return this.getOne("profile.email", email.toLowerCase());
 	}
 
@@ -159,33 +151,28 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 		this.info("get payment methods by user id", requestId,
 				detailsOf("userId", userId, "page", paginationDto.getPage(), "limit", paginationDto.getLimit()));
 
-		ServiceResponse<List<PaymentMethodEntity>> paymentMethodRes = this.paymentMethodService
-				.getMany("userId", new ObjectId(userId), paginationDto.getPage(), paginationDto.getLimit());
+		ServiceResponse<List<PaymentMethodEntity>> paymentMethodRes = this.paymentMethodService.getMany("userId",
+				new ObjectId(userId), paginationDto.getPage(), paginationDto.getLimit());
 
 		List<Map<String, Object>> publicPaymentMethods = paymentMethodRes.getData().stream()
-				.map(PaymentMethodEntity::getPublicData)
-				.collect(Collectors.toList());
+				.map(PaymentMethodEntity::getPublicData).collect(Collectors.toList());
 
 		return ServiceResponse.founded(publicPaymentMethods, paymentMethodRes.getPaginationOrThrow());
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== Update =====
-	 * ? ==================
+	 * ? === === === Update === === ===
 	 */
 
 	/**
 	 * Сменить пароль (принимает новый в открытом виде, хэширует).
 	 */
 	public ServiceResponse<UserEntity> changePassword(String requestId, String userId, String newPassword) {
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.set("security.passwordHash", CryptoUtils.hashPassword(newPassword));
+		updateBuilder.currentDate("system.meta.updatedAt");
 
-		Document updateDoc = new Document("$set", new Document(
-				Map.<String, Object>of(
-						"security.passwordHash", CryptoUtils.hashPassword(newPassword),
-						"system.meta.updatedAt", Instant.now())));
-
-		var res = this.updateById(userId, updateDoc);
+		var res = this.updateById(userId, updateBuilder.build());
 		this.info("user password changed", requestId, detailsOf("userId", userId), true);
 		return res;
 	}
@@ -197,14 +184,11 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public ServiceResponse<UserEntity> touchLastLogin(String requestId, String userId) {
 		Instant now = Instant.now();
 
-		Document updateDoc = new Document("$set", new Document(
-				Map.<String, Object>of(
-						"system.meta.lastLoginAt", now)));
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.set("system.meta.lastLoginAt", now);
 
-		var res = this.updateById(userId, updateDoc);
-
-		this.info("user lastLoginAt updated", requestId,
-				detailsOf("userId", userId, "at", now.toString()));
+		var res = this.updateById(userId, updateBuilder.build());
+		this.info("user lastLoginAt updated", requestId, detailsOf("userId", userId, "at", now.toString()));
 		return res;
 	}
 
@@ -212,6 +196,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * @param requestId     request-id для корреляции логов
 	 * @param userId        строковый ObjectId пользователя
 	 * @param paymentMethod способ оплаты
+	 * 
 	 * @return обновлённый пользователь с добавленным способом оплаты
 	 */
 	public ServiceResponse<UserEntity> addPaymentMethod(String requestId, String userId,
@@ -221,17 +206,45 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 				detailsOf("userId", userId, "paymentMethodId", paymentMethod.id.toHexString()));
 
 		// append to user's finance.paymentMethodIds using $addToSet
-		Document updates = new Document();
-		updates.append("$addToSet", new Document("finance.paymentMethodIds", paymentMethod.id.toHexString()));
-		updates.append("$set", new Document("system.meta.updatedAt", Instant.now()));
-		updates.append("$inc", new Document("finance.accountsCount", 1));
-		return this.updateById(userId, updates);
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.currentDate("system.meta.updatedAt");
+		updateBuilder.addToSet("finance.paymentMethodIds", paymentMethod.id.toHexString());
+		updateBuilder.incOne("finance.accountsCount");
+
+		return this.updateById(userId, updateBuilder.build());
 	}
 
 	/**
-	 * Загрузить/заменить аватар пользователю: сохраняет файл, обновляет
-	 * account.avatarFileId у пользователя, логирует создание/замену
-	 * и удаляет старый файл (best-effort).
+	 * Обновить порядок способа оплаты у пользователя.
+	 * 
+	 * @param requestId request-id для корреляции логов
+	 * @param userId    строковый ObjectId пользователя
+	 * @param methodId  строковый ObjectId способа оплаты
+	 * @param order     новый порядок способа оплаты
+	 * 
+	 * @throws EntityNotFoundException если способ оплаты не найден
+	 * 
+	 * @return обновлённый пользователь с обновлённым порядком способа оплаты
+	 */
+	public ServiceResponse<PaymentMethodEntity> updatePaymentMethodOrder(String requestId, String userId,
+			String methodId, int order) {
+		PaymentMethodEntity pm = this.paymentMethodService.getById(methodId).getData();
+
+		if (pm.userId == null || !pm.userId.toHexString().equals(userId)) {
+			// если не совпадает, просто отдаём not found
+			throw new EntityNotFoundException(PaymentMethodEntity.class.getSimpleName(),
+					Map.of("id", methodId, "userId", userId));
+		}
+
+		this.info("update payment method order", requestId,
+				detailsOf("userId", userId, "paymentMethodId", methodId, "order", order));
+
+		return this.paymentMethodService.updateOrder(requestId, userId, methodId, order);
+	}
+
+	/**
+	 * Загрузить/заменить аватар пользователю: сохраняет файл, обновляет account.avatarFileId у пользователя, логирует
+	 * создание/замену и удаляет старый файл (best-effort).
 	 * 
 	 * @param requestId request-id для корреляции логов
 	 * @param userId    строковый ObjectId пользователя
@@ -250,19 +263,16 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 		String url = user.getAvatarUrl();
 
 		// update employee (persist only new file id)
-		Instant now = Instant.now();
-		Document updates = new Document("$set", new Document()
-				.append("profile.avatarFileId", stored.id.toHexString())
-				.append("system.meta.updatedAt", now));
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.set("profile.avatarFileId", stored.id.toHexString());
+		updateBuilder.currentDate("system.meta.updatedAt");
 
-		this.updateById(userId, updates);
+		this.updateById(userId, updateBuilder.build());
 
 		// Лог: создан или обновлён аватар
 		if (oldAvatarId != null) {
 			this.info("user avatar updated", requestId,
-					detailsOf("userId", userId, "oldFileId", oldAvatarId,
-							"newFileId", stored.id.toHexString()),
-					true);
+					detailsOf("userId", userId, "oldFileId", oldAvatarId, "newFileId", stored.id.toHexString()), true);
 			// best-effort cleanup of previous avatar
 			try {
 				this.fileService.deleteById(requestId, oldAvatarId);
@@ -271,22 +281,19 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 			return ServiceResponse.updated(url);
 		} else {
-			this.info("user avatar created", requestId,
-					detailsOf("userId", userId, "fileId", stored.id.toHexString()),
+			this.info("user avatar created", requestId, detailsOf("userId", userId, "fileId", stored.id.toHexString()),
 					true);
 			return ServiceResponse.created(url);
 		}
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== Delete =====
-	 * ? ==================
+	 * ? === === === Delete === === ===
 	 */
 
 	/**
-	 * Полное удаление аватарки: очищает ссылку у пользователя и удаляет файл.
-	 * Логирует операцию удаления (персистентно).
+	 * Полное удаление аватарки: очищает ссылку у пользователя и удаляет файл. Логирует операцию удаления
+	 * (персистентно).
 	 * 
 	 * @param requestId request-id для корреляции логов
 	 * @param userId    строковый ObjectId пользователя
@@ -295,31 +302,28 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public ServiceResponse<String> deleteAvatar(String requestId, String userId) {
 		UserEntity user = this.getById(userId).getData();
 
-		String avatarId = user.getAvatarFileIdOptional().orElseThrow(() -> new EntityNotFoundException(
-				"UserAvatar", "userId", userId));
+		String avatarId = user.getAvatarFileIdOptional()
+				.orElseThrow(() -> new EntityNotFoundException("UserAvatar", "userId", userId));
 
 		// Clear reference in user
-		Document updates = new Document("$set", new Document()
-				.append("profile.avatarFileId", null)
-				.append("system.meta.updatedAt", Instant.now()));
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.currentDate("system.meta.updatedAt");
+		updateBuilder.set("profile.avatarFileId", null);
 
-		// Clear reference in employee
-		this.updateById(userId, updates);
+		// Clear reference in user
+		this.updateById(userId, updateBuilder.build());
 
 		// Удаление файла (метаданные + физический файл)
 		this.fileService.deleteById(requestId, avatarId);
 
 		// Лог удаления
-		this.info("user avatar deleted", requestId,
-				detailsOf("userId", userId, "fileId", avatarId),
-				true);
+		this.info("user avatar deleted", requestId, detailsOf("userId", userId, "fileId", avatarId), true);
 
 		return ServiceResponse.deleted(user.getAvatarUrl());
 	}
 
 	/**
-	 * Удаление метода оплаты: удаляет ссылку у пользователя на метод оплаты.
-	 * Логирует операцию удаления (персистентно).
+	 * Удаление метода оплаты: удаляет ссылку у пользователя на метод оплаты. Логирует операцию удаления (персистентно).
 	 * 
 	 * @param requestId request-id для корреляции логов
 	 * @param userId    строковый ObjectId пользователя
@@ -341,16 +345,18 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 		// Clear reference in user's finance.paymentMethodIds and update timestamp
 		Document updates = new Document();
 		updates.append("$pull", new Document("finance.paymentMethodIds", methodId));
-		updates.append("$set", new Document("system.meta.updatedAt", Instant.now()));
-		updates.append("$inc", new Document("finance.accountsCount", -1));
 
-		// Clear reference in employee
-		var res = this.updateById(userId, updates);
+		// Clear reference in user
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.pull("finance.paymentMethodIds", methodId);
+		updateBuilder.currentDate("system.meta.updatedAt");
+		updateBuilder.decOne("finance.accountsCount");
+
+		// Clear reference in user
+		var res = this.updateById(userId, updateBuilder.build());
 
 		// Лог удаления
-		this.info("user payment method deleted", requestId,
-				detailsOf("userId", userId, "methodId", methodId),
-				true);
+		this.info("user payment method deleted", requestId, detailsOf("userId", userId, "methodId", methodId), true);
 
 		return ServiceResponse.deleted(res.getData());
 	}

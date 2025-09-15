@@ -56,8 +56,8 @@ import com.spendi.core.dto.PaginationQueryDto;
  * </ul>
  * 
  * <p>
- * Все операции с пользовательскими данными требуют валидной сессии.
- * Контроллер использует паттерн Singleton для управления экземпляром.
+ * Все операции с пользовательскими данными требуют валидной сессии. Контроллер использует паттерн Singleton для
+ * управления экземпляром.
  * 
  * @see UserService
  * @see FileService
@@ -76,8 +76,8 @@ public class UserController extends BaseController {
 	private final PaymentMethodService paymentService = PaymentMethodService.getInstance();
 
 	/**
-	 * Приватный конструктор для реализации паттерна Singleton.
-	 * Инициализирует контроллер с именем класса для логирования.
+	 * Приватный конструктор для реализации паттерна Singleton. Инициализирует контроллер с именем класса для
+	 * логирования.
 	 */
 	protected UserController() {
 		super(UserController.class.getSimpleName());
@@ -103,8 +103,8 @@ public class UserController extends BaseController {
 	 * Endpoint: {@code GET /users/me}
 	 * 
 	 * <p>
-	 * Возвращает приватные данные пользователя (включая email и другую
-	 * конфиденциальную информацию), доступные только самому пользователю.
+	 * Возвращает приватные данные пользователя (включая email и другую конфиденциальную информацию), доступные только
+	 * самому пользователю.
 	 * 
 	 * <p>
 	 * Требования:
@@ -127,15 +127,9 @@ public class UserController extends BaseController {
 		UserEntity user = this.userService.getById(s.userId.toHexString()).getData();
 
 		// Лог запроса сущности пользователя (несохраненный)
-		this.info(
-				"User get me",
-				ctx.getRequestId(),
-				detailsOf("userId", user.id.toHexString()));
+		this.info("User get me", ctx.getRequestId(), detailsOf("userId", user.id.toHexString()));
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"User " + user.getEmail(),
-				user.getPrivateData()));
+		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail(), user.getPrivateData()));
 	}
 
 	/**
@@ -145,8 +139,8 @@ public class UserController extends BaseController {
 	 * Endpoint: {@code GET /users/{id}}
 	 * 
 	 * <p>
-	 * Возвращает только публичные данные пользователя (без конфиденциальной
-	 * информации типа email). Доступно для всех аутентифицированных пользователей.
+	 * Возвращает только публичные данные пользователя (без конфиденциальной информации типа email). Доступно для всех
+	 * аутентифицированных пользователей.
 	 * 
 	 * <p>
 	 * Параметры URL:
@@ -167,18 +161,12 @@ public class UserController extends BaseController {
 		IdDto params = ctx.getValidParams(IdDto.class);
 
 		// Лог запроса сущности пользователя (несохраненный)
-		this.info(
-				"User get by id",
-				ctx.getRequestId(),
-				detailsOf("userId", params.id));
+		this.info("User get by id", ctx.getRequestId(), detailsOf("userId", params.id));
 
 		var resp = this.userService.getById(params.id);
 		UserEntity user = resp.getData();
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"User " + user.getEmail(),
-				user.getPublicData()));
+		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail(), user.getPublicData()));
 	}
 
 	/**
@@ -188,9 +176,8 @@ public class UserController extends BaseController {
 	 * Endpoint: {@code GET /users/me/avatar}
 	 * 
 	 * <p>
-	 * Возвращает бинарное содержимое файла аватара с соответствующими
-	 * HTTP заголовками для отображения в браузере (Content-Type,
-	 * Content-Disposition).
+	 * Возвращает бинарное содержимое файла аватара с соответствующими HTTP заголовками для отображения в браузере
+	 * (Content-Type, Content-Disposition).
 	 * 
 	 * <p>
 	 * Поведение:
@@ -221,8 +208,7 @@ public class UserController extends BaseController {
 		UserEntity u = this.userService.getById(s.userId.toHexString()).getData();
 
 		// Логируем запрос для отслеживания активности пользователей
-		this.info("user avatar get requested", ctx.getRequestId(),
-				detailsOf("userId", u.id.toHexString()));
+		this.info("user avatar get requested", ctx.getRequestId(), detailsOf("userId", u.id.toHexString()));
 
 		// Проверяем, есть ли у пользователя аватар
 		// Если аватар отсутствует, возвращаем HTTP 204 (No Content)
@@ -239,15 +225,12 @@ public class UserController extends BaseController {
 		// Формируем заголовок Content-Disposition для inline отображения
 		// Используем оригинальное имя файла или ID пользователя как fallback
 		String disposition = "inline; filename=\""
-				+ (file.getFilename() == null ? u.id.toHexString() : file.getFilename())
-				+ "\"";
+				+ (file.getFilename() == null ? u.id.toHexString() : file.getFilename()) + "\"";
 
 		// Отправляем файл клиенту с правильными заголовками
 		// Content-Type определяет MIME тип для корректного отображения
 		// Content-Disposition: inline позволяет отображать изображение в браузере
-		ctx.res()
-				.header("Content-Type", file.getContentType())
-				.header("Content-Disposition", disposition)
+		ctx.res().header("Content-Type", file.getContentType()).header("Content-Disposition", disposition)
 				.sendBytes(file.getContent());
 	}
 
@@ -271,11 +254,8 @@ public class UserController extends BaseController {
 		DownloadedFile file = fileResp.getData();
 
 		String disposition = "inline; filename=\""
-				+ (file.getFilename() == null ? (params.id + "") : file.getFilename())
-				+ "\"";
-		ctx.res()
-				.header("Content-Type", file.getContentType())
-				.header("Content-Disposition", disposition)
+				+ (file.getFilename() == null ? (params.id + "") : file.getFilename()) + "\"";
+		ctx.res().header("Content-Type", file.getContentType()).header("Content-Disposition", disposition)
 				.sendBytes(file.getContent());
 	}
 
@@ -293,10 +273,7 @@ public class UserController extends BaseController {
 		ServiceResponse<List<Map<String, Object>>> paymentMethods = this.userService
 				.getPaymentMethods(ctx.getRequestId(), s.userId.toHexString(), query);
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"payment methods loaded",
-				paymentMethods.getData(),
+		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "payment methods loaded", paymentMethods.getData(),
 				paymentMethods.getPaginationOrThrow().toMap()));
 	}
 
@@ -311,8 +288,8 @@ public class UserController extends BaseController {
 	 * Endpoint: {@code POST /users/me/avatar}
 	 * 
 	 * <p>
-	 * Принимает multipart/form-data с файлом изображения и сохраняет его
-	 * как аватар пользователя. Если аватар уже существует - заменяет его.
+	 * Принимает multipart/form-data с файлом изображения и сохраняет его как аватар пользователя. Если аватар уже
+	 * существует - заменяет его.
 	 * 
 	 * <p>
 	 * Требования к файлу:
@@ -351,8 +328,7 @@ public class UserController extends BaseController {
 		List<UploadedFile> files = ctx.getFiles();
 
 		// Логируем попытку загрузки аватара для аудита
-		this.info("user avatar upload requested", ctx.getRequestId(),
-				detailsOf("userId", user.id.toHexString()));
+		this.info("user avatar upload requested", ctx.getRequestId(), detailsOf("userId", user.id.toHexString()));
 
 		// Делегируем обработку загрузки UserService
 		// Сервис выполнит валидацию файла, сохранение и обновление профиля
@@ -364,16 +340,10 @@ public class UserController extends BaseController {
 		// ServiceProcessType.CREATED означает, что аватар создан впервые
 		if (resp.getProcess() == ServiceProcessType.CREATED) {
 			// Возвращаем HTTP 201 Created для нового аватара
-			ctx.res().success(ApiSuccessResponse.created(
-					ctx.getRequestId(),
-					"avatar created",
-					detailsOf("url", url)));
+			ctx.res().success(ApiSuccessResponse.created(ctx.getRequestId(), "avatar created", detailsOf("url", url)));
 		} else {
 			// Возвращаем HTTP 200 OK для обновления существующего аватара
-			ctx.res().success(ApiSuccessResponse.ok(
-					ctx.getRequestId(),
-					"avatar updated",
-					detailsOf("url", url)));
+			ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "avatar updated", detailsOf("url", url)));
 		}
 	}
 
@@ -386,13 +356,10 @@ public class UserController extends BaseController {
 
 		var created = this.paymentService.createOne(ctx.getRequestId(), s.userId.toHexString(), dto).getData();
 
-		var updated = this.userService.addPaymentMethod(ctx.getRequestId(),
-				s.userId.toHexString(), created).getData();
+		var updated = this.userService.addPaymentMethod(ctx.getRequestId(), s.userId.toHexString(), created).getData();
 
-		ctx.res().success(ApiSuccessResponse.created(
-				ctx.getRequestId(),
-				"payment method created",
-				updated.getPrivateData()));
+		ctx.res().success(
+				ApiSuccessResponse.created(ctx.getRequestId(), "payment method created", updated.getPrivateData()));
 	}
 
 	/**
@@ -403,12 +370,10 @@ public class UserController extends BaseController {
 		var params = ctx.getValidParams(PaymentMethodIdParams.class);
 		PaymentMethodOrderDto dto = ctx.getValidBody(PaymentMethodOrderDto.class);
 
-		var updated = this.paymentService.updateOrder(ctx.getRequestId(), s.userId.toHexString(), params.pmId,
+		var updated = this.userService.updatePaymentMethodOrder(ctx.getRequestId(), s.userId.toHexString(), params.pmId,
 				dto.order);
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"payment method order updated",
+		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "payment method order updated",
 				updated.getData().getPublicData()));
 	}
 
@@ -425,10 +390,8 @@ public class UserController extends BaseController {
 
 		this.userService.deletePaymentMethod(ctx.getRequestId(), s.userId.toHexString(), params.pmId);
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"payment method deleted",
-				detailsOf("id", params.pmId)));
+		ctx.res().success(
+				ApiSuccessResponse.ok(ctx.getRequestId(), "payment method deleted", detailsOf("id", params.pmId)));
 	}
 
 	/**
@@ -437,19 +400,13 @@ public class UserController extends BaseController {
 	public void deleteMeAvatar(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
 
-		UserEntity user = this.userService.getById(s.userId.toHexString()).getData();
-
 		// Лог запроса удаления аватара (несохраненный)
-		this.info("user avatar delete requested", ctx.getRequestId(),
-				detailsOf("userId", user.id.toHexString()));
+		this.info("user avatar delete requested", ctx.getRequestId(), detailsOf("userId", s.userId.toHexString()));
 
-		var resp = this.userService.deleteAvatar(ctx.getRequestId(), user.id.toHexString());
+		var resp = this.userService.deleteAvatar(ctx.getRequestId(), s.userId.toHexString());
 		String url = resp.getData();
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"avatar deleted",
-				detailsOf("url", url)));
+		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "avatar deleted", detailsOf("url", url)));
 	}
 
 }

@@ -61,40 +61,37 @@ public class AuthController extends BaseController {
 
 		var created = this.userService.create(ctx.getRequestId(), createDto).getData();
 
-		ctx.res().success(ApiSuccessResponse.created(
-				ctx.getRequestId(),
-				"User registered",
-				created.getPublicData()));
+		ctx.res().success(ApiSuccessResponse.created(ctx.getRequestId(), "User registered", created.getPublicData()));
 	}
 
 	public void login(HttpContext ctx) {
 		LoginDto dto = ctx.getValidBody(LoginDto.class);
 
+		String maskedPassword = "*".repeat(dto.password.length());
+
 		// Лог: запрос логина (несохраненный)
-		this.info("login requested", ctx.getRequestId(), detailsOf("email", dto.email));
+		this.info("login requested", ctx.getRequestId(), detailsOf("email", dto.email, "password", maskedPassword));
 
 		// Поиск пользователя по почте (выбрасывает исключение если не найден)
-		UserEntity user = this.userService.getByEmail(dto.email).getData();
+		UserEntity user = this.userService.getByEmail(ctx.getRequestId(), dto.email).getData();
 
 		// Verify password
 		boolean ok = CryptoUtils.verifyPassword(dto.password, user.security.passwordHash);
 		if (!ok) {
 			// Лог: неверные учётные данные (сохраняем)
-			this.warn("login failed: invalid credentials", ctx.getRequestId(),
-					detailsOf("email", dto.email), true);
+			this.warn("login failed: invalid credentials", ctx.getRequestId(), detailsOf("email", dto.email), true);
 			throw new ValidationException("Invalid credentials", Map.of("password", "invalid password"), Map.of());
 		}
 
-		// Single active session policy: отзываем предыдущие активные сессии
-		// сотрудника
+		// Single active session policy: отзываем предыдущие активные сессии пользователя
 		this.sessionService.revokeActiveByUser(ctx.getRequestId(), user.id.toHexString());
+
+		this.debug("login success", ctx.getRequestId(), detailsOf("email", dto.email), true);
 
 		// Создание новой сессии
 		String ip = ctx.req().remoteAddress().orElse(null);
 		String ua = ctx.req().header("User-Agent").orElse("");
-		var s = this.sessionService
-				.create(ctx.getRequestId(), user.id.toHexString(), ip, ua)
-				.getData();
+		var s = this.sessionService.create(ctx.getRequestId(), user.id.toHexString(), ip, ua).getData();
 
 		// Set cookie
 		String cookie = CookieUtils.buildCookie(authCfg.getCookieName(), s.id.toHexString(), authCfg.getSessionTtlSec(),
@@ -107,18 +104,15 @@ public class AuthController extends BaseController {
 
 		this.userService.touchLastLogin(ctx.getRequestId(), user.id.toHexString());
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"User " + user.getEmail() + " logged",
-				user.getPublicData()));
+		ctx.res().success(
+				ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail() + " logged", user.getPublicData()));
 	}
 
 	public void logout(HttpContext ctx) {
 		SessionEntity session = ctx.getAuthSession();
 
 		// Лог: запрос на logout (несохраненный)
-		this.info("logout requested", ctx.getRequestId(), detailsOf(
-				"sessionId", session.id.toHexString()));
+		this.info("logout requested", ctx.getRequestId(), detailsOf("sessionId", session.id.toHexString()));
 
 		try {
 			this.sessionService.revokeById(ctx.getRequestId(), session.id.toHexString());

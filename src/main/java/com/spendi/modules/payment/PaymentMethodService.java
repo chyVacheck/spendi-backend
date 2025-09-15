@@ -7,7 +7,6 @@
 
 package com.spendi.modules.payment;
 
-import org.bson.Document;
 /**
  * ! lib imports
  */
@@ -15,6 +14,7 @@ import org.bson.types.ObjectId;
 import java.time.Instant;
 import java.util.Map;
 
+import com.spendi.core.base.database.MongoUpdateBuilder;
 /**
  * ! java imports
  */
@@ -53,8 +53,7 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 	 * @param dto       данные для создания способа оплаты
 	 * @return созданный способ оплаты
 	 */
-	public ServiceResponse<PaymentMethodEntity> createOne(String requestId, String userId,
-			PaymentMethodCreateDto dto) {
+	public ServiceResponse<PaymentMethodEntity> createOne(String requestId, String userId, PaymentMethodCreateDto dto) {
 		var now = Instant.now();
 
 		// Assemble entity
@@ -108,22 +107,31 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		return created;
 	}
 
-	/** Обновить поле order у метода оплаты. */
+	/**
+	 * Обновить поле order у метода оплаты.
+	 * 
+	 * @param requestId request-id для корреляции логов
+	 * @param userId    строковый ObjectId пользователя
+	 * @param methodId  строковый ObjectId способа оплаты
+	 * @param order     новый порядок способа оплаты
+	 * @return обновленный способ оплаты
+	 */
 	public ServiceResponse<PaymentMethodEntity> updateOrder(String requestId, String userId, String methodId,
 			int order) {
 		// ensure belongs to user
 		var pm = this.getById(methodId).getData();
 		if (pm.userId == null || !pm.userId.toHexString().equals(userId)) {
 			// если не совпадает, просто отдаём not found
-			throw new com.spendi.core.exceptions.EntityNotFoundException(
-					PaymentMethodEntity.class.getSimpleName(), Map.of("id", methodId, "userId", userId));
+			throw new com.spendi.core.exceptions.EntityNotFoundException(PaymentMethodEntity.class.getSimpleName(),
+					Map.of("id", methodId, "userId", userId));
 		}
-		var fieldsToSet = Map.<String, Object>of(
-				"info.order", order,
-				"system.meta.updatedAt", Instant.now());
 
-		Document updateDocument = new Document("$set", new Document(fieldsToSet));
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.set("info.order", order);
+		updateBuilder.currentDate("system.meta.updatedAt");
 
-		return this.updateById(methodId, updateDocument);
+		var updated = this.updateById(methodId, updateBuilder.build());
+
+		return ServiceResponse.updated(updated.getData());
 	}
 }

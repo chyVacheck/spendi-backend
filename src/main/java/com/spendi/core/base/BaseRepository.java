@@ -44,6 +44,7 @@ import java.util.Optional;
 /**
  * ! my imports
  */
+import com.spendi.core.base.database.GenericUpdate;
 import com.spendi.core.types.EClassType;
 
 /**
@@ -61,14 +62,9 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @param className      человекочитаемое имя класса (для логов)
 	 * @param entity         класс сущности
 	 * @param database       инстанс базы MongoDB (подключение/БД выбирается выше)
-	 * @param collectionName имя коллекции (фиксируется на уровне конкретного
-	 *                       репозитория)
+	 * @param collectionName имя коллекции (фиксируется на уровне конкретного репозитория)
 	 */
-	public BaseRepository(
-			String className,
-			Class<TEntity> entity,
-			MongoDatabase database,
-			String collectionName) {
+	public BaseRepository(String className, Class<TEntity> entity, MongoDatabase database, String collectionName) {
 		super(EClassType.REPOSITORY, className);
 		this.entityClass = entity;
 		this.collection = database.getCollection(collectionName);
@@ -80,9 +76,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	}
 
 	/**
-	 * ? ==============================
-	 * ? ===== МАППИНГ (ABSTRACT) =====
-	 * ? ==============================
+	 * ? === === === МАППИНГ (ABSTRACT) === === ===
 	 */
 
 	/**
@@ -102,9 +96,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	protected abstract Document toDocument(TEntity entity);
 
 	/**
-	 * ? =================
-	 * ? ===== COUNT =====
-	 * ? =================
+	 * ? === === === COUNT === === ===
 	 */
 
 	/**
@@ -129,9 +121,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== EXISTS =====
-	 * ? ==================
+	 * ? === === === EXISTS === === ===
 	 */
 
 	/**
@@ -156,9 +146,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	}
 
 	/**
-	 * ? ================
-	 * ? ===== READ =====
-	 * ? ================
+	 * ? === === === READ === === ===
 	 */
 
 	/**
@@ -234,10 +222,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 		int safeLimit = Math.max(1, limit);
 		int skip = (safePage - 1) * safeLimit;
 
-		return collection.find(new Document(filter))
-				.skip(skip)
-				.limit(limit)
-				.into(new ArrayList<>());
+		return collection.find(new Document(filter)).skip(skip).limit(limit).into(new ArrayList<>());
 	}
 
 	/**
@@ -254,10 +239,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 		int safeLimit = Math.max(1, limit);
 		int skip = (safePage - 1) * safeLimit;
 
-		return collection.find(Filters.eq(key, value))
-				.skip(skip)
-				.limit(limit)
-				.into(new ArrayList<>());
+		return collection.find(Filters.eq(key, value)).skip(skip).limit(limit).into(new ArrayList<>());
 	}
 
 	/**
@@ -269,8 +251,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @return список сущностей
 	 */
 	public List<TEntity> findMany(Map<String, Object> filter, int page, int limit) {
-		return this.findManyDocs(filter, page, limit)
-				.stream() // превращаем в Stream<Document>
+		return this.findManyDocs(filter, page, limit).stream() // превращаем в Stream<Document>
 				.map(this::toEntity) // применяем преобразование (map в TS)
 				.toList();
 	}
@@ -285,16 +266,13 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 * @return список сущностей
 	 */
 	public List<TEntity> findMany(String key, Object value, int page, int limit) {
-		return this.findManyDocs(key, value, page, limit)
-				.stream() // превращаем в Stream<Document>
+		return this.findManyDocs(key, value, page, limit).stream() // превращаем в Stream<Document>
 				.map(this::toEntity) // применяем преобразование (map в TS)
 				.toList();
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== CREATE =====
-	 * ? ==================
+	 * ? === === === CREATE === === ===
 	 */
 
 	/**
@@ -339,99 +317,83 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== UPDATE =====
-	 * ? ==================
+	 * ? === === === UPDATE === === ===
 	 */
 
 	/**
-	 * 
-	 * Обновить документ по id (partial update: $set) и вернуть обновлённый
-	 * документ.
+	 * @description Обновить документ по id и вернуть обновлённый документ.
 	 *
 	 * @param id      ObjectId в строковом виде
-	 * @param updates карта полей для $set
+	 * @param updates карта полей для обновления
+	 * @return Optional с обновлённым документом или empty, если документ не найден
 	 */
-	public Optional<Document> updateDocById(String id, Document updates) {
+	public Optional<Document> updateDocById(String id, GenericUpdate updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
-		Document updated = collection.findOneAndUpdate(
-				Filters.eq("_id", new ObjectId(id)),
-				updates,
+		Document updated = collection.findOneAndUpdate(Filters.eq("_id", new ObjectId(id)), updates.toMongoDocument(),
 				opts);
 		return Optional.ofNullable(updated);
 	}
 
 	/**
-	 * Обновить документ по id (partial update: $set) и вернуть обновлённую
-	 * сущность.
+	 * @description Обновить документ по id и вернуть обновлённую сущность.
 	 *
 	 * @param id      ObjectId в строковом виде
-	 * @param updates карта полей для $set
+	 * @param updates карта полей для обновления
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateById(String id, Document updates) {
+	public Optional<TEntity> updateById(String id, GenericUpdate updates) {
 		return this.updateDocById(id, updates) // Optional<Document>
 				.map(this::toEntity); // Optional<TEntity>
 	}
 
 	/**
-	 * Обновить один документ по фильтру (partial update: $set) и вернуть
-	 * обновлённый документ.
+	 * @description Обновить один документ по фильтру и вернуть обновлённый документ.
 	 * 
 	 * @param filter  карта условий
-	 * @param updates карта полей для $set
+	 * @param updates карта полей для обновления
+	 * @return Optional с обновлённым документом или empty, если документ не найден
 	 */
-	public Optional<Document> updateDocOne(Map<String, Object> filter, Document updates) {
+	public Optional<Document> updateDocOne(Map<String, Object> filter, GenericUpdate updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
-		Document updated = collection.findOneAndUpdate(
-				new Document(filter),
-				updates,
-				opts);
+		Document updated = collection.findOneAndUpdate(new Document(filter), updates.toMongoDocument(), opts);
 		return Optional.ofNullable(updated);
 	}
 
 	/**
-	 * Обновить один документ по фильтру (partial update: $set) и вернуть
-	 * обновлённую сущность.
+	 * @description Обновить один документ по фильтру и вернуть обновлённую сущность.
 	 *
 	 * @param filter  карта условий
 	 * @param updates карта полей для $set
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateOne(Map<String, Object> filter, Document updates) {
-		return this.updateDocOne(filter, updates)
-				.map(this::toEntity);
+	public Optional<TEntity> updateOne(Map<String, Object> filter, GenericUpdate updates) {
+		return this.updateDocOne(filter, updates).map(this::toEntity);
 	}
 
 	/**
-	 * Обновить один документ по условию key==value (partial update: $set) и вернуть
-	 * обновлённый документ.
+	 * @description Обновить один документ по условию key==value и вернуть обновлённый документ.
 	 *
 	 * @param key     поле
 	 * @param value   значение
-	 * @param updates карта полей для $set
+	 * @param updates карта полей для обновления
+	 * @return Optional с обновлённым документом или empty, если документ не найден
 	 */
-	public Optional<Document> updateDocOne(String key, Object value, Document updates) {
+	public Optional<Document> updateDocOne(String key, Object value, GenericUpdate updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
-		Document updated = collection.findOneAndUpdate(
-				Filters.eq(key, value),
-				updates,
-				opts);
+		Document updated = collection.findOneAndUpdate(Filters.eq(key, value), updates.toMongoDocument(), opts);
 		return Optional.ofNullable(updated);
 	}
 
 	/**
-	 * Обновить один документ по условию (key == value) (partial update: $set) и
-	 * вернуть обновлённую сущность.
+	 * @description Обновить один документ по условию (key == value) и вернуть обновлённую сущность.
 	 *
 	 * @param key     поле
 	 * @param value   значение
-	 * @param updates карта полей для $set
+	 * @param updates карта полей для обновления
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateOne(String key, Object value, Document updates) {
-		return this.updateDocOne(key, value, updates)
-				.map(this::toEntity);
+	public Optional<TEntity> updateOne(String key, Object value, GenericUpdate updates) {
+		return this.updateDocOne(key, value, updates).map(this::toEntity);
 	}
 
 	/**
@@ -439,36 +401,30 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 */
 
 	/**
-	 * Обновить много документов по фильтру. Возвращает статистику обновления.
-	 * (MongoDB не возвращает «список обновлённых документов» для bulk-апдейта).
+	 * @description Обновить много документов по фильтру. Возвращает статистику обновления.
 	 *
 	 * @param filter  карта условий
-	 * @param updates карта полей для $set
+	 * @param updates карта полей для обновления
+	 * @return UpdateResult с статистикой обновления
 	 */
-	public UpdateResult updateManyDocs(Map<String, Object> filter, Document updates) {
-		return collection.updateMany(
-				new Document(filter),
-				updates);
+	public UpdateResult updateManyDocs(Map<String, Object> filter, GenericUpdate updates) {
+		return collection.updateMany(new Document(filter), updates.toMongoDocument());
 	}
 
 	/**
-	 * Обновить много документов по условию key==value. Возвращает статистику
-	 * обновления.
+	 * Обновить много документов по условию key==value. Возвращает статистику обновления.
 	 * 
 	 * @param key     поле
 	 * @param value   значение
-	 * @param updates карта полей для $set
+	 * @param updates обновления
+	 * @return UpdateResult с статистикой обновления
 	 */
-	public UpdateResult updateManyDocs(String key, Object value, Document updates) {
-		return collection.updateMany(
-				Filters.eq(key, value),
-				updates);
+	public UpdateResult updateManyDocs(String key, Object value, GenericUpdate updates) {
+		return collection.updateMany(Filters.eq(key, value), updates.toMongoDocument());
 	}
 
 	/**
-	 * ? ==================
-	 * ? ===== DELETE =====
-	 * ? ==================
+	 * ? === === === DELETE === === ===
 	 */
 
 	/**
@@ -523,8 +479,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	}
 
 	/**
-	 * Удалить несколько документов по условию key==value. Возвращает количество
-	 * удалённых.
+	 * Удалить несколько документов по условию key==value. Возвращает количество удалённых.
 	 * 
 	 * @param key   поле
 	 * @param value значение

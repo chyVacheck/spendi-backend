@@ -12,7 +12,7 @@ package com.spendi.core.init;
 /**
  * ! my imports
  */
-import com.spendi.core.database.MongoProvider;
+import com.spendi.core.base.database.MongoProvider;
 import com.spendi.core.files.FileStorage;
 import com.spendi.modules.files.FileRepository;
 import com.spendi.modules.files.FileService;
@@ -25,8 +25,7 @@ import com.spendi.modules.session.SessionService;
 import com.mongodb.client.MongoDatabase;
 
 public final class AppInitializer {
-	private AppInitializer() {
-	}
+	private AppInitializer() {}
 
 	/** Точка входа для инициализации всех модулей. */
 	public static void initAll() {
