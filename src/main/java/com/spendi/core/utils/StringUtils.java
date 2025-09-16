@@ -9,6 +9,7 @@
  *
  * @author Dmytro Shakh
  */
+
 package com.spendi.core.utils;
 
 /**
@@ -17,8 +18,7 @@ package com.spendi.core.utils;
 import java.util.Optional;
 
 /**
- * Утилиты для работы со строками.
- * Реализован в стиле static-only (не поддерживает состояние).
+ * Утилиты для работы со строками. Реализован в стиле static-only (не поддерживает состояние).
  */
 public final class StringUtils {
 
@@ -45,8 +45,19 @@ public final class StringUtils {
 	}
 
 	/**
-	 * Преобразовать Optional<String> в lowercase-строку или null.
-	 * Если сам Optional == null — вернуть null.
+	 * Преобразовать строку в формат "First Letter Capitalized". Если строка пустая или null, возвращается сама строка.
+	 * 
+	 * @param s строка, которую нужно преобразовать
+	 * @return строка с первой буквой в верхнем регистре и с остальной частью в нижнем регистре
+	 */
+	public static String capitalize(String s) {
+		if (s == null || s.isEmpty())
+			return s;
+		return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+	}
+
+	/**
+	 * Преобразовать Optional<String> в lowercase-строку или null. Если сам Optional == null — вернуть null.
 	 */
 	public static String lowerOrNull(Optional<String> opt) {
 		if (opt == null)

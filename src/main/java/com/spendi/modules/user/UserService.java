@@ -85,9 +85,9 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 */
 	public ServiceResponse<UserEntity> create(String requestId, UserCreateDto dto) {
 		// Уникальность по email
-		if (repository.existsByEmail(dto.profile.email)) {
+		if (repository.existsByEmail(dto.getProfile().getEmail())) {
 			throw new EntityAlreadyExistsException(UserEntity.class.getSimpleName(),
-					Map.of("profile.email", dto.profile.email));
+					Map.of("profile.email", dto.getProfile().getEmail()));
 		}
 
 		var now = Instant.now();
@@ -97,15 +97,15 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 		// profile
 		var profile = new UserEntity.Profile();
-		profile.email = dto.profile.email.toLowerCase();
-		profile.firstName = dto.profile.firstName;
-		profile.lastName = dto.profile.lastName;
+		profile.email = dto.getProfile().getEmail().toLowerCase();
+		profile.firstName = dto.getProfile().getFirstName();
+		profile.lastName = dto.getProfile().getLastName();
 		profile.avatarFileId = null;
 		entity.profile = profile;
 
 		// security
 		var sec = new UserEntity.Security();
-		sec.passwordHash = CryptoUtils.hashPassword(dto.security.password);
+		sec.passwordHash = CryptoUtils.hashPassword(dto.getSecurity().getPassword());
 		entity.security = sec;
 
 		// finance

@@ -25,6 +25,7 @@ import com.spendi.config.AuthConfig;
 import com.spendi.core.base.database.MongoUpdateBuilder;
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.response.ServiceResponse;
+import com.spendi.modules.session.dto.CreateSessionDto;
 import com.spendi.core.exceptions.UnauthorizedException;
 
 public class SessionService extends BaseRepositoryService<SessionRepository, SessionEntity> {
@@ -51,23 +52,54 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		return ref;
 	}
 
-	public ServiceResponse<SessionEntity> create(String requestId, String userId, String ip, String ua) {
+	/**
+	 * ? === === === Create === === ===
+	 */
+
+	/**
+	 * Создать сессию.
+	 * 
+	 * @param requestId request-id для корреляции логов
+	 * 
+	 * @param dto       данные для создания сессии
+	 * 
+	 * @return созданная сессия
+	 */
+	public ServiceResponse<SessionEntity> create(String requestId, CreateSessionDto dto) {
 		var s = new SessionEntity();
 		s.id = new ObjectId();
-		s.userId = new ObjectId(userId);
+		s.userId = new ObjectId(dto.getUserId());
 		s.createdAt = Instant.now();
 		s.lastSeenAt = s.createdAt;
 		s.expiresAt = s.createdAt.plusSeconds(authCfg.getSessionTtlSec());
 		s.revoked = false;
-		s.ip = ip;
-		s.userAgent = ua;
+		s.ip = dto.getIp();
+		s.userAgent = dto.getUserAgent();
 		var created = super.createOne(s);
 		// Лог: создана сессия
-		this.info("session created", requestId,
-				detailsOf("sessionId", s.id.toHexString(), "expiresAt", s.expiresAt.toString(), "userId", userId),
-				true);
+		this.info("session created", requestId, detailsOf("sessionId", s.id.toHexString(), "expiresAt",
+				s.expiresAt.toString(), "userId", dto.getUserId()), true);
 		return created;
 	}
+
+	/**
+	 * ? === === === Read === === ===
+	 */
+
+	/**
+	 * Найти активную (не отозванную и не истёкшую) сессию по id.
+	 */
+	public ServiceResponse<SessionEntity> getActiveById(String id) {
+		var opt = this.repository.findActiveById(id);
+		if (opt.isEmpty()) {
+			throw new UnauthorizedException("Session is invalid or expired", Map.of("sessionId", id));
+		}
+		return ServiceResponse.founded(opt.get());
+	}
+
+	/**
+	 * ? === === === Update === === ===
+	 */
 
 	/**
 	 * Обновить время последнего посещения сессии.
@@ -85,17 +117,6 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		// Лог: обновлено время последнего посещения
 		this.info("session touched", requestId, detailsOf("sessionId", id));
 		return this.updateById(id, updateBuilder.build());
-	}
-
-	/**
-	 * Найти активную (не отозванную и не истёкшую) сессию по id.
-	 */
-	public ServiceResponse<SessionEntity> getActiveById(String id) {
-		var opt = this.repository.findActiveById(id);
-		if (opt.isEmpty()) {
-			throw new UnauthorizedException("Session is invalid or expired", Map.of("sessionId", id));
-		}
-		return ServiceResponse.founded(opt.get());
 	}
 
 	public ServiceResponse<String> revokeById(String requestId, String id) {

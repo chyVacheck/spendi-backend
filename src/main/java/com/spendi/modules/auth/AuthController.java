@@ -19,14 +19,13 @@ import com.spendi.config.AuthConfig;
 import com.spendi.core.base.BaseController;
 import com.spendi.core.base.http.HttpContext;
 import com.spendi.core.response.ApiSuccessResponse;
-import com.spendi.core.exceptions.ValidationException;
-import com.spendi.core.utils.CryptoUtils;
 import com.spendi.modules.auth.dto.LoginDto;
 import com.spendi.modules.user.UserEntity;
 import com.spendi.modules.user.UserService;
 import com.spendi.modules.user.dto.UserCreateDto;
 import com.spendi.modules.session.SessionEntity;
 import com.spendi.modules.session.SessionService;
+import com.spendi.modules.session.dto.CreateSessionDto;
 import com.spendi.core.utils.CookieUtils;
 
 public class AuthController extends BaseController {
@@ -34,6 +33,7 @@ public class AuthController extends BaseController {
 	protected static AuthController INSTANCE = new AuthController();
 	private final UserService userService = UserService.getInstance();
 	private final SessionService sessionService = SessionService.getInstance();
+	private final AuthService authService = AuthService.getInstance();
 	protected final AuthConfig authCfg = AuthConfig.getConfig();
 
 	protected AuthController() {
@@ -44,54 +44,53 @@ public class AuthController extends BaseController {
 		return INSTANCE;
 	}
 
+	/**
+	 * Регистрация пользователя
+	 * 
+	 * @param ctx HttpContext контекст запроса
+	 */
 	public void register(HttpContext ctx) {
-		LoginDto dto = ctx.getValidBody(LoginDto.class);
+		UserCreateDto dto = ctx.getValidBody(UserCreateDto.class);
 
 		// Лог: запрос регистрации (несохраненный)
-		this.info("register requested", ctx.getRequestId(), detailsOf("email", dto.email));
+		this.info("register requested", ctx.getRequestId(), detailsOf("email", dto.getProfile().getEmail()));
 
-		// Сборка минимального UserCreateDto из email/password
-		var createDto = new UserCreateDto();
-		var profile = new UserCreateDto.ProfileBlock();
-		profile.email = dto.email;
-		createDto.profile = profile;
-		var sec = new UserCreateDto.SecurityBlock();
-		sec.password = dto.password;
-		createDto.security = sec;
+		var res = this.authService.register(ctx.getRequestId(), dto);
 
-		var created = this.userService.create(ctx.getRequestId(), createDto).getData();
-
-		ctx.res().success(ApiSuccessResponse.created(ctx.getRequestId(), "User registered", created.getPublicData()));
+		ctx.res().success(
+				ApiSuccessResponse.created(ctx.getRequestId(), "User registered", res.getData().getPublicData()));
 	}
 
+	/**
+	 * Авторизация пользователя
+	 * 
+	 * @param ctx HttpContext контекст запроса
+	 */
 	public void login(HttpContext ctx) {
 		LoginDto dto = ctx.getValidBody(LoginDto.class);
 
-		String maskedPassword = "*".repeat(dto.password.length());
+		String maskedPassword = "*".repeat(dto.getPassword().length());
 
 		// Лог: запрос логина (несохраненный)
-		this.info("login requested", ctx.getRequestId(), detailsOf("email", dto.email, "password", maskedPassword));
+		this.info("login requested", ctx.getRequestId(),
+				detailsOf("email", dto.getEmail(), "password", maskedPassword));
 
-		// Поиск пользователя по почте (выбрасывает исключение если не найден)
-		UserEntity user = this.userService.getByEmail(ctx.getRequestId(), dto.email).getData();
-
-		// Verify password
-		boolean ok = CryptoUtils.verifyPassword(dto.password, user.security.passwordHash);
-		if (!ok) {
-			// Лог: неверные учётные данные (сохраняем)
-			this.warn("login failed: invalid credentials", ctx.getRequestId(), detailsOf("email", dto.email), true);
-			throw new ValidationException("Invalid credentials", Map.of("password", "invalid password"), Map.of());
-		}
+		// Поиск пользователя по почте и проверка пароля (выбрасывает исключение если не найден)
+		UserEntity user = this.authService.getUserAndCheckPassword(ctx.getRequestId(), dto).getData();
 
 		// Single active session policy: отзываем предыдущие активные сессии пользователя
 		this.sessionService.revokeActiveByUser(ctx.getRequestId(), user.id.toHexString());
 
-		this.debug("login success", ctx.getRequestId(), detailsOf("email", dto.email), true);
-
 		// Создание новой сессии
 		String ip = ctx.req().remoteAddress().orElse(null);
 		String ua = ctx.req().header("User-Agent").orElse("");
-		var s = this.sessionService.create(ctx.getRequestId(), user.id.toHexString(), ip, ua).getData();
+
+		CreateSessionDto createSessionDto = new CreateSessionDto();
+		createSessionDto.setUserId(user.id.toHexString());
+		createSessionDto.setIp(ip);
+		createSessionDto.setUserAgent(ua);
+
+		var s = this.sessionService.create(ctx.getRequestId(), createSessionDto).getData();
 
 		// Set cookie
 		String cookie = CookieUtils.buildCookie(authCfg.getCookieName(), s.id.toHexString(), authCfg.getSessionTtlSec(),
@@ -108,18 +107,18 @@ public class AuthController extends BaseController {
 				ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail() + " logged", user.getPublicData()));
 	}
 
+	/**
+	 * Выход пользователя из системы
+	 * 
+	 * @param ctx HttpContext контекст запроса
+	 */
 	public void logout(HttpContext ctx) {
-		SessionEntity session = ctx.getAuthSession();
+		SessionEntity s = ctx.getAuthSession();
 
 		// Лог: запрос на logout (несохраненный)
-		this.info("logout requested", ctx.getRequestId(), detailsOf("sessionId", session.id.toHexString()));
+		this.info("logout requested", ctx.getRequestId(), detailsOf("sessionId", s.id.toHexString()));
 
-		try {
-			this.sessionService.revokeById(ctx.getRequestId(), session.id.toHexString());
-			// Лог: успешный logout
-			this.info("logout success", ctx.getRequestId(), detailsOf("sessionId", session.id.toHexString()), true);
-		} catch (RuntimeException ignore) {
-		}
+		this.authService.logout(ctx.getRequestId(), s.id.toHexString());
 
 		// очистка cookie
 		String cleared = CookieUtils.buildCookie(authCfg.getCookieName(), "", 0, authCfg);

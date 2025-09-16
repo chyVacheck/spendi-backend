@@ -13,6 +13,7 @@ package com.spendi.modules.user;
  */
 import org.bson.types.ObjectId;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spendi.core.utils.CryptoUtils;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -92,6 +93,10 @@ public class UserEntity {
 
 	public String getAvatarUrl() {
 		return "/users/" + this.id.toHexString() + "/avatar";
+	}
+
+	public boolean comparePassword(String password) {
+		return CryptoUtils.verifyPassword(password, this.security.passwordHash);
 	}
 
 	public Optional<String> getAvatarFileIdOptional() {
