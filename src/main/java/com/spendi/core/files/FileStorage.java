@@ -27,15 +27,14 @@ import com.spendi.config.FileStorageConfig;
 
 public class FileStorage extends BaseClass {
 	private final Path baseDir;
-	private static volatile FileStorage INSTANCE;
+	private static volatile FileStorage INSTANCE = new FileStorage();
 
 	/**
-	 * Создать FileStorage, читая путь из .env (spendi_FILES_DIR) через
-	 * FileStorageConfig.
+	 * Создать FileStorage, читая путь из .env (spendi_FILES_DIR) через FileStorageConfig.
 	 */
 	public FileStorage() {
 		super(EClassType.SYSTEM, FileStorage.class.getSimpleName());
-        FileStorageConfig cfg = FileStorageConfig.getConfig();
+		FileStorageConfig cfg = FileStorageConfig.getConfig();
 		// Важно: используем абсолютный путь, чтобы не зависеть от текущей рабочей
 		// директории процесса
 		this.baseDir = Paths.get(cfg.getBaseDir()).toAbsolutePath().normalize();
@@ -43,25 +42,10 @@ public class FileStorage extends BaseClass {
 	}
 
 	/**
-	 * Явная инициализация синглтона (из AppInitializer).
-	 */
-	public static void init(FileStorage storage) {
-		synchronized (FileStorage.class) {
-			if (INSTANCE == null) {
-				INSTANCE = storage;
-			}
-		}
-	}
-
-	/**
-	 * Singleton-доступ к FileStorage (после init).
+	 * Singleton-доступ к FileStorage.
 	 */
 	public static FileStorage getInstance() {
-		FileStorage ref = INSTANCE;
-		if (ref == null) {
-			throw new IllegalStateException("FileStorage not initialized. Call AppInitializer.initAll() in App.main");
-		}
-		return ref;
+		return INSTANCE;
 	}
 
 	/** Сохранить один файл с заранее заданным id (hex). */
@@ -81,9 +65,7 @@ public class FileStorage extends BaseClass {
 
 		this.info("File " + name + " saved", requestId, detailsOf("name", name), true);
 
-		return new StoredFile(
-				name,
-				baseDir.relativize(dst).toString());
+		return new StoredFile(name, baseDir.relativize(dst).toString());
 	}
 
 	/**
@@ -115,8 +97,7 @@ public class FileStorage extends BaseClass {
 	}
 
 	/**
-	 * Удалить файл из локального хранилища по относительному пути.
-	 * Возвращает true, если файл существовал и был удалён.
+	 * Удалить файл из локального хранилища по относительному пути. Возвращает true, если файл существовал и был удалён.
 	 */
 	public boolean delete(String requestId, String relativePath) {
 		try {

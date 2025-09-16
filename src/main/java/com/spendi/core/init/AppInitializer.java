@@ -13,7 +13,6 @@ package com.spendi.core.init;
  * ! my imports
  */
 import com.spendi.core.base.database.MongoProvider;
-import com.spendi.core.files.FileStorage;
 import com.spendi.modules.files.FileRepository;
 import com.spendi.modules.files.FileService;
 import com.spendi.modules.user.UserRepository;
@@ -45,9 +44,6 @@ public final class AppInitializer {
 	 */
 	public static void initFilesModule(MongoDatabase db) {
 		var fileRepo = new FileRepository(db);
-
-		// Инициализируем хранилище файлов (локальная ФС)
-		FileStorage.init(new FileStorage());
 
 		// Инициализируем сервис файлов с явным репозиторием
 		FileService.init(fileRepo);
