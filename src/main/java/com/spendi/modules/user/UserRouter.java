@@ -30,10 +30,10 @@ import com.spendi.core.files.validation.FileValidationRules;
 import com.spendi.core.router.ApiRouter;
 // user -> dto
 import com.spendi.modules.user.dto.UserIdParams;
+import com.spendi.modules.user.dto.UserPaymentMethodIdParams;
 // payment -> dto
 import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
 import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
-import com.spendi.modules.payment.dto.PaymentMethodIdParams;
 
 public class UserRouter extends ApiRouter {
 	public UserController controller = UserController.getInstance();
@@ -51,13 +51,31 @@ public class UserRouter extends ApiRouter {
 		// Подключаем AuthMiddleware на весь роутер
 		this.use(AuthMiddleware.getInstance());
 
+		/**
+		 * ? === === === Read === === ===
+		 */
+
 		// Получить свои данные
 		this.get("/me", controller::getMe);
 
-		// Доп. маршруты по необходимости (terms отключен)
-
-		// Получить данные о сотруднике по id
+		// Получить данные о пользователе по id
 		this.get("/{id}", controller::getOneById, ParamsValidationMiddleware.of(UserIdParams.class));
+
+		/**
+		 * * === === === Avatar === === ===
+		 */
+
+		/**
+		 * ? === === === Create === === ===
+		 */
+
+		// Загрузить аватар для авторизованого пользователе
+		this.post("/me/avatar", controller::uploadMeAvatar, new JavalinMultipartParserMiddleware(),
+				new FileValidationMiddleware(avatarRules), TempFilesCleanupMiddleware.getInstance());
+
+		/**
+		 * ? === === === Read === === ===
+		 */
 
 		// Посмотреть свой аватар
 		this.get("/me/avatar", controller::getMeAvatar);
@@ -65,27 +83,49 @@ public class UserRouter extends ApiRouter {
 		// Посмотреть аватар
 		this.get("/{id}/avatar", controller::getAvatar, ParamsValidationMiddleware.of(UserIdParams.class));
 
-		// Загрузить аватар для авторизованого сотрудника
-		this.post("/me/avatar", controller::uploadMeAvatar, new JavalinMultipartParserMiddleware(),
-				new FileValidationMiddleware(avatarRules), TempFilesCleanupMiddleware.getInstance());
+		/**
+		 * ? === === === Delete === === ===
+		 */
 
-		// Удалить аватар авторизованого сотрудника
+		// Удалить аватар авторизованого пользователе
 		this.delete("/me/avatar", controller::deleteMeAvatar);
 
-		// ? === Payment methods ===
-		this.get("/me/payment-methods", controller::getMePaymentMethods,
-				QueryValidationMiddleware.of(PaginationQueryDto.class));
+		/**
+		 * * === === === Payment methods === === ===
+		 */
 
+		/**
+		 * ? === === === Create === === ===
+		 */
+
+		// Добавить метод оплаты авторизованого пользователя
 		this.post("/me/payment-methods", controller::addPaymentMethod, new JsonBodyParserMiddleware(),
 				BodyValidationMiddleware.of(PaymentMethodCreateDto.class));
 
-		this.delete("/me/payment-methods/{pmId}", controller::deletePaymentMethod,
-				ParamsValidationMiddleware.of(PaymentMethodIdParams.class));
+		/**
+		 * ? === === === Read === === ===
+		 */
 
-		// /me/payment-methods/{pmId}
+		// Получить все методы оплаты авторизованого пользователя
+		this.get("/me/payment-methods", controller::getMePaymentMethods,
+				QueryValidationMiddleware.of(PaginationQueryDto.class));
+
+		/**
+		 * ? === === === Update === === ===
+		 */
+
+		// Обновить порядок методов оплаты авторизованого пользователя
 		this.put("/me/payment-methods/{pmId}/order", controller::updatePaymentMethodOrder,
-				ParamsValidationMiddleware.of(PaymentMethodIdParams.class), new JsonBodyParserMiddleware(),
+				ParamsValidationMiddleware.of(UserPaymentMethodIdParams.class), new JsonBodyParserMiddleware(),
 				BodyValidationMiddleware.of(PaymentMethodOrderDto.class));
+
+		/**
+		 * ? === === === Delete === === ===
+		 */
+
+		// Удалить метод оплаты авторизованого пользователя
+		this.delete("/me/payment-methods/{pmId}", controller::deletePaymentMethod,
+				ParamsValidationMiddleware.of(UserPaymentMethodIdParams.class));
 
 	}
 }
