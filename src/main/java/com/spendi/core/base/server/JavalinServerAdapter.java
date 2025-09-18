@@ -55,8 +55,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	public JavalinServerAdapter() {
 		super(EClassType.SYSTEM, JavalinServerAdapter.class.getSimpleName());
 
-		ObjectMapper mapper = new ObjectMapper()
-				.findAndRegisterModules()
+		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules()
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
 		this.app = Javalin.create(cfg -> {
@@ -78,20 +77,15 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 
 			if (domain == null) {
 				// Совсем неожиданный случай
-				domain = new DomainException(
-						"Internal server error",
-						ErrorCode.INTERNAL_ERROR,
-						Map.of("exception", e.getClass().getName()),
-						Map.of()) {
-				};
+				domain = new DomainException("Internal server error", ErrorCode.INTERNAL_ERROR,
+						Map.of("exception", e.getClass().getName()), Map.of()) {};
 				logError(domain, "Unhandled exception", httpCtx.getRequestId());
 			} else {
 				// Ожидаемое бизнес-исключение
-				this.warn("Domain exception handled", httpCtx.getRequestId(), detailsOf(
-						"errorCode", domain.getErrorCodeName(),
-						"details", domain.getDetails(),
-						"fieldErrors", domain.getFieldErrors(),
-						"message", domain.getMessage()), true);
+				this.warn("Domain exception handled", httpCtx.getRequestId(),
+						detailsOf("errorCode", domain.getErrorCodeName(), "details", domain.getDetails(), "fieldErrors",
+								domain.getFieldErrors(), "message", domain.getMessage()),
+						true);
 			}
 
 			ApiErrorResponse body = domain.toErrorResponse(httpCtx.getRequestId());
@@ -108,8 +102,7 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 
 	public void setExceptionMapper(ExceptionMapper mapper) {
 		this.exceptionMapper = mapper;
-		this.info("ExceptionMapper installed", "no-id", detailsOf(
-				"class", mapper.getClass().getSimpleName()), true);
+		this.info("ExceptionMapper installed", "no-id", detailsOf("class", mapper.getClass().getSimpleName()), true);
 	}
 
 	// ============================
@@ -122,10 +115,8 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		}
 		this.globalMiddleware.add(middleware);
 
-		this.info("Register middleware", "no-id", detailsOf(
-				"class", middleware.getClass().getSimpleName(),
-				"type", "before", "scope", "global"),
-				true);
+		this.info("Register middleware", "no-id",
+				detailsOf("class", middleware.getClass().getSimpleName(), "type", "before", "scope", "global"), true);
 
 		this.app.before(ctx -> {
 			var httpCtx = new JavalinHttpContext(ctx);
@@ -150,9 +141,8 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		}
 		this.globalMiddleware.add(middleware);
 
-		this.info("Register middleware", "no-id", detailsOf(
-				"class", middleware.getClass().getSimpleName(),
-				"type", "after", "scope", "global"), true);
+		this.info("Register middleware", "no-id",
+				detailsOf("class", middleware.getClass().getSimpleName(), "type", "after", "scope", "global"), true);
 
 		this.app.after(ctx -> {
 			var httpCtx = new JavalinHttpContext(ctx);
@@ -175,11 +165,8 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 				if (mw == null)
 					continue;
 
-				this.info("Register middleware", "no-id", detailsOf(
-						"class", mw.getClass().getSimpleName(),
-						"type", "before",
-						"scope", "router",
-						"basePath", basePath), true);
+				this.info("Register middleware", "no-id", detailsOf("class", mw.getClass().getSimpleName(), "type",
+						"before", "scope", "router", "basePath", basePath), true);
 
 				if (basePath == null || basePath.isBlank() || "/".equals(basePath)) {
 					// Fallback: глобальная регистрация (как было раньше)
@@ -200,25 +187,21 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 			for (Route r : routes) {
 				registerRoute(r, name);
 			}
-			this.info("Mounted routes", "no-id", detailsOf(
-					"count", routes.size()), true);
+			this.info("Mounted routes", "no-id", detailsOf("count", routes.size()), true);
 		} else {
-			this.warn("Mounted routes", "no-id", detailsOf(
-					"count", 0), true);
+			this.warn("Mounted routes", "no-id", detailsOf("count", 0), true);
 		}
 	}
 
 	@Override
 	public void start(int port) {
 
-		this.info("Starting server", "no-id", detailsOf(
-				"port", port,
-				"finished", false), true);
+		this.info("Starting server", "no-id", detailsOf("port", port, "finished", false), true);
 
 		this.app.start(port);
-		this.info("Starting server", "no-id", detailsOf(
-				"port", port,
-				"finished", true), true);
+		this.info("Starting server", "no-id", detailsOf("port", port, "finished", true), true);
+
+		this.debug("=== === ===  Server started === === === ");
 	}
 
 	@Override
@@ -236,29 +219,24 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 		RouteHandler handler = r.handler();
 		List<Middleware> locals = r.middlewares();
 
-		this.info("Register route " + className, "no-id", detailsOf(
-				"path", path,
-				"method", m.name()), true);
+		this.info("Register route " + className, "no-id", detailsOf("path", path, "method", m.name()), true);
 
 		switch (m) {
-			case GET -> app.get(path, ctx -> handleWithChain(ctx, handler, locals));
-			case POST -> app.post(path, ctx -> handleWithChain(ctx, handler, locals));
-			case PUT -> app.put(path, ctx -> handleWithChain(ctx, handler, locals));
-			case PATCH -> app.patch(path, ctx -> handleWithChain(ctx, handler, locals));
-			case DELETE -> app.delete(path, ctx -> handleWithChain(ctx, handler, locals));
-			default -> throw new IllegalArgumentException("Unexpected value: " + m);
+		case GET -> app.get(path, ctx -> handleWithChain(ctx, handler, locals));
+		case POST -> app.post(path, ctx -> handleWithChain(ctx, handler, locals));
+		case PUT -> app.put(path, ctx -> handleWithChain(ctx, handler, locals));
+		case PATCH -> app.patch(path, ctx -> handleWithChain(ctx, handler, locals));
+		case DELETE -> app.delete(path, ctx -> handleWithChain(ctx, handler, locals));
+		default -> throw new IllegalArgumentException("Unexpected value: " + m);
 		}
 	}
 
-	private void handleWithChain(Context ctx, RouteHandler handler, List<Middleware> locals)
-			throws Exception {
+	private void handleWithChain(Context ctx, RouteHandler handler, List<Middleware> locals) throws Exception {
 		var httpCtx = new JavalinHttpContext(ctx);
 
 		// логируем входящий запрос
-		this.info("Incoming request", httpCtx.getRequestId(), detailsOf(
-				"path", httpCtx.req().path(),
-				"method", httpCtx.req().method(),
-				"query", httpCtx.req().queryParams()), true);
+		this.info("Incoming request", httpCtx.getRequestId(), detailsOf("path", httpCtx.req().path(), "method",
+				httpCtx.req().method(), "query", httpCtx.req().queryParams()), true);
 
 		// Выполняем локальные миддлы “по цепочке”, затем — handler
 		if (locals == null || locals.isEmpty()) {
@@ -292,10 +270,8 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	}
 
 	private void logError(Throwable e, String message, String requestId) {
-		this.error(message,
-				requestId,
-				Map.of("exception", e.getClass().getName(), "message", String.valueOf(e.getMessage())),
-				true);
+		this.error(message, requestId,
+				Map.of("exception", e.getClass().getName(), "message", String.valueOf(e.getMessage())), true);
 	}
 
 	/** Простейшая реализация цепочки для одного middleware. */
