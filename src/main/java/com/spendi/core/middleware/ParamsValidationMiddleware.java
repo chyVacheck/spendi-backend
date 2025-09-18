@@ -35,8 +35,7 @@ import com.spendi.core.json.Jsons;
 import com.spendi.core.validation.Validators;
 
 /**
- * Валидирует path-параметры, биндя их в DTO и прогоняя через Jakarta
- * Validation.
+ * Валидирует path-параметры, биндя их в DTO и прогоняя через Jakarta Validation.
  */
 public final class ParamsValidationMiddleware<T> extends BaseMiddleware {
 	private final Class<T> dtoClass;

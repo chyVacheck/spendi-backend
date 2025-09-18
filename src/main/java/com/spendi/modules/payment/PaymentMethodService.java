@@ -21,6 +21,7 @@ import com.spendi.core.base.database.MongoUpdateBuilder;
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.response.ServiceResponse;
 import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
+import com.spendi.modules.payment.types.EPaymentMethodStatus;
 
 public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRepository, PaymentMethodEntity> {
 
@@ -92,11 +93,11 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		e.details = details;
 
 		var sys = new PaymentMethodEntity.System();
-		sys.status = PaymentMethodEntity.EPaymentMethodStatus.Active;
+		sys.status = EPaymentMethodStatus.ACTIVE;
 		sys.meta = new PaymentMethodEntity.Meta();
 		sys.meta.createdAt = now;
 		sys.meta.updatedAt = null;
-		sys.meta.archivedAt = null;
+		sys.meta.deletedAt = null;
 		e.system = sys;
 
 		e.id = new ObjectId();

@@ -10,8 +10,13 @@ package com.spendi.modules.payment;
 /**
  * ! lib imports
  */
+// bson
 import org.bson.types.ObjectId;
+// fasterxml
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spendi.modules.payment.types.EPaymentMethodStatus;
+import com.spendi.modules.payment.types.EPaymentMethodType;
+// jakarta
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -84,15 +89,7 @@ public class PaymentMethodEntity {
 	public static class Meta {
 		public Instant createdAt;
 		public Instant updatedAt;
-		public Instant archivedAt;
-	}
-
-	public enum EPaymentMethodType {
-		Cash, Card, BankAccount, EWallet, Other
-	}
-
-	public enum EPaymentMethodStatus {
-		Active, Archived, Deleted
+		public Instant deletedAt;
 	}
 
 	public Map<String, Object> getPublicData() {
@@ -117,7 +114,7 @@ public class PaymentMethodEntity {
 		Map<String, Object> m = new HashMap<>(3);
 		m.put("createdAt", system.meta.createdAt);
 		m.put("updatedAt", system.meta.updatedAt);
-		m.put("archivedAt", system.meta.archivedAt);
+		m.put("deletedAt", system.meta.deletedAt);
 		s.put("meta", m);
 		out.put("system", s);
 

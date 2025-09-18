@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * ! my imports
  */
-import com.spendi.modules.payment.PaymentMethodEntity.EPaymentMethodType;
+import com.spendi.modules.payment.types.EPaymentMethodType;
 
 public class PaymentMethodCreateDto {
 

@@ -21,8 +21,13 @@ import com.mongodb.client.model.Indexes;
  */
 import java.util.List;
 
+/**
+ * ! my imports
+ */
 import com.spendi.core.base.BaseRepository;
 import com.spendi.core.utils.InstantUtils;
+import com.spendi.modules.payment.types.EPaymentMethodStatus;
+import com.spendi.modules.payment.types.EPaymentMethodType;
 
 public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity> {
 
@@ -56,11 +61,10 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 			if (d != null) {
 				String t = d.getString("type");
 				if (t != null)
-					i.type = PaymentMethodEntity.EPaymentMethodType.valueOf(t);
+					i.type = EPaymentMethodType.valueOf(t);
 				i.name = d.getString("name");
 				i.currency = d.getString("currency");
-				Object o = d.get("order");
-				i.order = (o instanceof Number) ? ((Number) o).intValue() : null;
+				i.order = d.getInteger("order");
 				@SuppressWarnings("unchecked")
 				List<String> tags = (List<String>) d.get("tags", List.class);
 				i.tags = tags;
@@ -78,10 +82,8 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 					PaymentMethodEntity.Card card = new PaymentMethodEntity.Card();
 					card.brand = c.getString("brand");
 					card.last4 = c.getString("last4");
-					Object em = c.get("expMonth");
-					Object ey = c.get("expYear");
-					card.expMonth = em instanceof Number ? ((Number) em).intValue() : null;
-					card.expYear = ey instanceof Number ? ((Number) ey).intValue() : null;
+					card.expMonth = c.getInteger("expMonth");
+					card.expYear = c.getInteger("expYear");
 					det.card = card;
 				}
 				Document b = d.get("bank", Document.class);
@@ -109,16 +111,16 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 			if (d != null) {
 				String st = d.getString("status");
 				if (st != null)
-					s.status = PaymentMethodEntity.EPaymentMethodStatus.valueOf(st);
+					s.status = EPaymentMethodStatus.valueOf(st);
 				Document m = d.get("meta", Document.class);
 				PaymentMethodEntity.Meta meta = new PaymentMethodEntity.Meta();
 				if (m != null) {
 					Object ca = m.get("createdAt");
 					Object ua = m.get("updatedAt");
-					Object aa = m.get("archivedAt");
+					Object aa = m.get("deletedAt");
 					meta.createdAt = InstantUtils.getInstantOrNull(ca);
 					meta.updatedAt = InstantUtils.getInstantOrNull(ua);
-					meta.archivedAt = InstantUtils.getInstantOrNull(aa);
+					meta.deletedAt = InstantUtils.getInstantOrNull(aa);
 				}
 				s.meta = meta;
 			}
@@ -181,12 +183,12 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 		{
 			Document d = new Document();
 			if (e.system != null) {
-				d.put("status", e.system.status != null ? e.system.status.name() : null);
+				d.put("status", e.system.status.name());
 				Document m = new Document();
 				if (e.system.meta != null) {
 					m.put("createdAt", e.system.meta.createdAt);
 					m.put("updatedAt", e.system.meta.updatedAt);
-					m.put("archivedAt", e.system.meta.archivedAt);
+					m.put("deletedAt", e.system.meta.deletedAt);
 				}
 				d.put("meta", m);
 			}
