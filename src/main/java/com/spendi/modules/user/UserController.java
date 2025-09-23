@@ -127,7 +127,7 @@ public class UserController extends BaseController {
 		UserEntity user = this.userService.getById(s.userId.toHexString()).getData();
 
 		// Лог запроса сущности пользователя (несохраненный)
-		this.info("User get me", ctx.getRequestId(), detailsOf("userId", user.id.toHexString()));
+		this.info("User get me", ctx.getRequestId(), detailsOf("userId", user.getId().toHexString()));
 
 		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail(), user.getPrivateData()));
 	}
@@ -208,7 +208,7 @@ public class UserController extends BaseController {
 		UserEntity u = this.userService.getById(s.userId.toHexString()).getData();
 
 		// Логируем запрос для отслеживания активности пользователей
-		this.info("user avatar get requested", ctx.getRequestId(), detailsOf("userId", u.id.toHexString()));
+		this.info("user avatar get requested", ctx.getRequestId(), detailsOf("userId", u.getId().toHexString()));
 
 		// Проверяем, есть ли у пользователя аватар
 		// Если аватар отсутствует, возвращаем HTTP 204 (No Content)
@@ -219,13 +219,14 @@ public class UserController extends BaseController {
 		}
 
 		// Загружаем файл аватара из файлового хранилища по ID файла
-		var fileResp = this.fileService.downloadOne(ctx.getRequestId(), u.profile.avatarFileId);
+		var fileResp = this.fileService.downloadOne(ctx.getRequestId(), u.getProfile().getAvatarFileId());
 		DownloadedFile file = fileResp.getData();
 
 		// Формируем заголовок Content-Disposition для inline отображения
 		// Используем оригинальное имя файла или ID пользователя как fallback
 		String disposition = "inline; filename=\""
-				+ (file.getFilename() == null ? u.id.toHexString() : file.getFilename()) + "\"";
+				+ (file.getFilename() == null ? u.getProfile().getAvatarFileId().toHexString() : file.getFilename())
+				+ "\"";
 
 		// Отправляем файл клиенту с правильными заголовками
 		// Content-Type определяет MIME тип для корректного отображения
@@ -250,7 +251,7 @@ public class UserController extends BaseController {
 			ctx.res().status(HttpStatusCode.NO_CONTENT.getCode());
 			return;
 		}
-		var fileResp = this.fileService.downloadOne(ctx.getRequestId(), u.profile.avatarFileId);
+		var fileResp = this.fileService.downloadOne(ctx.getRequestId(), u.getProfile().getAvatarFileId());
 		DownloadedFile file = fileResp.getData();
 
 		String disposition = "inline; filename=\""
@@ -328,11 +329,11 @@ public class UserController extends BaseController {
 		List<UploadedFile> files = ctx.getFiles();
 
 		// Логируем попытку загрузки аватара для аудита
-		this.info("user avatar upload requested", ctx.getRequestId(), detailsOf("userId", user.id.toHexString()));
+		this.info("user avatar upload requested", ctx.getRequestId(), detailsOf("userId", user.getId().toHexString()));
 
 		// Делегируем обработку загрузки UserService
 		// Сервис выполнит валидацию файла, сохранение и обновление профиля
-		var resp = this.userService.uploadAvatar(ctx.getRequestId(), user.id.toHexString(), files.get(0));
+		var resp = this.userService.uploadAvatar(ctx.getRequestId(), user.getId().toHexString(), files.get(0));
 		String url = resp.getData();
 
 		// Определяем тип ответа на основе того, был ли аватар создан впервые или
@@ -354,8 +355,11 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 		PaymentMethodCreateDto dto = ctx.getValidBody(PaymentMethodCreateDto.class);
 
+		// todo мапить dto в command для создания метода оплаты
+
 		var created = this.paymentService.createOne(ctx.getRequestId(), s.userId.toHexString(), dto).getData();
 
+		// todo переделать сервис для принятия только ObjectId
 		var updated = this.userService.addPaymentMethod(ctx.getRequestId(), s.userId.toHexString(), created).getData();
 
 		ctx.res().success(
@@ -369,6 +373,9 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 		var params = ctx.getValidParams(PaymentMethodIdParams.class);
 		PaymentMethodOrderDto dto = ctx.getValidBody(PaymentMethodOrderDto.class);
+
+		// todo мапить dto в command для создания метода оплаты
+		// todo принимать в сервисе command
 
 		var updated = this.userService.updatePaymentMethodOrder(ctx.getRequestId(), s.userId.toHexString(), params.pmId,
 				dto.order);

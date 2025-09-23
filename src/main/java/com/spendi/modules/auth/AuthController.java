@@ -1,3 +1,4 @@
+
 /**
  * @file AuthController.java
  * @module modules/auth
@@ -19,14 +20,14 @@ import com.spendi.config.AuthConfig;
 import com.spendi.core.base.BaseController;
 import com.spendi.core.base.http.HttpContext;
 import com.spendi.core.response.ApiSuccessResponse;
+import com.spendi.core.utils.CookieUtils;
 import com.spendi.modules.auth.dto.LoginDto;
+import com.spendi.modules.auth.dto.RegisterDto;
 import com.spendi.modules.user.UserEntity;
 import com.spendi.modules.user.UserService;
-import com.spendi.modules.user.dto.UserCreateDto;
 import com.spendi.modules.session.SessionEntity;
 import com.spendi.modules.session.SessionService;
 import com.spendi.modules.session.dto.CreateSessionDto;
-import com.spendi.core.utils.CookieUtils;
 
 public class AuthController extends BaseController {
 
@@ -50,10 +51,10 @@ public class AuthController extends BaseController {
 	 * @param ctx HttpContext контекст запроса
 	 */
 	public void register(HttpContext ctx) {
-		UserCreateDto dto = ctx.getValidBody(UserCreateDto.class);
+		RegisterDto dto = ctx.getValidBody(RegisterDto.class);
 
 		// Лог: запрос регистрации (несохраненный)
-		this.info("register requested", ctx.getRequestId(), detailsOf("email", dto.getProfile().getEmail()));
+		this.info("register requested", ctx.getRequestId(), detailsOf("email", dto.getEmail()));
 
 		var res = this.authService.register(ctx.getRequestId(), dto);
 
@@ -79,14 +80,14 @@ public class AuthController extends BaseController {
 		UserEntity user = this.authService.getUserAndCheckPassword(ctx.getRequestId(), dto).getData();
 
 		// Single active session policy: отзываем предыдущие активные сессии пользователя
-		this.sessionService.revokeActiveByUser(ctx.getRequestId(), user.id.toHexString());
+		this.sessionService.revokeActiveByUser(ctx.getRequestId(), user.getId().toHexString());
 
 		// Создание новой сессии
 		String ip = ctx.req().remoteAddress().orElse(null);
 		String ua = ctx.req().header("User-Agent").orElse("");
 
 		CreateSessionDto createSessionDto = new CreateSessionDto();
-		createSessionDto.setUserId(user.id.toHexString());
+		createSessionDto.setUserId(user.getId().toHexString());
 		createSessionDto.setIp(ip);
 		createSessionDto.setUserAgent(ua);
 
@@ -99,9 +100,9 @@ public class AuthController extends BaseController {
 
 		// Лог: успешный логин
 		this.info("login success", ctx.getRequestId(),
-				detailsOf("userId", user.id.toHexString(), "sessionId", s.id.toHexString()), true);
+				detailsOf("userId", user.getId().toHexString(), "sessionId", s.id.toHexString()), true);
 
-		this.userService.touchLastLogin(ctx.getRequestId(), user.id.toHexString());
+		this.userService.touchLastLogin(ctx.getRequestId(), user.getId().toHexString());
 
 		ctx.res().success(
 				ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail() + " logged", user.getPublicData()));

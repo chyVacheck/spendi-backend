@@ -28,6 +28,7 @@ import com.mongodb.client.model.Indexes;
  */
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * ! my imports
@@ -62,19 +63,19 @@ public class UserRepository extends BaseRepository<UserEntity> {
 
 		// _id
 		ObjectId id = doc.getObjectId("_id");
-		e.id = id;
+		e.setId(id);
 
 		// profile
 		{
 			Document d = doc.get("profile", Document.class);
 			UserEntity.Profile p = new UserEntity.Profile();
 			if (d != null) {
-				p.email = d.getString("email");
-				p.firstName = d.getString("firstName");
-				p.lastName = d.getString("lastName");
-				p.avatarFileId = d.getString("avatarFileId");
+				p.setEmail(d.getString("email"));
+				p.setFirstName(d.getString("firstName"));
+				p.setLastName(d.getString("lastName"));
+				p.setAvatarFileId(d.getObjectId("avatarFileId"));
 			}
-			e.profile = p;
+			e.setProfile(p);
 		}
 
 		// security
@@ -82,9 +83,9 @@ public class UserRepository extends BaseRepository<UserEntity> {
 			Document d = doc.get("security", Document.class);
 			UserEntity.Security s = new UserEntity.Security();
 			if (d != null) {
-				s.passwordHash = d.getString("passwordHash");
+				s.setPasswordHash(d.getString("passwordHash"));
 			}
-			e.security = s;
+			e.setSecurity(s);
 		}
 
 		// finance
@@ -92,14 +93,12 @@ public class UserRepository extends BaseRepository<UserEntity> {
 			Document d = doc.get("finance", Document.class);
 			UserEntity.Finance f = new UserEntity.Finance();
 			if (d != null) {
-				f.defaultAccountId = d.getString("defaultAccountId");
-				Object cnt = d.get("accountsCount");
-				f.accountsCount = cnt instanceof Number ? ((Number) cnt).intValue() : 0;
+				f.setDefaultAccountId(d.getObjectId("defaultAccountId"));
 				@SuppressWarnings("unchecked")
 				List<String> pms = (List<String>) d.get("paymentMethodIds", List.class);
-				f.paymentMethodIds = pms;
+				f.setPaymentMethodIds(pms.stream().map(ObjectId::new).collect(Collectors.toSet()));
 			}
-			e.finance = f;
+			e.setFinance(f);
 		}
 
 		// system
@@ -113,13 +112,13 @@ public class UserRepository extends BaseRepository<UserEntity> {
 					Object ca = m.get("createdAt");
 					Object ua = m.get("updatedAt");
 					Object la = m.get("lastLoginAt");
-					meta.createdAt = InstantUtils.getInstantOrNull(ca);
-					meta.updatedAt = InstantUtils.getInstantOrNull(ua);
-					meta.lastLoginAt = InstantUtils.getInstantOrNull(la);
+					meta.setCreatedAt(InstantUtils.getInstantOrNull(ca));
+					meta.setUpdatedAt(InstantUtils.getInstantOrNull(ua));
+					meta.setLastLoginAt(InstantUtils.getInstantOrNull(la));
 				}
-				s.meta = meta;
+				s.setMeta(meta);
 			}
-			e.system = s;
+			e.setSystem(s);
 		}
 
 		return e;
@@ -129,55 +128,50 @@ public class UserRepository extends BaseRepository<UserEntity> {
 	protected Document toDocument(UserEntity e) {
 		Document doc = new Document();
 
-		if (e.id != null) {
-			doc.put("_id", e.id);
-		}
+		doc.put("_id", e.getId());
 
 		// profile
 		{
 			Document d = new Document();
-			if (e.profile != null) {
-				d.put("email", e.profile.email);
-				d.put("firstName", e.profile.firstName);
-				d.put("lastName", e.profile.lastName);
-				d.put("avatarFileId", e.profile.avatarFileId);
-			}
+
+			d.put("email", e.getProfile().getEmail());
+			d.put("firstName", e.getProfile().getFirstName());
+			d.put("lastName", e.getProfile().getLastName());
+			d.put("avatarFileId", e.getProfile().getAvatarFileId());
+
 			doc.put("profile", d);
 		}
 
 		// security
 		{
 			Document d = new Document();
-			if (e.security != null) {
-				d.put("passwordHash", e.security.passwordHash);
-			}
+
+			d.put("passwordHash", e.getSecurity().getPasswordHash());
+
 			doc.put("security", d);
 		}
 
 		// finance
 		{
 			Document d = new Document();
-			if (e.finance != null) {
-				d.put("defaultAccountId", e.finance.defaultAccountId);
-				d.put("accountsCount", e.finance.accountsCount);
-				d.put("paymentMethodIds",
-						e.finance.paymentMethodIds != null ? List.copyOf(e.finance.paymentMethodIds) : List.of());
-			}
+
+			d.put("defaultAccountId", e.getFinance().getDefaultAccountId());
+			d.put("paymentMethodIds", List.copyOf(e.getFinance().getPaymentMethodIds())); // todo set
+
 			doc.put("finance", d);
 		}
 
 		// system
 		{
 			Document d = new Document();
-			if (e.system != null) {
-				Document m = new Document();
-				if (e.system.meta != null) {
-					m.put("createdAt", e.system.meta.createdAt);
-					m.put("updatedAt", e.system.meta.updatedAt);
-					m.put("lastLoginAt", e.system.meta.lastLoginAt);
-				}
-				d.put("meta", m);
-			}
+			// meta
+			UserEntity.Meta meta = e.getSystem().getMeta();
+			Document m = new Document();
+			m.put("createdAt", meta.getCreatedAt());
+			m.put("updatedAt", meta.getUpdatedAt());
+			m.put("lastLoginAt", meta.getLastLoginAt());
+			d.put("meta", m);
+
 			doc.put("system", d);
 		}
 

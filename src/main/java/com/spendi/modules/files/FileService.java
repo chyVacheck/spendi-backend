@@ -78,8 +78,7 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 
 		ServiceResponse<FileEntity> res = this.createOne(e);
 
-		this.info("File metadata created", requestId, detailsOf("id", e.id.toHexString(), "rel", e.relativePath),
-				true);
+		this.info("File metadata created", requestId, detailsOf("id", e.id.toHexString(), "rel", e.relativePath), true);
 		return res;
 	}
 
@@ -91,16 +90,18 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 	/**
 	 * Загрузить содержимое файла по id с диска, вернуть как DTO для отдачи.
 	 */
-	public ServiceResponse<DownloadedFile> downloadOne(String requestId, String id) {
+	public ServiceResponse<DownloadedFile> downloadOne(String requestId, ObjectId id) {
 		// 1) Метаданные из БД
 		FileEntity e = this.getById(id).getData();
 		// 2) Чтение из ФС
 		if (e == null || e.relativePath == null) {
-			throw new EntityNotFoundException("File", "id", id);
+			throw new EntityNotFoundException("File", "id", id.toHexString());
 		}
 
+		// 3) Проверка существования файла на диске
 		if (!this.fileStorage.exists(e.relativePath)) {
-			this.info("file content not found", requestId, detailsOf("id", id), false);
+			this.info("file content not found", requestId,
+					detailsOf("id", id.toHexString(), "relativePath", e.relativePath), false);
 
 			throw new EntityNotFoundException("FileContent", "relativePath", e.relativePath);
 		}
@@ -110,24 +111,26 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 
 		DownloadedFile dto = new DownloadedFile(content, filename, e.contentType);
 
-		this.info("file read for download", requestId, detailsOf("id", id, "bytes", content.length), false);
+		this.info("file read for download", requestId, detailsOf("id", id.toHexString(), "bytes", content.length),
+				false);
 
 		return ServiceResponse.founded(dto);
 	}
 
-	public ServiceResponse<String> deleteById(String requestId, String id) {
+	public ServiceResponse<String> deleteById(String requestId, ObjectId id) {
 		// ensure exists and get metadata
 		FileEntity e = this.getById(id).getData();
 		// try delete physical file (best-effort)
 		try {
 			if (e != null && e.relativePath != null) {
 				this.fileStorage.delete(requestId, e.relativePath);
-				this.info("file deleted", requestId, detailsOf("relative", e.relativePath), true);
+				this.info("file deleted", requestId, detailsOf("id", id.toHexString(), "relativePath", e.relativePath),
+						true);
 			}
 		} catch (RuntimeException ignore) {
 		}
 		var res = super.deleteById(id); // ServiceResponse<String> with deleted id or throws
-		this.info("file metadata deleted", requestId, detailsOf("id", id), false);
+		this.info("file metadata deleted", requestId, detailsOf("id", id.toHexString()), false);
 		return res;
 	}
 

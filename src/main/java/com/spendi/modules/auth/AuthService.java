@@ -22,9 +22,10 @@ import com.spendi.core.base.service.BaseService;
 import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.exceptions.ValidationException;
 import com.spendi.modules.auth.dto.LoginDto;
+import com.spendi.modules.auth.dto.RegisterDto;
 import com.spendi.modules.user.UserEntity;
 import com.spendi.modules.user.UserService;
-import com.spendi.modules.user.dto.UserCreateDto;
+import com.spendi.modules.user.command.UserCreateCommand;
 import com.spendi.modules.session.SessionService;
 
 /**
@@ -36,6 +37,7 @@ public class AuthService extends BaseService {
 	private final UserService userService = UserService.getInstance();
 	private final SessionService sessionService = SessionService.getInstance();
 	protected final AuthConfig authCfg = AuthConfig.getConfig();
+	protected final AuthMapper authMapper = AuthMapper.getInstance();
 
 	protected AuthService() {
 		super(AuthService.class.getSimpleName());
@@ -51,13 +53,15 @@ public class AuthService extends BaseService {
 	 * @param requestId идентификатор запроса
 	 * @param dto       данные для регистрации
 	 */
-	public ServiceResponse<UserEntity> register(String requestId, UserCreateDto dto) {
+	public ServiceResponse<UserEntity> register(String requestId, RegisterDto dto) {
+		// маппим dto в command
+		UserCreateCommand command = authMapper.toCmd(dto);
 
 		// создаем пользователя
-		var created = this.userService.create(requestId, dto);
+		var created = this.userService.create(requestId, command);
 
 		this.info("register success", requestId,
-				detailsOf("email", created.getData().getEmail(), "userId", created.getData().id.toHexString()));
+				detailsOf("email", created.getData().getEmail(), "userId", created.getData().getId().toHexString()));
 
 		return created;
 	}

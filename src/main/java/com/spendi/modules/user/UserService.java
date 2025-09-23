@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
+import java.util.Set;
 
 import com.spendi.core.base.database.MongoUpdateBuilder;
 /**
@@ -41,7 +42,7 @@ import com.spendi.modules.files.FileService;
 import com.spendi.modules.files.FileEntity;
 import com.spendi.modules.payment.PaymentMethodEntity;
 import com.spendi.modules.payment.PaymentMethodService;
-import com.spendi.modules.user.dto.UserCreateDto;
+import com.spendi.modules.user.command.UserCreateCommand;
 import com.spendi.core.dto.PaginationQueryDto;
 
 public class UserService extends BaseRepositoryService<UserRepository, UserEntity> {
@@ -81,51 +82,51 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 */
 
 	/**
-	 * Создать пользователя из DTO. Проверяет уникальность profile.email.
+	 * Создать пользователя из UserCreateCommand. Проверяет уникальность profile.email.
 	 */
-	public ServiceResponse<UserEntity> create(String requestId, UserCreateDto dto) {
+	public ServiceResponse<UserEntity> create(String requestId, UserCreateCommand cmd) {
 		// Уникальность по email
-		if (repository.existsByEmail(dto.getProfile().getEmail())) {
+		if (repository.existsByEmail(cmd.getProfile().getEmail())) {
 			throw new EntityAlreadyExistsException(UserEntity.class.getSimpleName(),
-					Map.of("profile.email", dto.getProfile().getEmail()));
+					Map.of("profile.email", cmd.getProfile().getEmail()));
 		}
 
 		var now = Instant.now();
 
 		var entity = new UserEntity();
-		entity.id = new ObjectId();
+		entity.setId(new ObjectId());
 
 		// profile
 		var profile = new UserEntity.Profile();
-		profile.email = dto.getProfile().getEmail().toLowerCase();
-		profile.firstName = dto.getProfile().getFirstName();
-		profile.lastName = dto.getProfile().getLastName();
-		profile.avatarFileId = null;
-		entity.profile = profile;
+		profile.setEmail(cmd.getProfile().getEmail().toLowerCase());
+		profile.setFirstName(cmd.getProfile().getFirstName());
+		profile.setLastName(cmd.getProfile().getLastName());
+		profile.setAvatarFileId();
+		entity.setProfile(profile);
 
 		// security
 		var sec = new UserEntity.Security();
-		sec.passwordHash = CryptoUtils.hashPassword(dto.getSecurity().getPassword());
-		entity.security = sec;
+		sec.setPasswordHash(CryptoUtils.hashPassword(cmd.getSecurity().getPassword()));
+		entity.setSecurity(sec);
 
 		// finance
 		var fin = new UserEntity.Finance();
-		fin.defaultAccountId = null;
-		fin.accountsCount = 0;
-		fin.paymentMethodIds = List.of();
-		entity.finance = fin;
+		fin.setDefaultAccountId(null);
+		fin.setPaymentMethodIds(Set.of());
+		entity.setFinance(fin);
 
 		// system
 		var sys = new UserEntity.System();
 		var meta = new UserEntity.Meta();
-		meta.createdAt = now;
-		meta.updatedAt = now;
-		meta.lastLoginAt = null;
-		sys.meta = meta;
-		entity.system = sys;
+		meta.setCreatedAt(now);
+		meta.setUpdatedAt(now);
+		meta.setLastLoginAt(null);
+		sys.setMeta(meta);
+		entity.setSystem(sys);
 
 		var created = super.createOne(entity);
-		this.info("user created", requestId, detailsOf("id", entity.id.toHexString(), "email", profile.email), true);
+		this.info("user created", requestId, detailsOf("id", entity.getId().toHexString(), "email", profile.getEmail()),
+				true);
 		return created;
 	}
 
@@ -133,7 +134,14 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * ? === === === Read === === ===
 	 */
 
-	/** Найти по email. */
+	/**
+	 * Получить пользователя по email.
+	 * 
+	 * @param requestId request-id для корреляции логов
+	 * @param email     email искомого пользователя
+	 * 
+	 * @return найденный пользователь по email
+	 */
 	public ServiceResponse<UserEntity> getByEmail(String requestId, String email) {
 		this.info("get user by email", requestId, detailsOf("email", email));
 		return this.getOne("profile.email", email.toLowerCase());
@@ -254,7 +262,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public ServiceResponse<String> uploadAvatar(String requestId, String userId, UploadedFile uf) {
 		// ensure exists and remember previous avatar id
 		UserEntity user = this.getById(userId).getData();
-		String oldAvatarId = user.getAvatarFileIdOptional().orElse(null);
+		ObjectId oldAvatarId = user.getProfile().getAvatarFileId();
 
 		// store new file
 		FileEntity stored = this.fileService.uploadOne(requestId, uf).getData();
@@ -271,8 +279,8 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 		// Лог: создан или обновлён аватар
 		if (oldAvatarId != null) {
-			this.info("user avatar updated", requestId,
-					detailsOf("userId", userId, "oldFileId", oldAvatarId, "newFileId", stored.id.toHexString()), true);
+			this.info("user avatar updated", requestId, detailsOf("userId", userId, "oldFileId",
+					oldAvatarId.toHexString(), "newFileId", stored.id.toHexString()), true);
 			// best-effort cleanup of previous avatar
 			try {
 				this.fileService.deleteById(requestId, oldAvatarId);
@@ -302,7 +310,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	public ServiceResponse<String> deleteAvatar(String requestId, String userId) {
 		UserEntity user = this.getById(userId).getData();
 
-		String avatarId = user.getAvatarFileIdOptional()
+		ObjectId avatarId = user.getAvatarFileIdOptional()
 				.orElseThrow(() -> new EntityNotFoundException("UserAvatar", "userId", userId));
 
 		// Clear reference in user
@@ -331,12 +339,12 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 * @return обновлённый пользователь с удалённым способом оплаты
 	 */
 	public ServiceResponse<UserEntity> deletePaymentMethod(String requestId, String userId, String methodId) {
-
 		UserEntity user = this.getById(userId).getData();
 
 		// проверка на наличие метода оплаты у пользователя
-		if (!user.finance.paymentMethodIds.contains(methodId)) {
-			throw new EntityNotFoundException("PaymentMethod", "PaymentMethods", user.finance.paymentMethodIds);
+		if (!user.hasPaymentMethod(methodId)) {
+			throw new EntityNotFoundException("PaymentMethod", "PaymentMethods",
+					user.getFinance().getPaymentMethodIds());
 		}
 
 		// удаляем метод оплаты

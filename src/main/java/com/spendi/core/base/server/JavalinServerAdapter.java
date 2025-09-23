@@ -20,6 +20,7 @@ package com.spendi.core.base.server;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.json.JavalinJackson;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -55,11 +56,11 @@ public class JavalinServerAdapter extends BaseClass implements HttpServerAdapter
 	public JavalinServerAdapter() {
 		super(EClassType.SYSTEM, JavalinServerAdapter.class.getSimpleName());
 
-		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules()
+		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules() // находим и регистрируем все модули
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
 		this.app = Javalin.create(cfg -> {
-			cfg.jsonMapper(new JavalinJackson(mapper));
+			cfg.jsonMapper(new JavalinJackson(mapper, false));
 		});
 
 		app.exception(Exception.class, (e, jctx) -> {

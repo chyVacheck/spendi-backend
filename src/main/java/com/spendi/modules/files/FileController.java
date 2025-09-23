@@ -13,6 +13,8 @@ package com.spendi.modules.files;
  */
 import java.util.List;
 
+import org.bson.types.ObjectId;
+
 /**
  * ! my imports
  */
@@ -27,7 +29,7 @@ import com.spendi.modules.files.dto.FileDownloadQuery;
 public class FileController extends BaseController {
 
 	protected static FileController INSTANCE = new FileController();
-    private final FileService fileService = FileService.getInstance();
+	private final FileService fileService = FileService.getInstance();
 
 	protected FileController() {
 		super(FileController.class.getSimpleName());
@@ -41,21 +43,17 @@ public class FileController extends BaseController {
 		List<UploadedFile> files = ctx.getFiles();
 
 		// Лог запроса на загрузку файла (несохраненный)
-		this.info("file upload requested", ctx.getRequestId(),
-				detailsOf("count", files.size()));
+		this.info("file upload requested", ctx.getRequestId(), detailsOf("count", files.size()));
 
 		var resp = this.fileService.createOne(ctx.getRequestId(), files.get(0));
 		FileEntity file = resp.getData();
 
-		ctx.res().success(ApiSuccessResponse.created(
-				ctx.getRequestId(),
-				"Uploaded one file",
-				IdDto.of(file.id.toHexString())));
+		ctx.res().success(
+				ApiSuccessResponse.created(ctx.getRequestId(), "Uploaded one file", IdDto.of(file.id.toHexString())));
 	}
 
 	/**
-	 * Скачать/просмотреть файл по id.
-	 * Query-параметр: download=true|1 — принудительно attachment.
+	 * Скачать/просмотреть файл по id. Query-параметр: download=true|1 — принудительно attachment.
 	 */
 	public void downloadOne(HttpContext ctx) {
 		IdDto params = ctx.getValidParams(IdDto.class);
@@ -66,15 +64,13 @@ public class FileController extends BaseController {
 		// Лог запроса скачивания файла (несохраненный)
 		this.info("file download requested", ctx.getRequestId(), detailsOf("id", params.id));
 
-		var resp = this.fileService.downloadOne(ctx.getRequestId(), params.id);
+		var resp = this.fileService.downloadOne(ctx.getRequestId(), new ObjectId(params.id));
 		DownloadedFile file = resp.getData();
 
-		String disposition = (attachment ? "attachment" : "inline") +
-				"; filename=\"" + (file.getFilename() == null ? (params.id + "") : file.getFilename()) + "\"";
+		String disposition = (attachment ? "attachment" : "inline") + "; filename=\""
+				+ (file.getFilename() == null ? (params.id + "") : file.getFilename()) + "\"";
 
-		ctx.res()
-				.header("Content-Type", file.getContentType())
-				.header("Content-Disposition", disposition)
+		ctx.res().header("Content-Type", file.getContentType()).header("Content-Disposition", disposition)
 				.sendBytes(file.getContent());
 	}
 
@@ -87,11 +83,8 @@ public class FileController extends BaseController {
 		// Лог запроса удаления файла (несохраненный)
 		this.info("file delete requested", ctx.getRequestId(), detailsOf("id", params.id));
 
-		var resp = this.fileService.deleteById(ctx.getRequestId(), params.id);
+		var resp = this.fileService.deleteById(ctx.getRequestId(), new ObjectId(params.id));
 
-		ctx.res().success(ApiSuccessResponse.ok(
-				ctx.getRequestId(),
-				"deleted",
-				detailsOf("id", resp.getData())));
+		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "deleted", detailsOf("id", resp.getData())));
 	}
 }

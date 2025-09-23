@@ -13,5 +13,4 @@ package com.spendi.modules.user.dto;
  */
 import com.spendi.core.dto.IdDto;
 
-public class UserIdParams extends IdDto {
-}
+public class UserIdParams extends IdDto {}

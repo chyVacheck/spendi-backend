@@ -150,24 +150,22 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 */
 
 	/**
-	 * Найти документ по ObjectId.
+	 * Найти документ по _id.
 	 *
-	 * @param id строковый ObjectId (24 hex-символа)
+	 * @param id ObjectId
 	 * @return Optional с документом или empty, если не найден
-	 * @throws IllegalArgumentException если id невалидный для ObjectId
 	 */
-	public Optional<Document> findDocById(String id) {
-		return Optional.ofNullable(collection.find(Filters.eq("_id", new ObjectId(id))).first());
+	public Optional<Document> findDocById(ObjectId id) {
+		return Optional.ofNullable(collection.find(Filters.eq("_id", id)).first());
 	}
 
 	/**
 	 * Найти сущность по ObjectId.
 	 *
-	 * @param id строковый ObjectId (24 hex-символа)
+	 * @param id ObjectId
 	 * @return Optional с сущностью или empty, если не найдено
-	 * @throws IllegalArgumentException если id невалидный для ObjectId
 	 */
-	public Optional<TEntity> findById(String id) {
+	public Optional<TEntity> findById(ObjectId id) {
 		return this.findDocById(id).map(this::toEntity);
 	}
 
@@ -323,25 +321,24 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	/**
 	 * @description Обновить документ по id и вернуть обновлённый документ.
 	 *
-	 * @param id      ObjectId в строковом виде
+	 * @param id      ObjectId
 	 * @param updates карта полей для обновления
 	 * @return Optional с обновлённым документом или empty, если документ не найден
 	 */
-	public Optional<Document> updateDocById(String id, GenericUpdate updates) {
+	public Optional<Document> updateDocById(ObjectId id, GenericUpdate updates) {
 		var opts = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
-		Document updated = collection.findOneAndUpdate(Filters.eq("_id", new ObjectId(id)), updates.toMongoDocument(),
-				opts);
+		Document updated = collection.findOneAndUpdate(Filters.eq("_id", id), updates.toMongoDocument(), opts);
 		return Optional.ofNullable(updated);
 	}
 
 	/**
 	 * @description Обновить документ по id и вернуть обновлённую сущность.
 	 *
-	 * @param id      ObjectId в строковом виде
+	 * @param id      ObjectId
 	 * @param updates карта полей для обновления
 	 * @return Optional с обновлённой сущностью или empty, если документ не найден
 	 */
-	public Optional<TEntity> updateById(String id, GenericUpdate updates) {
+	public Optional<TEntity> updateById(ObjectId id, GenericUpdate updates) {
 		return this.updateDocById(id, updates) // Optional<Document>
 				.map(this::toEntity); // Optional<TEntity>
 	}
@@ -432,8 +429,8 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 *
 	 * @param id ObjectId в строковом виде
 	 */
-	public Optional<String> deleteById(String id) {
-		Document deleted = collection.findOneAndDelete(Filters.eq("_id", new ObjectId(id)));
+	public Optional<String> deleteById(ObjectId id) {
+		Document deleted = collection.findOneAndDelete(Filters.eq("_id", id));
 		if (deleted == null)
 			return Optional.empty();
 		ObjectId deletedId = deleted.getObjectId("_id");

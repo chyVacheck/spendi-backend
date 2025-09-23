@@ -2,6 +2,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	
 	<groupId>com.spendi</groupId>
 	<artifactId>spendi</artifactId>
 	<packaging>jar</packaging>
@@ -13,41 +14,60 @@
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
+		<maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
+		<slf4j.version>2.0.17</slf4j.version>
+		<junit.version>5.13.4</junit.version>
+		<jackson.bom.version>2.20.0</jackson.bom.version>
+  	</properties>
+
+	<!-- Используем BOM, чтобы все Jackson-зависимости были в единой версии -->
+	<dependencyManagement>
+		<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson</groupId>
+			<artifactId>jackson-bom</artifactId>
+			<version>${jackson.bom.version}</version>
+			<type>pom</type>
+			<scope>import</scope>
+		</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
-		<!-- JUnit -->
+		<!-- Тесты: JUnit 5 -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.10.0</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.10.0</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Dotenv -->
 		<dependency>
 			<groupId>io.github.cdimascio</groupId>
 			<artifactId>dotenv-java</artifactId>
 			<version>3.0.0</version>
 		</dependency>
 
-		<!-- Javalin -->
+		<!-- Javalin (6.x) -->
 		<dependency>
 			<groupId>io.javalin</groupId>
 			<artifactId>javalin</artifactId>
-			<version>5.6.2</version>
+			<version>6.7.0</version>
 		</dependency>
 
-		<!-- Глушим чужие логи через SLF4J (или используй slf4j-simple, если нужно выводить) -->
+		<!-- Логи: глушилка; можно заменить на slf4j-simple для вывода -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-nop</artifactId>
-			<version>2.0.13</version>
+			<version>${slf4j.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -55,45 +75,51 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-sync</artifactId>
-			<version>5.2.0</version> <!-- или самая свежая -->
+			<version>5.6.0</version>
 		</dependency>
 
-		<!-- Jackson JSON -->
+		<!-- Jackson JSON (версии подтянутся из BOM) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.17.2</version>
 		</dependency>
-
-		<!-- Поддержка java.time.* -->
+		
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.17.2</version>
 		</dependency>
 
+		<!-- Bean Validation: API + реализация -->
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.1.0</version>
+			<version>3.1.1</version>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>8.0.1.Final</version>
+			<version>8.0.3.Final</version>
 		</dependency>
-
-		<!-- Для работы с Java 21 и датами -->
+		
+		<!-- Для EL, требуемой Hibernate Validator -->
 		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>jakarta.el</artifactId>
 			<version>4.0.2</version>
 		</dependency>
+
+		<!-- OpenAPI annotations for Javalin 6.x -->
+		<dependency>
+			<groupId>io.javalin.community.openapi</groupId>
+			<artifactId>openapi-specification</artifactId>
+			<version>6.7.0-2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
+			<!-- Собираем fat-jar с указанием Main-Class -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -107,12 +133,11 @@
 						<configuration>
 							<createDependencyReducedPom>true</createDependencyReducedPom>
 							<transformers>
-								<!-- Записываем Main-Class в MANIFEST -->
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>com.spendi.App</mainClass>
 								</transformer>
 							</transformers>
+
 							<release>21</release>
 							<source>21</source>
 							<target>21</target>
@@ -122,21 +147,55 @@
 				</executions>
 			</plugin>
 
+			<!-- Запуск приложения в dev через mvn exec:java -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>3.5.0</version>
 				<configuration>
-					<!-- Указываем главный класс приложения -->
 					<mainClass>com.spendi.App</mainClass>
-					<!-- Аргументы JVM для разработки -->
 					<options>
 						<option>-Dfile.encoding=UTF-8</option>
 						<option>-Xmx512m</option>
 					</options>
 				</configuration>
 			</plugin>
+			
+			<!-- Компилятор под Java 21 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
+				<configuration>
+					<source>21</source>
+					<target>21</target>
+					<encoding>UTF-8</encoding>
+					<!-- Добавляем процессор OpenAPI -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>io.javalin.community.openapi</groupId>
+							<artifactId>openapi-annotation-processor</artifactId>
+							<version>6.7.0-2</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
 
+			<!-- Запуск юнит-тестов JUnit 5 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven.surefire.plugin.version}</version>
+				<configuration>
+					<useSystemClassLoader>true</useSystemClassLoader>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+					</includes>
+				</configuration>
+			</plugin>
+
+			<!-- Обычный JAR (версии, манифест и т.п.) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

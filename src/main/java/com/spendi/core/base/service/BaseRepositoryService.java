@@ -25,6 +25,7 @@ package com.spendi.core.base.service;
  * ! lib imports
  */
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 /**
  * ! java imports
@@ -115,17 +116,33 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	/**
 	 * Получить документ по id.
 	 */
+	public ServiceResponse<Document> getDocById(ObjectId id) {
+		return this.repository.findDocById(id).map(doc -> ServiceResponse.founded(doc))
+				.orElseThrow(() -> new EntityNotFoundException(this.repository.getEntityClass().getSimpleName(),
+						Map.of("id", id.toHexString())));
+	}
+
+	/**
+	 * Получить документ по id.
+	 */
 	public ServiceResponse<Document> getDocById(String id) {
-		return this.repository.findDocById(id).map(doc -> ServiceResponse.founded(doc)).orElseThrow(
-				() -> new EntityNotFoundException(this.repository.getEntityClass().getSimpleName(), Map.of("id", id)));
+		return this.getDocById(new ObjectId(id));
+	}
+
+	/**
+	 * Получить сущность по id.
+	 */
+	public ServiceResponse<TEntity> getById(ObjectId id) {
+		return this.repository.findById(id).map(ServiceResponse::founded)
+				.orElseThrow(() -> new EntityNotFoundException(this.repository.getEntityClass().getSimpleName(),
+						Map.of("id", id.toHexString())));
 	}
 
 	/**
 	 * Получить сущность по id.
 	 */
 	public ServiceResponse<TEntity> getById(String id) {
-		return this.repository.findById(id).map(entity -> ServiceResponse.founded(entity)).orElseThrow(
-				() -> new EntityNotFoundException(this.repository.getEntityClass().getSimpleName(), Map.of("id", id)));
+		return this.getById(new ObjectId(id));
 	}
 
 	/**
@@ -269,6 +286,22 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	/**
 	 * Быстрый апдейт по id (без детекции no-op). Возвращает UPDATED.
 	 * 
+	 * @param id      ObjectId сущности
+	 * @param updates обновления
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return обновлённая сущность
+	 */
+	public ServiceResponse<TEntity> updateById(ObjectId id, GenericUpdate updates) {
+		return repository.updateById(id, updates).map(ServiceResponse::updated)
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(),
+						Map.of("id", id.toHexString())));
+	}
+
+	/**
+	 * Быстрый апдейт по id (без детекции no-op). Возвращает UPDATED.
+	 * 
 	 * @param id      строковый ObjectId сущности
 	 * @param updates обновления
 	 * 
@@ -277,8 +310,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	 * @return обновлённая сущность
 	 */
 	public ServiceResponse<TEntity> updateById(String id, GenericUpdate updates) {
-		return repository.updateById(id, updates).map(ServiceResponse::updated).orElseThrow(
-				() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(), Map.of("id", id)));
+		return this.updateById(new ObjectId(id), updates);
 	}
 
 	/**
@@ -352,6 +384,21 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	/**
 	 * Удалить документ по id. Возвращает удалённый id или NotFound.
 	 * 
+	 * @param id ObjectId сущности
+	 * 
+	 * @throws EntityNotFoundException если сущность не найдена
+	 * 
+	 * @return удалённый id
+	 */
+	public ServiceResponse<String> deleteById(ObjectId id) {
+		return repository.deleteById(id).map(ServiceResponse::deleted) // успех: DELETED + id
+				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(),
+						Map.of("id", id.toHexString())));
+	}
+
+	/**
+	 * Удалить документ по id. Возвращает удалённый id или NotFound.
+	 * 
 	 * @param id строковый ObjectId сущности
 	 * 
 	 * @throws EntityNotFoundException если сущность не найдена
@@ -359,9 +406,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	 * @return удалённый id
 	 */
 	public ServiceResponse<String> deleteById(String id) {
-		return repository.deleteById(id).map(ServiceResponse::deleted) // успех: DELETED + id
-				.orElseThrow(() -> new EntityNotFoundException(repository.getEntityClass().getSimpleName(),
-						Map.of("id", id)));
+		return this.deleteById(new ObjectId(id));
 	}
 
 	/**

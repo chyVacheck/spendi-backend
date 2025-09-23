@@ -1,50 +1,34 @@
 
 /**
- * @file EmployeeCreateDto.java
- * @module modules/employee/dto
+ * @file UserCreateCommand.java
+ * @module modules/user/command
  *
  * @author Dmytro Shakh
  */
 
-package com.spendi.modules.user.dto;
+package com.spendi.modules.user.command;
 
+/**
+ * ! my imports
+ */
 import com.spendi.core.utils.StringUtils;
 
 /**
- * ! lib imports
+ * DTO для создания пользователя. Валидируется BodyValidationMiddleware (Jakarta Bean Validation).
  */
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+public class UserCreateCommand {
 
-/**
- * DTO для создания сотрудника. Валидируется BodyValidationMiddleware (Jakarta Bean Validation).
- */
-public class UserCreateDto {
-
-	@Valid
-	@NotNull
 	private ProfileBlock profile;
 
-	@Valid
-	@NotNull
 	private SecurityBlock security;
 
 	// --- blocks ---
 
 	public static class ProfileBlock {
-		@Email
-		@NotBlank
 		private String email;
 
-		@Size(max = 80)
-		@NotBlank
 		private String firstName;
 
-		@Size(max = 80)
-		@NotBlank
 		private String lastName;
 
 		// --- getters ---
@@ -78,8 +62,6 @@ public class UserCreateDto {
 
 	public static class SecurityBlock {
 		/** Пароль в открытом виде — будет захеширован в сервисе. */
-		@NotBlank
-		@Size(min = 8, max = 128)
 		private String password;
 
 		// --- getters ---
@@ -91,7 +73,7 @@ public class UserCreateDto {
 		// --- setters ---
 
 		public void setPassword(String password) {
-			this.password = password.toLowerCase();
+			this.password = password;
 		}
 	}
 

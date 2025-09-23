@@ -19,7 +19,9 @@ public final class Jsons {
 	private static final ObjectMapper MAPPER = new ObjectMapper() // делаем mapper на основе ObjectMapper
 			.registerModule(new JavaTimeModule()) // подключаем модуль для работы с датами
 			.registerModule(new EnumFriendlyModule()) // подключаем модуль для работы с enum
-			.setSerializationInclusion(JsonInclude.Include.NON_NULL) // исключаем из сериализации null значения
+			// исключаем из сериализации null значения
+			.setDefaultPropertyInclusion(
+					JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL))
 			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
