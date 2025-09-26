@@ -18,11 +18,11 @@ import org.bson.Document;
 /**
  * ! my imports
  */
-import com.spendi.shared.model.meta.BaseMeta;
-import com.spendi.shared.model.meta.MetaFields;
 import com.spendi.core.base.BaseMapper;
 import com.spendi.core.types.DocMapper;
 import com.spendi.core.utils.InstantUtils;
+import com.spendi.shared.model.meta.BaseMeta;
+import com.spendi.shared.model.meta.MetaFields;
 
 public class BaseMetaMapper extends BaseMapper implements DocMapper<BaseMeta> {
 	private static final BaseMetaMapper INSTANCE = new BaseMetaMapper();

@@ -20,7 +20,7 @@ import com.spendi.core.types.EClassType;
 
 public abstract class BaseMapper extends BaseClass {
 
-	public BaseMapper(String className) {
+	protected BaseMapper(String className) {
 		super(EClassType.MAPPER, className);
 	}
 

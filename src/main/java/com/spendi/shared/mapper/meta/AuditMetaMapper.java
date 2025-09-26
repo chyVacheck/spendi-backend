@@ -18,19 +18,18 @@ import org.bson.Document;
 /**
  * ! my imports
  */
+import com.spendi.core.base.BaseMapper;
+import com.spendi.core.types.DocMapper;
 import com.spendi.core.utils.InstantUtils;
 import com.spendi.shared.model.meta.AuditMeta;
 import com.spendi.shared.model.meta.MetaFields;
 
-public class AuditMetaMapper extends BaseMetaMapper {
+public class AuditMetaMapper extends BaseMapper implements DocMapper<AuditMeta> {
 	private static final AuditMetaMapper INSTANCE = new AuditMetaMapper();
+	private static final BaseMetaMapper BASE = BaseMetaMapper.getInstance();
 
 	private AuditMetaMapper() {
 		super(AuditMetaMapper.class.getSimpleName());
-	}
-
-	protected AuditMetaMapper(String mapperName) {
-		super(mapperName);
 	}
 
 	public static AuditMetaMapper getInstance() {
@@ -40,7 +39,7 @@ public class AuditMetaMapper extends BaseMetaMapper {
 	public Document toDocument(AuditMeta meta) {
 		if (meta == null)
 			return null;
-		Document d = super.toDocument(meta);
+		Document d = BASE.toDocument(meta); // базовые поля
 		putIfNotNull(d, MetaFields.UPDATED_AT, meta.getUpdatedAt());
 		putIfNotNull(d, MetaFields.UPDATED_BY, meta.getUpdatedBy());
 		return d;

@@ -18,12 +18,15 @@ import org.bson.Document;
 /**
  * ! my imports
  */
+import com.spendi.core.base.BaseMapper;
+import com.spendi.core.types.DocMapper;
 import com.spendi.core.utils.InstantUtils;
 import com.spendi.shared.model.meta.LifecycleMeta;
 import com.spendi.shared.model.meta.MetaFields;
 
-public final class LifecycleMetaMapper extends AuditMetaMapper {
+public final class LifecycleMetaMapper extends BaseMapper implements DocMapper<LifecycleMeta> {
 	private static final LifecycleMetaMapper INSTANCE = new LifecycleMetaMapper();
+	private static final AuditMetaMapper AUDIT = AuditMetaMapper.getInstance();
 
 	private LifecycleMetaMapper() {
 		super(LifecycleMetaMapper.class.getSimpleName());
@@ -36,7 +39,7 @@ public final class LifecycleMetaMapper extends AuditMetaMapper {
 	public Document toDocument(LifecycleMeta meta) {
 		if (meta == null)
 			return null;
-		Document d = super.toDocument(meta);
+		Document d = AUDIT.toDocument(meta); // базовые поля
 		putIfNotNull(d, MetaFields.DELETED_AT, meta.getDeletedAt());
 		putIfNotNull(d, MetaFields.DELETED_BY, meta.getDeletedBy());
 		return d;
