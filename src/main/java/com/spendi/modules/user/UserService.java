@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Set;
 
-import com.spendi.core.base.database.MongoUpdateBuilder;
 /**
  * ! my imports
  */
+import com.spendi.core.base.database.MongoUpdateBuilder;
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.exceptions.EntityAlreadyExistsException;
 import com.spendi.core.exceptions.EntityNotFoundException;
@@ -40,10 +40,16 @@ import com.spendi.core.files.UploadedFile;
 import com.spendi.core.utils.CryptoUtils;
 import com.spendi.modules.files.FileService;
 import com.spendi.modules.files.FileEntity;
-import com.spendi.modules.payment.PaymentMethodEntity;
+import com.spendi.modules.payment.model.PaymentMethodEntity;
+import com.spendi.modules.user.cmd.UserCreateCmd;
+import com.spendi.modules.user.model.UserEntity;
+import com.spendi.modules.user.model.UserFinance;
+import com.spendi.modules.user.model.UserSystemMeta;
+import com.spendi.modules.user.model.UserProfile;
+import com.spendi.modules.user.model.UserSecurity;
+import com.spendi.modules.user.model.UserSystem;
 import com.spendi.modules.payment.PaymentMethodService;
-import com.spendi.modules.user.command.UserCreateCommand;
-import com.spendi.core.dto.PaginationQueryDto;
+import com.spendi.shared.dto.PaginationQueryDto;
 
 public class UserService extends BaseRepositoryService<UserRepository, UserEntity> {
 
@@ -84,7 +90,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	/**
 	 * Создать пользователя из UserCreateCommand. Проверяет уникальность profile.email.
 	 */
-	public ServiceResponse<UserEntity> create(String requestId, UserCreateCommand cmd) {
+	public ServiceResponse<UserEntity> create(String requestId, UserCreateCmd cmd) {
 		// Уникальность по email
 		if (repository.existsByEmail(cmd.getProfile().getEmail())) {
 			throw new EntityAlreadyExistsException(UserEntity.class.getSimpleName(),
@@ -97,30 +103,28 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 		entity.setId(new ObjectId());
 
 		// profile
-		var profile = new UserEntity.Profile();
+		var profile = new UserProfile();
 		profile.setEmail(cmd.getProfile().getEmail().toLowerCase());
 		profile.setFirstName(cmd.getProfile().getFirstName());
 		profile.setLastName(cmd.getProfile().getLastName());
-		profile.setAvatarFileId();
 		entity.setProfile(profile);
 
 		// security
-		var sec = new UserEntity.Security();
+		var sec = new UserSecurity();
 		sec.setPasswordHash(CryptoUtils.hashPassword(cmd.getSecurity().getPassword()));
 		entity.setSecurity(sec);
 
 		// finance
-		var fin = new UserEntity.Finance();
+		var fin = new UserFinance();
 		fin.setDefaultAccountId(null);
 		fin.setPaymentMethodIds(Set.of());
 		entity.setFinance(fin);
 
 		// system
-		var sys = new UserEntity.System();
-		var meta = new UserEntity.Meta();
+		var sys = new UserSystem();
+		var meta = new UserSystemMeta();
 		meta.setCreatedAt(now);
 		meta.setUpdatedAt(now);
-		meta.setLastLoginAt(null);
 		sys.setMeta(meta);
 		entity.setSystem(sys);
 
@@ -202,6 +206,27 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 	/**
 	 * @param requestId     request-id для корреляции логов
+	 * @param userId        ObjectId пользователя
+	 * @param paymentMethod способ оплаты
+	 * 
+	 * @return обновлённый пользователь с добавленным способом оплаты
+	 */
+	public ServiceResponse<UserEntity> addPaymentMethod(String requestId, ObjectId userId,
+			PaymentMethodEntity paymentMethod) {
+
+		this.info("add payment method to user", requestId,
+				detailsOf("userId", userId, "paymentMethodId", paymentMethod.getHexId()));
+
+		var updateBuilder = new MongoUpdateBuilder();
+		updateBuilder.currentDate("system.meta.updatedAt");
+		updateBuilder.addToSet("finance.paymentMethodIds", paymentMethod.getHexId());
+		updateBuilder.incOne("finance.accountsCount");
+
+		return this.updateById(userId, updateBuilder.build());
+	}
+
+	/**
+	 * @param requestId     request-id для корреляции логов
 	 * @param userId        строковый ObjectId пользователя
 	 * @param paymentMethod способ оплаты
 	 * 
@@ -209,17 +234,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 	 */
 	public ServiceResponse<UserEntity> addPaymentMethod(String requestId, String userId,
 			PaymentMethodEntity paymentMethod) {
-
-		this.info("add payment method to user", requestId,
-				detailsOf("userId", userId, "paymentMethodId", paymentMethod.id.toHexString()));
-
-		// append to user's finance.paymentMethodIds using $addToSet
-		var updateBuilder = new MongoUpdateBuilder();
-		updateBuilder.currentDate("system.meta.updatedAt");
-		updateBuilder.addToSet("finance.paymentMethodIds", paymentMethod.id.toHexString());
-		updateBuilder.incOne("finance.accountsCount");
-
-		return this.updateById(userId, updateBuilder.build());
+		return this.addPaymentMethod(requestId, new ObjectId(userId), paymentMethod);
 	}
 
 	/**
@@ -238,7 +253,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 			String methodId, int order) {
 		PaymentMethodEntity pm = this.paymentMethodService.getById(methodId).getData();
 
-		if (pm.userId == null || !pm.userId.toHexString().equals(userId)) {
+		if (pm.getUserId().toHexString().equals(userId)) {
 			// если не совпадает, просто отдаём not found
 			throw new EntityNotFoundException(PaymentMethodEntity.class.getSimpleName(),
 					Map.of("id", methodId, "userId", userId));

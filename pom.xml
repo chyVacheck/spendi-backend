@@ -18,6 +18,7 @@
 		<slf4j.version>2.0.17</slf4j.version>
 		<junit.version>5.13.4</junit.version>
 		<jackson.bom.version>2.20.0</jackson.bom.version>
+		<lombok.version>1.18.34</lombok.version>
   	</properties>
 
 	<!-- Используем BOM, чтобы все Jackson-зависимости были в единой версии -->
@@ -109,6 +110,14 @@
 			<version>4.0.2</version>
 		</dependency>
 
+		<!-- Lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<!-- OpenAPI annotations for Javalin 6.x -->
 		<dependency>
 			<groupId>io.javalin.community.openapi</groupId>
@@ -137,11 +146,6 @@
 									<mainClass>com.spendi.App</mainClass>
 								</transformer>
 							</transformers>
-
-							<release>21</release>
-							<source>21</source>
-							<target>21</target>
-							<encoding>UTF-8</encoding>
 						</configuration>
 					</execution>
 				</executions>
@@ -170,12 +174,18 @@
 					<source>21</source>
 					<target>21</target>
 					<encoding>UTF-8</encoding>
-					<!-- Добавляем процессор OpenAPI -->
 					<annotationProcessorPaths>
+						<!-- Добавляем процессор OpenAPI -->
 						<path>
 							<groupId>io.javalin.community.openapi</groupId>
 							<artifactId>openapi-annotation-processor</artifactId>
 							<version>6.7.0-2</version>
+						</path>
+						<!-- Lombok processor (НУЖНО ДОБАВИТЬ) -->
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>

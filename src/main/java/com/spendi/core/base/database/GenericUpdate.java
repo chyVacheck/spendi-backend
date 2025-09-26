@@ -21,17 +21,17 @@ import java.util.List;
 import java.util.Map;
 
 public class GenericUpdate {
-	private Map<String, Object> setOperations;
-	private Map<String, Number> incOperations;
-	private Map<String, Object> unsetOperations;
-	private Map<String, Object> pushOperations;
-	private Map<String, Object> pullOperations;
-	private Map<String, Object> addToSetOperations;
-	private Map<String, Number> mulOperations;
-	private Map<String, String> renameOperations;
-	private Map<String, Object> minOperations;
-	private Map<String, Object> maxOperations;
-	private Map<String, Object> currentDateOperations;
+	private Map<String, Object> setOperations = null;
+	private Map<String, Number> incOperations = null;
+	private Map<String, Object> unsetOperations = null;
+	private Map<String, Object> pushOperations = null;
+	private Map<String, Object> pullOperations = null;
+	private Map<String, Object> addToSetOperations = null;
+	private Map<String, Number> mulOperations = null;
+	private Map<String, String> renameOperations = null;
+	private Map<String, Object> minOperations = null;
+	private Map<String, Object> maxOperations = null;
+	private Map<String, Object> currentDateOperations = null;
 
 	/**
 	 * Метод для установки значения поля.

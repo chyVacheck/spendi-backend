@@ -29,20 +29,24 @@ import java.util.Map;
  */
 import com.spendi.core.base.BaseController;
 import com.spendi.core.base.http.HttpContext;
-import com.spendi.core.dto.IdDto;
 import com.spendi.core.response.ApiSuccessResponse;
 import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.types.ServiceProcessType;
 import com.spendi.modules.files.FileService;
 import com.spendi.modules.session.SessionEntity;
+import com.spendi.modules.user.model.UserEntity;
+import com.spendi.shared.dto.IdParams;
+import com.spendi.shared.dto.PaginationQueryDto;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.http.HttpStatusCode;
 import com.spendi.core.files.DownloadedFile;
+import com.spendi.modules.payment.PaymentMethodMapper;
 import com.spendi.modules.payment.PaymentMethodService;
-import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
+import com.spendi.modules.payment.cmd.PaymentMethodCreateCmd;
 import com.spendi.modules.payment.dto.PaymentMethodIdParams;
 import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
-import com.spendi.core.dto.PaginationQueryDto;
+import com.spendi.modules.payment.dto.create.PaymentMethodCreateDto;
+import com.spendi.modules.payment.model.PaymentMethodEntity;
 
 /**
  * Контроллер для управления пользователями и связанными с ними данными.
@@ -74,6 +78,8 @@ public class UserController extends BaseController {
 	private final FileService fileService = FileService.getInstance();
 	/** Сервис для работы с методами оплаты */
 	private final PaymentMethodService paymentService = PaymentMethodService.getInstance();
+	/** Mapper для преобразования DTO в команды создания методов оплаты */
+	private final PaymentMethodMapper paymentMapper = PaymentMethodMapper.getInstance();
 
 	/**
 	 * Приватный конструктор для реализации паттерна Singleton. Инициализирует контроллер с именем класса для
@@ -155,15 +161,15 @@ public class UserController extends BaseController {
 	 * 
 	 * @apiNote Возвращает только публичные данные пользователя
 	 * @see UserEntity#getPublicData()
-	 * @see IdDto
+	 * @see IdParams
 	 */
 	public void getOneById(HttpContext ctx) {
-		IdDto params = ctx.getValidParams(IdDto.class);
+		IdParams p = ctx.getValidParams(IdParams.class);
 
 		// Лог запроса сущности пользователя (несохраненный)
-		this.info("User get by id", ctx.getRequestId(), detailsOf("userId", params.id));
+		this.info("User get by id", ctx.getRequestId(), detailsOf("userId", p.getId()));
 
-		var resp = this.userService.getById(params.id);
+		var resp = this.userService.getById(p.getId());
 		UserEntity user = resp.getData();
 
 		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail(), user.getPublicData()));
@@ -239,13 +245,13 @@ public class UserController extends BaseController {
 	 * GET /users/{id}/avatar: stream the avatar content inline
 	 */
 	public void getAvatar(HttpContext ctx) {
-		IdDto params = ctx.getValidParams(IdDto.class);
+		IdParams p = ctx.getValidParams(IdParams.class);
 
 		// Лог запроса получения аватара (несохраненный)
-		this.info("user avatar get requested", ctx.getRequestId(), detailsOf("userId", params.id));
+		this.info("user avatar get requested", ctx.getRequestId(), detailsOf("userId", p.getId()));
 
 		// read user to get file id
-		var u = this.userService.getById(params.id).getData();
+		var u = this.userService.getById(p.getId()).getData();
 		if (!u.hasAvatar()) {
 			this.debug("No avatar");
 			ctx.res().status(HttpStatusCode.NO_CONTENT.getCode());
@@ -255,7 +261,7 @@ public class UserController extends BaseController {
 		DownloadedFile file = fileResp.getData();
 
 		String disposition = "inline; filename=\""
-				+ (file.getFilename() == null ? (params.id + "") : file.getFilename()) + "\"";
+				+ (file.getFilename() == null ? (p.getId() + "") : file.getFilename()) + "\"";
 		ctx.res().header("Content-Type", file.getContentType()).header("Content-Disposition", disposition)
 				.sendBytes(file.getContent());
 	}
@@ -355,12 +361,13 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 		PaymentMethodCreateDto dto = ctx.getValidBody(PaymentMethodCreateDto.class);
 
-		// todo мапить dto в command для создания метода оплаты
+		PaymentMethodCreateCmd cmd = paymentMapper.toCmd(dto);
 
-		var created = this.paymentService.createOne(ctx.getRequestId(), s.userId.toHexString(), dto).getData();
+		PaymentMethodEntity created = this.paymentService.createOne(ctx.getRequestId(), s.userId.toHexString(), cmd)
+				.getData();
 
-		// todo переделать сервис для принятия только ObjectId
-		var updated = this.userService.addPaymentMethod(ctx.getRequestId(), s.userId.toHexString(), created).getData();
+		UserEntity updated = this.userService.addPaymentMethod(ctx.getRequestId(), s.userId.toHexString(), created)
+				.getData();
 
 		ctx.res().success(
 				ApiSuccessResponse.created(ctx.getRequestId(), "payment method created", updated.getPrivateData()));
@@ -371,17 +378,14 @@ public class UserController extends BaseController {
 	 */
 	public void updatePaymentMethodOrder(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
-		var params = ctx.getValidParams(PaymentMethodIdParams.class);
+		var p = ctx.getValidParams(PaymentMethodIdParams.class);
 		PaymentMethodOrderDto dto = ctx.getValidBody(PaymentMethodOrderDto.class);
 
-		// todo мапить dto в command для создания метода оплаты
-		// todo принимать в сервисе command
+		PaymentMethodEntity updated = this.userService
+				.updatePaymentMethodOrder(ctx.getRequestId(), s.userId.toHexString(), p.getPmId(), dto.order).getData();
 
-		var updated = this.userService.updatePaymentMethodOrder(ctx.getRequestId(), s.userId.toHexString(), params.pmId,
-				dto.order);
-
-		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "payment method order updated",
-				updated.getData().getPublicData()));
+		ctx.res().success(
+				ApiSuccessResponse.ok(ctx.getRequestId(), "payment method order updated", updated.getPublicData()));
 	}
 
 	/**
@@ -393,12 +397,12 @@ public class UserController extends BaseController {
 	 */
 	public void deletePaymentMethod(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
-		var params = ctx.getValidParams(PaymentMethodIdParams.class);
+		var p = ctx.getValidParams(PaymentMethodIdParams.class);
 
-		this.userService.deletePaymentMethod(ctx.getRequestId(), s.userId.toHexString(), params.pmId);
+		this.userService.deletePaymentMethod(ctx.getRequestId(), s.userId.toHexString(), p.getPmId());
 
 		ctx.res().success(
-				ApiSuccessResponse.ok(ctx.getRequestId(), "payment method deleted", detailsOf("id", params.pmId)));
+				ApiSuccessResponse.ok(ctx.getRequestId(), "payment method deleted", detailsOf("id", p.getPmId())));
 	}
 
 	/**

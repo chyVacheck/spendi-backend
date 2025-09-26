@@ -23,9 +23,9 @@ import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.exceptions.ValidationException;
 import com.spendi.modules.auth.dto.LoginDto;
 import com.spendi.modules.auth.dto.RegisterDto;
-import com.spendi.modules.user.UserEntity;
 import com.spendi.modules.user.UserService;
-import com.spendi.modules.user.command.UserCreateCommand;
+import com.spendi.modules.user.cmd.UserCreateCmd;
+import com.spendi.modules.user.model.UserEntity;
 import com.spendi.modules.session.SessionService;
 
 /**
@@ -55,7 +55,7 @@ public class AuthService extends BaseService {
 	 */
 	public ServiceResponse<UserEntity> register(String requestId, RegisterDto dto) {
 		// маппим dto в command
-		UserCreateCommand command = authMapper.toCmd(dto);
+		UserCreateCmd command = authMapper.toCmd(dto);
 
 		// создаем пользователя
 		var created = this.userService.create(requestId, command);

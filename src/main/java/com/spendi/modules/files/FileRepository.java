@@ -1,3 +1,4 @@
+
 /**
  * @file FileRepository.java
  * @module modules/files
@@ -31,6 +32,10 @@ public class FileRepository extends BaseRepository<FileEntity> {
 	public FileRepository(MongoDatabase db) {
 		super(FileRepository.class.getSimpleName(), FileEntity.class, db, COLLECTION);
 	}
+
+	/**
+	 * ? === === === MAPPING === === ===
+	 */
 
 	@Override
 	protected FileEntity toEntity(Document doc) {

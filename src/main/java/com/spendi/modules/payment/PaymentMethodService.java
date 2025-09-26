@@ -20,8 +20,12 @@ import com.spendi.core.base.database.MongoUpdateBuilder;
  */
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.response.ServiceResponse;
-import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
-import com.spendi.modules.payment.types.EPaymentMethodStatus;
+import com.spendi.modules.payment.cmd.PaymentMethodCreateCmd;
+import com.spendi.modules.payment.model.EPaymentMethodStatus;
+import com.spendi.modules.payment.model.PaymentMethodEntity;
+import com.spendi.modules.payment.model.PaymentMethodInfo;
+import com.spendi.modules.payment.model.PaymentMethodSystem;
+import com.spendi.shared.model.EntityMeta;
 
 public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRepository, PaymentMethodEntity> {
 
@@ -54,58 +58,37 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 	 * @param dto       данные для создания способа оплаты
 	 * @return созданный способ оплаты
 	 */
-	public ServiceResponse<PaymentMethodEntity> createOne(String requestId, String userId, PaymentMethodCreateDto dto) {
-		var now = Instant.now();
+	public ServiceResponse<PaymentMethodEntity> createOne(String requestId, String userId, PaymentMethodCreateCmd cmd) {
+		final Instant now = Instant.now();
 
-		// Assemble entity
-		PaymentMethodEntity e = new PaymentMethodEntity();
-		var info = new PaymentMethodEntity.Info();
-		info.type = dto.info.type;
-		info.name = dto.info.name;
-		info.currency = dto.info.currency;
-		info.order = dto.info.order;
-		info.tags = dto.info.tags;
-		e.info = info;
+		final PaymentMethodEntity e = new PaymentMethodEntity();
+		e.setId(new ObjectId());
+		e.setUserId(new ObjectId(userId));
 
-		var details = new PaymentMethodEntity.Details();
-		if (dto.details != null) {
-			if (dto.details.card != null) {
-				var c = new PaymentMethodEntity.Card();
-				c.brand = dto.details.card.brand;
-				c.last4 = dto.details.card.last4;
-				c.expMonth = dto.details.card.expMonth;
-				c.expYear = dto.details.card.expYear;
-				details.card = c;
-			}
-			if (dto.details.bank != null) {
-				var b = new PaymentMethodEntity.Bank();
-				b.bankName = dto.details.bank.bankName;
-				b.accountMasked = dto.details.bank.accountMasked;
-				details.bank = b;
-			}
-			if (dto.details.wallet != null) {
-				var w = new PaymentMethodEntity.Wallet();
-				w.provider = dto.details.wallet.provider;
-				w.handle = dto.details.wallet.handle;
-				details.wallet = w;
-			}
-		}
-		e.details = details;
+		// info
+		final var srcInfo = cmd.getInfo();
+		final var info = new PaymentMethodInfo();
+		info.setType(srcInfo.getType());
+		info.setName(srcInfo.getName());
+		info.setCurrency(srcInfo.getCurrency());
+		info.setOrder(srcInfo.getOrder());
+		info.setTags(srcInfo.getTags());
 
-		var sys = new PaymentMethodEntity.System();
-		sys.status = EPaymentMethodStatus.ACTIVE;
-		sys.meta = new PaymentMethodEntity.Meta();
-		sys.meta.createdAt = now;
-		sys.meta.updatedAt = null;
-		sys.meta.deletedAt = null;
-		e.system = sys;
+		// details (уже полиморфный объект: CardDetails | BankDetails | WalletDetails)
+		e.setDetails(cmd.getDetails());
 
-		e.id = new ObjectId();
-		e.userId = new ObjectId(userId);
+		// system
+		final var meta = new EntityMeta();
+		meta.setCreatedAt(now);
+		meta.setUpdatedAt(null);
+		meta.setDeletedAt(null);
 
-		var created = super.createOne(e);
+		final var sys = new PaymentMethodSystem();
+		sys.setStatus(EPaymentMethodStatus.ACTIVE);
+		sys.setMeta(meta);
+		e.setSystem(sys);
 
-		return created;
+		return super.createOne(e);
 	}
 
 	/**
@@ -121,8 +104,9 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 			int order) {
 		// ensure belongs to user
 		var pm = this.getById(methodId).getData();
-		if (pm.userId == null || !pm.userId.toHexString().equals(userId)) {
-			// если не совпадает, просто отдаём not found
+
+		// если не совпадает, просто отдаём not found
+		if (!pm.getUserId().toHexString().equals(userId)) {
 			throw new com.spendi.core.exceptions.EntityNotFoundException(PaymentMethodEntity.class.getSimpleName(),
 					Map.of("id", methodId, "userId", userId));
 		}

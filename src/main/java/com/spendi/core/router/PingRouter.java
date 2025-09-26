@@ -36,17 +36,14 @@ public class PingRouter extends ApiRouter {
 	public void configure(HttpServerAdapter http) {
 		// GET /ping
 		this.get("/", ctx -> {
-			ctx.res().status(200).sendJson(
-					Map.of("status", "ok"));
+			ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "ok", Map.of("status", "ok")));
 		});
 
 		// GET /ping/version
 		this.get("/version", ctx -> {
-			ctx.res().success(ApiSuccessResponse.ok(
-					ctx.getRequestId(), "ok",
-					Map.of(
-							"status", "ok",
-							"version", AppVersion.get())));
+			ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "ok",
+					Map.of("status", "ok", "version", AppVersion.get())));
 		});
 	}
+
 }

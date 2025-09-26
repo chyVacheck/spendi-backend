@@ -8,9 +8,6 @@
 
 package com.spendi.modules.user.dto;
 
-/**
- * ! my imports
- */
-import com.spendi.core.dto.IdDto;
+import com.spendi.shared.dto.IdParams;
 
-public class UserIdParams extends IdDto {}
+public class UserIdParams extends IdParams {}

@@ -13,7 +13,7 @@ package com.spendi.modules.auth;
  */
 import com.spendi.core.base.BaseMapper;
 import com.spendi.modules.auth.dto.RegisterDto;
-import com.spendi.modules.user.command.UserCreateCommand;
+import com.spendi.modules.user.cmd.UserCreateCmd;
 
 public class AuthMapper extends BaseMapper {
 	final private static AuthMapper INSTANCE = new AuthMapper();
@@ -26,22 +26,22 @@ public class AuthMapper extends BaseMapper {
 		return INSTANCE;
 	}
 
-	public UserCreateCommand toCmd(RegisterDto dto) {
-		UserCreateCommand command = new UserCreateCommand();
+	public UserCreateCmd toCmd(RegisterDto dto) {
+		UserCreateCmd cmd = new UserCreateCmd();
 
-		UserCreateCommand.ProfileBlock profile = new UserCreateCommand.ProfileBlock();
+		UserCreateCmd.ProfileBlock profile = new UserCreateCmd.ProfileBlock();
 
 		profile.setEmail(dto.getEmail());
 		profile.setFirstName(dto.getFirstName());
 		profile.setLastName(dto.getLastName());
 
-		UserCreateCommand.SecurityBlock security = new UserCreateCommand.SecurityBlock();
+		UserCreateCmd.SecurityBlock security = new UserCreateCmd.SecurityBlock();
 
 		security.setPassword(dto.getPassword());
 
-		command.setProfile(profile);
-		command.setSecurity(security);
+		cmd.setProfile(profile);
+		cmd.setSecurity(security);
 
-		return command;
+		return cmd;
 	}
 }

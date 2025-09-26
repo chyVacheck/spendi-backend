@@ -46,6 +46,10 @@ public class SessionRepository extends BaseRepository<SessionEntity> {
 		collection.createIndex(Indexes.ascending("revoked"));
 	}
 
+	/**
+	 * ? === === === MAPPING === === ===
+	 */
+
 	@Override
 	protected SessionEntity toEntity(Document doc) {
 		if (doc == null)

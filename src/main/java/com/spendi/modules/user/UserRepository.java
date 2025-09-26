@@ -23,11 +23,14 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 
+import java.util.ArrayList;
 /**
  * ! java imports
  */
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +38,12 @@ import java.util.stream.Collectors;
  */
 import com.spendi.core.base.BaseRepository;
 import com.spendi.core.utils.InstantUtils;
+import com.spendi.modules.user.model.UserEntity;
+import com.spendi.modules.user.model.UserFinance;
+import com.spendi.modules.user.model.UserSystemMeta;
+import com.spendi.modules.user.model.UserProfile;
+import com.spendi.modules.user.model.UserSecurity;
+import com.spendi.modules.user.model.UserSystem;
 
 public class UserRepository extends BaseRepository<UserEntity> {
 
@@ -50,9 +59,9 @@ public class UserRepository extends BaseRepository<UserEntity> {
 		collection.createIndex(Indexes.ascending("profile.email"), new IndexOptions().unique(true));
 	}
 
-	// =========================
-	// ======= MAPPING =========
-	// =========================
+	/**
+	 * ? === === === MAPPING === === ===
+	 */
 
 	@Override
 	protected UserEntity toEntity(Document doc) {
@@ -62,13 +71,12 @@ public class UserRepository extends BaseRepository<UserEntity> {
 		UserEntity e = new UserEntity();
 
 		// _id
-		ObjectId id = doc.getObjectId("_id");
-		e.setId(id);
+		e.setId(doc.getObjectId("_id"));
 
 		// profile
 		{
 			Document d = doc.get("profile", Document.class);
-			UserEntity.Profile p = new UserEntity.Profile();
+			UserProfile p = new UserProfile();
 			if (d != null) {
 				p.setEmail(d.getString("email"));
 				p.setFirstName(d.getString("firstName"));
@@ -81,7 +89,7 @@ public class UserRepository extends BaseRepository<UserEntity> {
 		// security
 		{
 			Document d = doc.get("security", Document.class);
-			UserEntity.Security s = new UserEntity.Security();
+			UserSecurity s = new UserSecurity();
 			if (d != null) {
 				s.setPasswordHash(d.getString("passwordHash"));
 			}
@@ -91,30 +99,41 @@ public class UserRepository extends BaseRepository<UserEntity> {
 		// finance
 		{
 			Document d = doc.get("finance", Document.class);
-			UserEntity.Finance f = new UserEntity.Finance();
+			UserFinance f = new UserFinance();
 			if (d != null) {
 				f.setDefaultAccountId(d.getObjectId("defaultAccountId"));
+
+				// ожидаем массив ObjectId; но на всякий случай поддержим строки
 				@SuppressWarnings("unchecked")
-				List<String> pms = (List<String>) d.get("paymentMethodIds", List.class);
-				f.setPaymentMethodIds(pms.stream().map(ObjectId::new).collect(Collectors.toSet()));
+				List<Object> raw = (List<Object>) d.get("paymentMethodIds", List.class);
+				if (raw != null) {
+					Set<ObjectId> ids = raw.stream().filter(Objects::nonNull)
+							.map(o -> (o instanceof ObjectId oid) ? oid : new ObjectId(o.toString()))
+							.collect(Collectors.toUnmodifiableSet());
+					f.setPaymentMethodIds(ids);
+				} else {
+					f.setPaymentMethodIds(Set.of());
+				}
 			}
 			e.setFinance(f);
 		}
 
-		// system
+		// system (meta + lastLoginAt в system-уровне)
 		{
 			Document d = doc.get("system", Document.class);
-			UserEntity.System s = new UserEntity.System();
+			UserSystem s = new UserSystem();
 			if (d != null) {
+				// lastLoginAt хранится на уровне system
+				Object lla = d.get("lastLoginAt");
+				s.setLastLoginAt(InstantUtils.getInstantOrNull(lla));
+
+				// meta внутри system
 				Document m = d.get("meta", Document.class);
-				UserEntity.Meta meta = new UserEntity.Meta();
+				UserSystemMeta meta = new UserSystemMeta();
 				if (m != null) {
-					Object ca = m.get("createdAt");
-					Object ua = m.get("updatedAt");
-					Object la = m.get("lastLoginAt");
-					meta.setCreatedAt(InstantUtils.getInstantOrNull(ca));
-					meta.setUpdatedAt(InstantUtils.getInstantOrNull(ua));
-					meta.setLastLoginAt(InstantUtils.getInstantOrNull(la));
+					meta.setCreatedAt(InstantUtils.getInstantOrNull(m.get("createdAt")));
+					meta.setUpdatedAt(InstantUtils.getInstantOrNull(m.get("updatedAt")));
+					meta.setDeletedAt(InstantUtils.getInstantOrNull(m.get("deletedAt")));
 				}
 				s.setMeta(meta);
 			}
@@ -132,46 +151,58 @@ public class UserRepository extends BaseRepository<UserEntity> {
 
 		// profile
 		{
+			UserProfile p = e.getProfile();
 			Document d = new Document();
-
-			d.put("email", e.getProfile().getEmail());
-			d.put("firstName", e.getProfile().getFirstName());
-			d.put("lastName", e.getProfile().getLastName());
-			d.put("avatarFileId", e.getProfile().getAvatarFileId());
-
+			if (p != null) {
+				d.put("email", p.getEmail());
+				d.put("firstName", p.getFirstName());
+				d.put("lastName", p.getLastName());
+				d.put("avatarFileId", p.getAvatarFileId());
+			}
 			doc.put("profile", d);
 		}
 
 		// security
 		{
+			UserSecurity s = e.getSecurity();
 			Document d = new Document();
-
-			d.put("passwordHash", e.getSecurity().getPasswordHash());
-
+			if (s != null) {
+				d.put("passwordHash", s.getPasswordHash());
+			}
 			doc.put("security", d);
 		}
 
 		// finance
 		{
+			UserFinance f = e.getFinance();
 			Document d = new Document();
-
-			d.put("defaultAccountId", e.getFinance().getDefaultAccountId());
-			d.put("paymentMethodIds", List.copyOf(e.getFinance().getPaymentMethodIds())); // todo set
-
+			if (f != null) {
+				d.put("defaultAccountId", f.getDefaultAccountId());
+				// в базе храним как список ObjectId
+				List<ObjectId> pms = f.getPaymentMethodIds() == null ? List.of()
+						: new ArrayList<>(f.getPaymentMethodIds());
+				d.put("paymentMethodIds", pms);
+			}
 			doc.put("finance", d);
 		}
 
-		// system
+		// system (meta + lastLoginAt)
 		{
+			UserSystem s = e.getSystem();
 			Document d = new Document();
-			// meta
-			UserEntity.Meta meta = e.getSystem().getMeta();
-			Document m = new Document();
-			m.put("createdAt", meta.getCreatedAt());
-			m.put("updatedAt", meta.getUpdatedAt());
-			m.put("lastLoginAt", meta.getLastLoginAt());
-			d.put("meta", m);
+			if (s != null) {
+				// lastLoginAt на уровне system
+				d.put("lastLoginAt", s.getLastLoginAt());
 
+				UserSystemMeta meta = s.getMeta();
+				Document m = new Document();
+				if (meta != null) {
+					m.put("createdAt", meta.getCreatedAt());
+					m.put("updatedAt", meta.getUpdatedAt());
+					m.put("deletedAt", meta.getDeletedAt());
+				}
+				d.put("meta", m);
+			}
 			doc.put("system", d);
 		}
 

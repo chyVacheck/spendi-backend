@@ -15,7 +15,6 @@ import com.spendi.config.FileValidationConfig;
 // core -> base
 import com.spendi.core.base.server.HttpServerAdapter;
 import com.spendi.core.base.server.javalin.middleware.JavalinMultipartParserMiddleware;
-import com.spendi.core.dto.PaginationQueryDto;
 // core -> middleware
 import com.spendi.core.middleware.AuthMiddleware;
 import com.spendi.core.middleware.FileValidationMiddleware;
@@ -30,10 +29,10 @@ import com.spendi.core.files.validation.FileValidationRules;
 import com.spendi.core.router.ApiRouter;
 // user -> dto
 import com.spendi.modules.user.dto.UserIdParams;
-import com.spendi.modules.user.dto.UserPaymentMethodIdParams;
-// payment -> dto
-import com.spendi.modules.payment.dto.PaymentMethodCreateDto;
+import com.spendi.shared.dto.PaginationQueryDto;
+import com.spendi.modules.payment.dto.PaymentMethodIdParams;
 import com.spendi.modules.payment.dto.PaymentMethodOrderDto;
+import com.spendi.modules.payment.dto.create.PaymentMethodCreateDto;
 
 public class UserRouter extends ApiRouter {
 	public UserController controller = UserController.getInstance();
@@ -116,7 +115,7 @@ public class UserRouter extends ApiRouter {
 
 		// Обновить порядок методов оплаты авторизованого пользователя
 		this.put("/me/payment-methods/{pmId}/order", controller::updatePaymentMethodOrder,
-				ParamsValidationMiddleware.of(UserPaymentMethodIdParams.class), new JsonBodyParserMiddleware(),
+				ParamsValidationMiddleware.of(PaymentMethodIdParams.class), new JsonBodyParserMiddleware(),
 				BodyValidationMiddleware.of(PaymentMethodOrderDto.class));
 
 		/**
@@ -125,7 +124,7 @@ public class UserRouter extends ApiRouter {
 
 		// Удалить метод оплаты авторизованого пользователя
 		this.delete("/me/payment-methods/{pmId}", controller::deletePaymentMethod,
-				ParamsValidationMiddleware.of(UserPaymentMethodIdParams.class));
+				ParamsValidationMiddleware.of(PaymentMethodIdParams.class));
 
 	}
 }

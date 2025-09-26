@@ -20,18 +20,29 @@ import com.mongodb.client.model.Indexes;
  * ! java imports
  */
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * ! my imports
  */
 import com.spendi.core.base.BaseRepository;
-import com.spendi.core.utils.InstantUtils;
-import com.spendi.modules.payment.types.EPaymentMethodStatus;
-import com.spendi.modules.payment.types.EPaymentMethodType;
+import com.spendi.modules.payment.model.BankDetails;
+import com.spendi.modules.payment.model.CardDetails;
+import com.spendi.modules.payment.model.PaymentMethodDetails;
+import com.spendi.modules.payment.model.EPaymentMethodStatus;
+import com.spendi.modules.payment.model.EPaymentMethodType;
+import com.spendi.modules.payment.model.PaymentMethodEntity;
+import com.spendi.modules.payment.model.PaymentMethodInfo;
+import com.spendi.modules.payment.model.WalletDetails;
+import com.spendi.modules.payment.model.PaymentMethodSystem;
+import com.spendi.shared.mapper.EntityMetaMapper;
+import com.spendi.shared.model.EntityMeta;
 
 public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity> {
 
 	public static final String COLLECTION = "payment_methods";
+	private final static EntityMetaMapper metaMapper = EntityMetaMapper.getInstance();
 
 	public PaymentMethodRepository(MongoDatabase db) {
 		super(PaymentMethodRepository.class.getSimpleName(), PaymentMethodEntity.class, db, COLLECTION);
@@ -45,86 +56,52 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 		collection.createIndex(Indexes.ascending("userId", "info.name"), new IndexOptions().unique(false));
 	}
 
+	/**
+	 * ? === === === MAPPING === === ===
+	 */
+
 	@Override
 	protected PaymentMethodEntity toEntity(Document doc) {
-		if (doc == null)
-			return null;
 		PaymentMethodEntity e = new PaymentMethodEntity();
-		e.id = doc.getObjectId("_id");
-		ObjectId uid = doc.getObjectId("userId");
-		e.userId = uid;
+		e.setId(doc.getObjectId("_id"));
+		e.setUserId(doc.getObjectId("userId"));
 
-		// info
-		{
-			Document d = doc.get("info", Document.class);
-			PaymentMethodEntity.Info i = new PaymentMethodEntity.Info();
-			if (d != null) {
-				String t = d.getString("type");
-				if (t != null)
-					i.type = EPaymentMethodType.valueOf(t);
-				i.name = d.getString("name");
-				i.currency = d.getString("currency");
-				i.order = d.getInteger("order");
-				@SuppressWarnings("unchecked")
-				List<String> tags = (List<String>) d.get("tags", List.class);
-				i.tags = tags;
-			}
-			e.info = i;
-		}
+		// --- info ---
+		Document di = doc.get("info", Document.class);
+		PaymentMethodInfo info = new PaymentMethodInfo();
+		String t = di.getString("type");
+		info.setType(EPaymentMethodType.valueOf(t));
+		info.setName(di.getString("name"));
+		info.setCurrency(di.getString("currency"));
+		info.setOrder(di.getInteger("order"));
+		@SuppressWarnings("unchecked")
+		List<String> tags = (List<String>) di.get("tags", List.class);
+		info.setTags(Set.copyOf(tags));
+		e.setInfo(info);
 
-		// details
-		{
-			Document d = doc.get("details", Document.class);
-			PaymentMethodEntity.Details det = new PaymentMethodEntity.Details();
-			if (d != null) {
-				Document c = d.get("card", Document.class);
-				if (c != null) {
-					PaymentMethodEntity.Card card = new PaymentMethodEntity.Card();
-					card.brand = c.getString("brand");
-					card.last4 = c.getString("last4");
-					card.expMonth = c.getInteger("expMonth");
-					card.expYear = c.getInteger("expYear");
-					det.card = card;
-				}
-				Document b = d.get("bank", Document.class);
-				if (b != null) {
-					PaymentMethodEntity.Bank bank = new PaymentMethodEntity.Bank();
-					bank.bankName = b.getString("bankName");
-					bank.accountMasked = b.getString("accountMasked");
-					det.bank = bank;
-				}
-				Document w = d.get("wallet", Document.class);
-				if (w != null) {
-					PaymentMethodEntity.Wallet wallet = new PaymentMethodEntity.Wallet();
-					wallet.provider = w.getString("provider");
-					wallet.handle = w.getString("handle");
-					det.wallet = wallet;
-				}
-			}
-			e.details = det;
-		}
+		// --- details ---
 
-		// system
+		Document dd = doc.get("details", Document.class);
+		e.setDetails(parseDetailsByKind(info.getType(), dd));
+
+		// --- system ---
 		{
-			Document d = doc.get("system", Document.class);
-			PaymentMethodEntity.System s = new PaymentMethodEntity.System();
-			if (d != null) {
-				String st = d.getString("status");
-				if (st != null)
-					s.status = EPaymentMethodStatus.valueOf(st);
-				Document m = d.get("meta", Document.class);
-				PaymentMethodEntity.Meta meta = new PaymentMethodEntity.Meta();
-				if (m != null) {
-					Object ca = m.get("createdAt");
-					Object ua = m.get("updatedAt");
-					Object aa = m.get("deletedAt");
-					meta.createdAt = InstantUtils.getInstantOrNull(ca);
-					meta.updatedAt = InstantUtils.getInstantOrNull(ua);
-					meta.deletedAt = InstantUtils.getInstantOrNull(aa);
-				}
-				s.meta = meta;
+			Document ds = doc.get("system", Document.class);
+			PaymentMethodSystem sys = new PaymentMethodSystem();
+
+			String st = ds.getString("status");
+
+			try {
+				sys.setStatus(EPaymentMethodStatus.valueOf(st));
+			} catch (IllegalArgumentException ignore) {
+				// статус останется null
+				this.warn("Unknown payment method status", "no-id", Map.of("status", st));
 			}
-			e.system = s;
+
+			Document dm = ds.get("meta", Document.class);
+			sys.setMeta(metaMapper.fromDocument(dm));
+
+			e.setSystem(sys);
 		}
 
 		return e;
@@ -133,66 +110,60 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 	@Override
 	protected Document toDocument(PaymentMethodEntity e) {
 		Document doc = new Document();
-		if (e.id != null)
-			doc.put("_id", e.id);
-		if (e.userId != null)
-			doc.put("userId", e.userId);
+		doc.put("_id", e.getId());
+		doc.put("userId", e.getUserId());
 
-		// info
+		// --- info ---
 		{
-			Document d = new Document();
-			if (e.info != null) {
-				d.put("type", e.info.type != null ? e.info.type.name() : null);
-				d.put("name", e.info.name);
-				d.put("currency", e.info.currency);
-				d.put("order", e.info.order);
-				d.put("tags", e.info.tags);
-			}
-			doc.put("info", d);
+			Document di = new Document();
+			PaymentMethodInfo i = e.getInfo();
+			di.put("type", i.getType() != null ? i.getType().name() : null);
+			di.put("name", i.getName());
+			di.put("currency", i.getCurrency());
+			di.put("order", i.getOrder());
+			di.put("tags", List.copyOf(i.getTags()));
+			doc.put("info", di);
 		}
 
-		// details
+		// --- details ---
 		{
-			Document d = new Document();
-			if (e.details != null) {
-				if (e.details.card != null) {
-					Document c = new Document();
-					c.put("brand", e.details.card.brand);
-					c.put("last4", e.details.card.last4);
-					c.put("expMonth", e.details.card.expMonth);
-					c.put("expYear", e.details.card.expYear);
-					d.put("card", c);
-				}
-				if (e.details.bank != null) {
-					Document b = new Document();
-					b.put("bankName", e.details.bank.bankName);
-					b.put("accountMasked", e.details.bank.accountMasked);
-					d.put("bank", b);
-				}
-				if (e.details.wallet != null) {
-					Document w = new Document();
-					w.put("provider", e.details.wallet.provider);
-					w.put("handle", e.details.wallet.handle);
-					d.put("wallet", w);
-				}
+			Document dd = new Document();
+			PaymentMethodDetails det = e.getDetails();
+			if (det instanceof CardDetails c) {
+				dd.put("kind", "CARD");
+				dd.put("brand", c.getBrand());
+				dd.put("last4", c.getLast4());
+				dd.put("expMonth", c.getExpMonth());
+				dd.put("expYear", c.getExpYear());
+			} else if (det instanceof BankDetails b) {
+				dd.put("kind", "BANK");
+				dd.put("bankName", b.getBankName());
+				dd.put("accountMasked", b.getAccountMasked());
+			} else if (det instanceof WalletDetails w) {
+				dd.put("kind", "WALLET");
+				dd.put("provider", w.getProvider());
+				dd.put("handle", w.getHandle());
+			} else {
+				// Если details отсутствует — не кладём поле вовсе, чтобы не плодить пустые документы
+				dd = null;
 			}
-			doc.put("details", d);
+
+			doc.put("details", dd);
+
 		}
 
-		// system
+		// --- system ---
 		{
-			Document d = new Document();
-			if (e.system != null) {
-				d.put("status", e.system.status.name());
-				Document m = new Document();
-				if (e.system.meta != null) {
-					m.put("createdAt", e.system.meta.createdAt);
-					m.put("updatedAt", e.system.meta.updatedAt);
-					m.put("deletedAt", e.system.meta.deletedAt);
-				}
-				d.put("meta", m);
+			Document ds = new Document();
+			PaymentMethodSystem s = e.getSystem();
+			if (s != null) {
+				ds.put("status", s.getStatus() != null ? s.getStatus().name() : null);
+
+				EntityMeta meta = s.getMeta();
+				ds.put("meta", metaMapper.toDocument(meta));
+
 			}
-			doc.put("system", d);
+			doc.put("system", ds);
 		}
 
 		return doc;
@@ -200,5 +171,16 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 
 	public List<PaymentMethodEntity> findByUserId(String userId, int page, int limit) {
 		return this.findMany("userId", new ObjectId(userId), page, limit);
+	}
+
+	private PaymentMethodDetails parseDetailsByKind(EPaymentMethodType type, Document d) {
+		return switch (type) {
+		case CARD -> CardDetails.builder().brand(d.getString("brand")).last4(d.getString("last4"))
+				.expMonth(d.getInteger("expMonth")).expYear(d.getInteger("expYear")).build();
+		case BANK -> BankDetails.builder().bankName(d.getString("bankName")).accountMasked(d.getString("accountMasked"))
+				.build();
+		case WALLET -> WalletDetails.builder().provider(d.getString("provider")).handle(d.getString("handle")).build();
+		default -> null;
+		};
 	}
 }

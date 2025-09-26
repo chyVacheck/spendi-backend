@@ -5,10 +5,6 @@
 
 package com.spendi.modules.files.dto;
 
-/**
- * ! lib imports
- */
-import com.spendi.core.dto.IdDto;
+import com.spendi.shared.dto.IdParams;
 
-public final class FileDownloadParams extends IdDto {
-}
+public final class FileDownloadParams extends IdParams {}

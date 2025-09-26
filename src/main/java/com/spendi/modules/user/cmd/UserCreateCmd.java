@@ -6,7 +6,7 @@
  * @author Dmytro Shakh
  */
 
-package com.spendi.modules.user.command;
+package com.spendi.modules.user.cmd;
 
 /**
  * ! my imports
@@ -16,7 +16,7 @@ import com.spendi.core.utils.StringUtils;
 /**
  * DTO для создания пользователя. Валидируется BodyValidationMiddleware (Jakarta Bean Validation).
  */
-public class UserCreateCommand {
+public class UserCreateCmd {
 
 	private ProfileBlock profile;
 
