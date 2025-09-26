@@ -14,5 +14,5 @@ import jakarta.validation.constraints.NotNull;
 
 public class PaymentMethodOrderDto {
 	@NotNull
-	public Integer order;
+	public int order;
 }

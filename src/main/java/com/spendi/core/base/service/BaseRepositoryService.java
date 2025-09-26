@@ -247,7 +247,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	 * Создать один документ (сырой).
 	 */
 	public ServiceResponse<Document> createOne(Document doc) {
-		this.repository.insertOne(doc);
+		this.repository.insertOneDoc(doc);
 		return ServiceResponse.created(doc);
 	}
 

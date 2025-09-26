@@ -13,11 +13,11 @@ package com.spendi.modules.user.model;
  * ! lib imports
  */
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
+import lombok.Data;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 /**
  * ! java imports
@@ -87,6 +87,15 @@ public class UserEntity {
 	 */
 	public void setId(String id) {
 		this.id = (id == null) ? null : new ObjectId(id);
+	}
+
+	/**
+	 * Возвращает hex-строковое представление идентификатора пользователя.
+	 * 
+	 * @return Hex-строка идентификатора или null, если идентификатор не установлен.
+	 */
+	public String getHexId() {
+		return id != null ? id.toHexString() : null;
 	}
 
 	/**

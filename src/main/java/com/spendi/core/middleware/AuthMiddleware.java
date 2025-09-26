@@ -46,8 +46,7 @@ public final class AuthMiddleware extends BaseMiddleware {
 	public void handle(HttpContext ctx, MiddlewareChain chain) throws Exception {
 		String sid = CookieUtils.readCookie(ctx.req(), authCfg.getCookieName());
 		if (sid == null || sid.isBlank()) {
-			throw new UnauthorizedException("Auth cookie is missing",
-					Map.of("cookie", authCfg.getCookieName()));
+			throw new UnauthorizedException("Auth cookie is missing", Map.of("cookie", authCfg.getCookieName()));
 		}
 
 		// Найти активную сессию (проверяет revoked и expiresAt)
@@ -55,12 +54,11 @@ public final class AuthMiddleware extends BaseMiddleware {
 
 		// Опционально обновим lastSeenAt
 		try {
-			this.sessionService.touch(ctx.getRequestId(), s.id.toHexString());
+			this.sessionService.touch(ctx.getRequestId(), s.getHexId());
 		} catch (RuntimeException ignore) {
 		}
 
-		this.info("Session id founded", ctx.getRequestId(),
-				detailsOf("sessionId", sid, "userId", s.userId.toHexString()));
+		this.info("Session id founded", ctx.getRequestId(), detailsOf("sessionId", sid, "userId", s.getUserHexId()));
 
 		// Положить в контекст для следующих хэндлеров/мидлвар
 		ctx.setAttr(RequestAttr.AUTH_SESSION, s);

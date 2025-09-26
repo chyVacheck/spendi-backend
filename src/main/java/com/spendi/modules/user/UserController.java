@@ -130,10 +130,10 @@ public class UserController extends BaseController {
 	public void getMe(HttpContext ctx) {
 		SessionEntity s = ctx.getAuthSession();
 
-		UserEntity user = this.userService.getById(s.userId.toHexString()).getData();
+		UserEntity user = this.userService.getById(s.getUserHexId()).getData();
 
 		// Лог запроса сущности пользователя (несохраненный)
-		this.info("User get me", ctx.getRequestId(), detailsOf("userId", user.getId().toHexString()));
+		this.info("User get me", ctx.getRequestId(), detailsOf("userId", user.getHexId()));
 
 		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail(), user.getPrivateData()));
 	}
@@ -211,7 +211,7 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 
 		// Получаем полные данные пользователя из базы данных по ID из сессии
-		UserEntity u = this.userService.getById(s.userId.toHexString()).getData();
+		UserEntity u = this.userService.getById(s.getUserHexId()).getData();
 
 		// Логируем запрос для отслеживания активности пользователей
 		this.info("user avatar get requested", ctx.getRequestId(), detailsOf("userId", u.getId().toHexString()));
@@ -278,7 +278,7 @@ public class UserController extends BaseController {
 
 		// Загружаем данные пользователя для проверки существования
 		ServiceResponse<List<Map<String, Object>>> paymentMethods = this.userService
-				.getPaymentMethods(ctx.getRequestId(), s.userId.toHexString(), query);
+				.getPaymentMethods(ctx.getRequestId(), s.getUserHexId(), query);
 
 		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "payment methods loaded", paymentMethods.getData(),
 				paymentMethods.getPaginationOrThrow().toMap()));
@@ -328,7 +328,7 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 
 		// Загружаем данные пользователя для проверки существования
-		UserEntity user = this.userService.getById(s.userId.toHexString()).getData();
+		UserEntity user = this.userService.getById(s.getUserHexId()).getData();
 
 		// Извлекаем загруженные файлы из multipart запроса
 		// Ожидается только один файл (аватар)
@@ -363,11 +363,10 @@ public class UserController extends BaseController {
 
 		PaymentMethodCreateCmd cmd = paymentMapper.toCmd(dto);
 
-		PaymentMethodEntity created = this.paymentService.createOne(ctx.getRequestId(), s.userId.toHexString(), cmd)
+		PaymentMethodEntity created = this.paymentService.createOne(ctx.getRequestId(), s.getUserHexId(), cmd)
 				.getData();
 
-		UserEntity updated = this.userService.addPaymentMethod(ctx.getRequestId(), s.userId.toHexString(), created)
-				.getData();
+		UserEntity updated = this.userService.addPaymentMethod(ctx.getRequestId(), s.getUserHexId(), created).getData();
 
 		ctx.res().success(
 				ApiSuccessResponse.created(ctx.getRequestId(), "payment method created", updated.getPrivateData()));
@@ -382,7 +381,7 @@ public class UserController extends BaseController {
 		PaymentMethodOrderDto dto = ctx.getValidBody(PaymentMethodOrderDto.class);
 
 		PaymentMethodEntity updated = this.userService
-				.updatePaymentMethodOrder(ctx.getRequestId(), s.userId.toHexString(), p.getPmId(), dto.order).getData();
+				.updatePaymentMethodOrder(ctx.getRequestId(), s.getUserHexId(), p.getPmId(), dto.order).getData();
 
 		ctx.res().success(
 				ApiSuccessResponse.ok(ctx.getRequestId(), "payment method order updated", updated.getPublicData()));
@@ -399,7 +398,7 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 		var p = ctx.getValidParams(PaymentMethodIdParams.class);
 
-		this.userService.deletePaymentMethod(ctx.getRequestId(), s.userId.toHexString(), p.getPmId());
+		this.userService.deletePaymentMethod(ctx.getRequestId(), s.getUserHexId(), p.getPmId());
 
 		ctx.res().success(
 				ApiSuccessResponse.ok(ctx.getRequestId(), "payment method deleted", detailsOf("id", p.getPmId())));
@@ -412,9 +411,9 @@ public class UserController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 
 		// Лог запроса удаления аватара (несохраненный)
-		this.info("user avatar delete requested", ctx.getRequestId(), detailsOf("userId", s.userId.toHexString()));
+		this.info("user avatar delete requested", ctx.getRequestId(), detailsOf("userId", s.getUserHexId()));
 
-		var resp = this.userService.deleteAvatar(ctx.getRequestId(), s.userId.toHexString());
+		var resp = this.userService.deleteAvatar(ctx.getRequestId(), s.getUserHexId());
 		String url = resp.getData();
 
 		ctx.res().success(ApiSuccessResponse.ok(ctx.getRequestId(), "avatar deleted", detailsOf("url", url)));

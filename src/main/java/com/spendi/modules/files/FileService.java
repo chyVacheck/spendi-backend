@@ -1,3 +1,4 @@
+
 /**
  * @file FileService.java
  * @module modules/files
@@ -23,6 +24,7 @@ import java.time.Instant;
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.exceptions.EntityNotFoundException;
 import com.spendi.core.response.ServiceResponse;
+import com.spendi.modules.files.model.FileEntity;
 import com.spendi.core.files.StoredFile;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.files.FileStorage;
@@ -68,17 +70,17 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 		ObjectId id = new ObjectId();
 		StoredFile stored = this.fileStorage.save(requestId, id.toHexString(), uf);
 
-		e.id = id;
-		e.originalName = uf.getOriginalName();
-		e.contentType = uf.getContentType();
-		e.size = uf.getSize();
-		e.filename = stored.getFilename();
-		e.relativePath = stored.getRelative();
-		e.createdAt = Instant.now();
+		e.setId(id);
+		e.setOriginalName(uf.getOriginalName());
+		e.setContentType(uf.getContentType());
+		e.setSize(uf.getSize());
+		e.setFilename(stored.getFilename());
+		e.setRelativePath(stored.getRelative());
+		e.setCreatedAt(Instant.now());
 
 		ServiceResponse<FileEntity> res = this.createOne(e);
 
-		this.info("File metadata created", requestId, detailsOf("id", e.id.toHexString(), "rel", e.relativePath), true);
+		this.info("File metadata created", requestId, detailsOf("id", e.getHexId(), "rel", e.getRelativePath()), true);
 		return res;
 	}
 
@@ -94,22 +96,23 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 		// 1) Метаданные из БД
 		FileEntity e = this.getById(id).getData();
 		// 2) Чтение из ФС
-		if (e == null || e.relativePath == null) {
+		if (e == null || e.getRelativePath() == null) {
 			throw new EntityNotFoundException("File", "id", id.toHexString());
 		}
 
 		// 3) Проверка существования файла на диске
-		if (!this.fileStorage.exists(e.relativePath)) {
+		if (!this.fileStorage.exists(e.getRelativePath())) {
 			this.info("file content not found", requestId,
-					detailsOf("id", id.toHexString(), "relativePath", e.relativePath), false);
+					detailsOf("id", id.toHexString(), "relativePath", e.getRelativePath()), false);
 
-			throw new EntityNotFoundException("FileContent", "relativePath", e.relativePath);
+			throw new EntityNotFoundException("FileContent", "relativePath", e.getRelativePath());
 		}
 
-		byte[] content = this.fileStorage.read(requestId, e.relativePath);
-		String filename = (e.originalName != null && !e.originalName.isBlank()) ? e.originalName : e.filename;
+		byte[] content = this.fileStorage.read(requestId, e.getRelativePath());
+		String filename = (e.getOriginalName() != null && !e.getOriginalName().isBlank()) ? e.getOriginalName()
+				: e.getFilename();
 
-		DownloadedFile dto = new DownloadedFile(content, filename, e.contentType);
+		DownloadedFile dto = new DownloadedFile(content, filename, e.getContentType());
 
 		this.info("file read for download", requestId, detailsOf("id", id.toHexString(), "bytes", content.length),
 				false);
@@ -122,10 +125,10 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 		FileEntity e = this.getById(id).getData();
 		// try delete physical file (best-effort)
 		try {
-			if (e != null && e.relativePath != null) {
-				this.fileStorage.delete(requestId, e.relativePath);
-				this.info("file deleted", requestId, detailsOf("id", id.toHexString(), "relativePath", e.relativePath),
-						true);
+			if (e != null && e.getRelativePath() != null) {
+				this.fileStorage.delete(requestId, e.getRelativePath());
+				this.info("file deleted", requestId,
+						detailsOf("id", id.toHexString(), "relativePath", e.getRelativePath()), true);
 			}
 		} catch (RuntimeException ignore) {
 		}

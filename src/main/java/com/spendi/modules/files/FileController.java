@@ -28,6 +28,7 @@ import com.spendi.core.files.UploadedFile;
 import com.spendi.core.files.DownloadedFile;
 import com.spendi.core.response.ApiSuccessResponse;
 import com.spendi.modules.files.dto.FileDownloadQuery;
+import com.spendi.modules.files.model.FileEntity;
 import com.spendi.shared.dto.IdParams;
 
 public class FileController extends BaseController {
@@ -52,8 +53,8 @@ public class FileController extends BaseController {
 		var resp = this.fileService.createOne(ctx.getRequestId(), files.get(0));
 		FileEntity file = resp.getData();
 
-		ctx.res().success(ApiSuccessResponse.created(ctx.getRequestId(), "Uploaded one file",
-				Map.of("id", file.id.toHexString())));
+		ctx.res().success(
+				ApiSuccessResponse.created(ctx.getRequestId(), "Uploaded one file", Map.of("id", file.getHexId())));
 	}
 
 	/**

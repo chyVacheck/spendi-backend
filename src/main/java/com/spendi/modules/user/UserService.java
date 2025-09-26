@@ -39,7 +39,7 @@ import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.utils.CryptoUtils;
 import com.spendi.modules.files.FileService;
-import com.spendi.modules.files.FileEntity;
+import com.spendi.modules.files.model.FileEntity;
 import com.spendi.modules.payment.model.PaymentMethodEntity;
 import com.spendi.modules.user.cmd.UserCreateCmd;
 import com.spendi.modules.user.model.UserEntity;
@@ -287,15 +287,16 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 		// update employee (persist only new file id)
 		var updateBuilder = new MongoUpdateBuilder();
-		updateBuilder.set("profile.avatarFileId", stored.id.toHexString());
+		updateBuilder.set("profile.avatarFileId", stored.getHexId());
 		updateBuilder.currentDate("system.meta.updatedAt");
 
 		this.updateById(userId, updateBuilder.build());
 
 		// Лог: создан или обновлён аватар
 		if (oldAvatarId != null) {
-			this.info("user avatar updated", requestId, detailsOf("userId", userId, "oldFileId",
-					oldAvatarId.toHexString(), "newFileId", stored.id.toHexString()), true);
+			this.info("user avatar updated", requestId,
+					detailsOf("userId", userId, "oldFileId", oldAvatarId.toHexString(), "newFileId", stored.getHexId()),
+					true);
 			// best-effort cleanup of previous avatar
 			try {
 				this.fileService.deleteById(requestId, oldAvatarId);
@@ -304,8 +305,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 			return ServiceResponse.updated(url);
 		} else {
-			this.info("user avatar created", requestId, detailsOf("userId", userId, "fileId", stored.id.toHexString()),
-					true);
+			this.info("user avatar created", requestId, detailsOf("userId", userId, "fileId", stored.getHexId()), true);
 			return ServiceResponse.created(url);
 		}
 	}

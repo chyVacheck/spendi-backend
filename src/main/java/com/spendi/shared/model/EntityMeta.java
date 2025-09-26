@@ -26,9 +26,9 @@ import java.time.Instant;
  * Вложенный класс для метаданных.
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class EntityMeta {
 	/**
 	 * Время создания сущности.

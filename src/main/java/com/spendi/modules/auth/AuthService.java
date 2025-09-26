@@ -14,6 +14,8 @@ package com.spendi.modules.auth;
  */
 import java.util.Map;
 
+import org.bson.types.ObjectId;
+
 /**
  * ! my imports
  */
@@ -96,7 +98,7 @@ public class AuthService extends BaseService {
 	 * @param requestId идентификатор запроса
 	 * @param sessionId идентификатор сессии
 	 */
-	public void logout(String requestId, String sessionId) {
+	public void logout(String requestId, ObjectId sessionId) {
 		try {
 			this.sessionService.revokeById(requestId, sessionId);
 			// Лог: успешный logout

@@ -27,7 +27,7 @@ import com.spendi.modules.user.UserService;
 import com.spendi.modules.user.model.UserEntity;
 import com.spendi.modules.session.SessionEntity;
 import com.spendi.modules.session.SessionService;
-import com.spendi.modules.session.dto.CreateSessionDto;
+import com.spendi.modules.session.cmd.SessionCreateCmd;
 
 public class AuthController extends BaseController {
 
@@ -86,23 +86,21 @@ public class AuthController extends BaseController {
 		String ip = ctx.req().remoteAddress().orElse(null);
 		String ua = ctx.req().header("User-Agent").orElse("");
 
-		CreateSessionDto createSessionDto = new CreateSessionDto();
-		createSessionDto.setUserId(user.getId().toHexString());
-		createSessionDto.setIp(ip);
-		createSessionDto.setUserAgent(ua);
+		SessionCreateCmd createSessionCmd = SessionCreateCmd.builder().userId(user.getId().toHexString()).ip(ip)
+				.userAgent(ua).build();
 
-		var s = this.sessionService.create(ctx.getRequestId(), createSessionDto).getData();
+		var s = this.sessionService.create(ctx.getRequestId(), createSessionCmd).getData();
 
 		// Set cookie
-		String cookie = CookieUtils.buildCookie(authCfg.getCookieName(), s.id.toHexString(), authCfg.getSessionTtlSec(),
+		String cookie = CookieUtils.buildCookie(authCfg.getCookieName(), s.getHexId(), authCfg.getSessionTtlSec(),
 				authCfg);
 		ctx.res().header("Set-Cookie", cookie);
 
 		// Лог: успешный логин
-		this.info("login success", ctx.getRequestId(),
-				detailsOf("userId", user.getId().toHexString(), "sessionId", s.id.toHexString()), true);
+		this.info("login success", ctx.getRequestId(), detailsOf("userId", user.getHexId(), "sessionId", s.getHexId()),
+				true);
 
-		this.userService.touchLastLogin(ctx.getRequestId(), user.getId().toHexString());
+		this.userService.touchLastLogin(ctx.getRequestId(), user.getHexId());
 
 		ctx.res().success(
 				ApiSuccessResponse.ok(ctx.getRequestId(), "User " + user.getEmail() + " logged", user.getPublicData()));
@@ -117,9 +115,9 @@ public class AuthController extends BaseController {
 		SessionEntity s = ctx.getAuthSession();
 
 		// Лог: запрос на logout (несохраненный)
-		this.info("logout requested", ctx.getRequestId(), detailsOf("sessionId", s.id.toHexString()));
+		this.info("logout requested", ctx.getRequestId(), detailsOf("sessionId", s.getHexId()));
 
-		this.authService.logout(ctx.getRequestId(), s.id.toHexString());
+		this.authService.logout(ctx.getRequestId(), s.getId());
 
 		// очистка cookie
 		String cleared = CookieUtils.buildCookie(authCfg.getCookieName(), "", 0, authCfg);

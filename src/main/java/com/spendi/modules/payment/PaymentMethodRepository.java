@@ -1,3 +1,4 @@
+
 /**
  * @file PaymentMethodRepository.java
  * @module modules/payment
@@ -20,8 +21,8 @@ import com.mongodb.client.model.Indexes;
  * ! java imports
  */
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * ! my imports
@@ -62,125 +63,135 @@ public class PaymentMethodRepository extends BaseRepository<PaymentMethodEntity>
 
 	@Override
 	protected PaymentMethodEntity toEntity(Document doc) {
-		PaymentMethodEntity e = new PaymentMethodEntity();
-		e.setId(doc.getObjectId("_id"));
-		e.setUserId(doc.getObjectId("userId"));
+		if (doc == null)
+			return null;
+
+		ObjectId id = reqObjectId(doc, "_id", null);
+		ObjectId userId = reqObjectId(doc, "userId", id);
 
 		// --- info ---
-		Document di = doc.get("info", Document.class);
-		PaymentMethodInfo info = new PaymentMethodInfo();
-		String t = di.getString("type");
-		info.setType(EPaymentMethodType.valueOf(t));
-		info.setName(di.getString("name"));
-		info.setCurrency(di.getString("currency"));
-		info.setOrder(di.getInteger("order"));
-		@SuppressWarnings("unchecked")
-		List<String> tags = (List<String>) di.get("tags", List.class);
-		info.setTags(Set.copyOf(tags));
-		e.setInfo(info);
+		Document infoDoc = reqSubDoc(doc, "info", id, "info");
+		EPaymentMethodType type = reqEnum(infoDoc, "type", EPaymentMethodType.class, id);
+		String name = reqString(infoDoc, "name", id, "info.name");
+		String currency = reqString(infoDoc, "currency", id, "info.currency");
+		Integer order = reqInt(infoDoc, "order", id, "info.order");
 
-		// --- details ---
-
-		Document dd = doc.get("details", Document.class);
-		e.setDetails(parseDetailsByKind(info.getType(), dd));
-
-		// --- system ---
-		{
-			Document ds = doc.get("system", Document.class);
-			PaymentMethodSystem sys = new PaymentMethodSystem();
-
-			String st = ds.getString("status");
-
-			try {
-				sys.setStatus(EPaymentMethodStatus.valueOf(st));
-			} catch (IllegalArgumentException ignore) {
-				// статус останется null
-				this.warn("Unknown payment method status", "no-id", Map.of("status", st));
-			}
-
-			Document dm = ds.get("meta", Document.class);
-			sys.setMeta(metaMapper.fromDocument(dm));
-
-			e.setSystem(sys);
+		// tags — допускаем отсутствие; если есть, приводим все элементы к String
+		Set<String> tags = Set.of();
+		Object rawTags = infoDoc.get("tags");
+		if (rawTags instanceof List<?> list) {
+			tags = list.stream().map(String::valueOf).collect(Collectors.toUnmodifiableSet());
 		}
 
-		return e;
+		var info = PaymentMethodInfo.builder().type(type).name(name).currency(currency).order(order).tags(tags).build();
+
+		// --- details ---
+		PaymentMethodDetails details = null;
+		Document detDoc = doc.get("details", Document.class);
+		if (detDoc != null) {
+			switch (type) {
+			case CARD -> details = CardDetails.builder().brand(reqString(detDoc, "brand", id, "details.brand"))
+					.last4(reqString(detDoc, "last4", id, "details.last4"))
+					.expMonth(reqInt(detDoc, "expMonth", id, "details.expMonth"))
+					.expYear(reqInt(detDoc, "expYear", id, "details.expYear")).build();
+			case BANK -> details = BankDetails.builder().bankName(reqString(detDoc, "bankName", id, "details.bankName"))
+					.accountMasked(reqString(detDoc, "accountMasked", id, "details.accountMasked")).build();
+			case WALLET -> details = WalletDetails.builder()
+					.provider(reqString(detDoc, "provider", id, "details.provider"))
+					.handle(reqString(detDoc, "handle", id, "details.handle")).build();
+			}
+		}
+
+		// --- system ---
+		Document sysDoc = reqSubDoc(doc, "system", id, "system");
+		EPaymentMethodStatus status = reqEnum(sysDoc, "status", EPaymentMethodStatus.class, id, "system.status");
+		Document metaDoc = reqSubDoc(sysDoc, "meta", id, "system.meta");
+		EntityMeta meta = metaMapper.fromDocument(metaDoc);
+
+		var system = PaymentMethodSystem.builder().status(status).meta(meta).build();
+
+		return PaymentMethodEntity.builder().id(id).userId(userId).info(info).details(details).system(system).build();
+
 	}
 
 	@Override
 	protected Document toDocument(PaymentMethodEntity e) {
+		if (e == null)
+			return new Document();
+
+		// обязательные поля строго проверяем
+		if (e.getId() == null)
+			missing("ObjectId", "_id", null);
+		if (e.getUserId() == null)
+			missing("ObjectId", "userId", e.getId());
+		if (e.getInfo() == null)
+			missing("Object", "info", e.getId());
+		if (e.getSystem() == null)
+			missing("Object", "system", e.getId());
+
+		PaymentMethodInfo i = e.getInfo();
+		if (i.getType() == null)
+			missing("Enum", "info.type", e.getId());
+		if (i.getName() == null)
+			missing("String", "info.name", e.getId());
+		if (i.getCurrency() == null)
+			missing("String", "info.currency", e.getId());
+		// order и tags допустимы как есть (order — int, tags — Set<String> может быть пустым)
+
 		Document doc = new Document();
 		doc.put("_id", e.getId());
 		doc.put("userId", e.getUserId());
 
-		// --- info ---
-		{
-			Document di = new Document();
-			PaymentMethodInfo i = e.getInfo();
-			di.put("type", i.getType() != null ? i.getType().name() : null);
-			di.put("name", i.getName());
-			di.put("currency", i.getCurrency());
-			di.put("order", i.getOrder());
-			di.put("tags", List.copyOf(i.getTags()));
-			doc.put("info", di);
-		}
+		// info
+		Document di = new Document();
+		di.put("type", i.getType().name());
+		di.put("name", i.getName());
+		di.put("currency", i.getCurrency());
+		di.put("order", i.getOrder());
+		di.put("tags", i.getTags() == null ? List.of() : List.copyOf(i.getTags()));
+		doc.put("info", di);
 
-		// --- details ---
-		{
+		// details (если есть)
+		var det = e.getDetails();
+		if (det instanceof CardDetails c) {
 			Document dd = new Document();
-			PaymentMethodDetails det = e.getDetails();
-			if (det instanceof CardDetails c) {
-				dd.put("kind", "CARD");
-				dd.put("brand", c.getBrand());
-				dd.put("last4", c.getLast4());
-				dd.put("expMonth", c.getExpMonth());
-				dd.put("expYear", c.getExpYear());
-			} else if (det instanceof BankDetails b) {
-				dd.put("kind", "BANK");
-				dd.put("bankName", b.getBankName());
-				dd.put("accountMasked", b.getAccountMasked());
-			} else if (det instanceof WalletDetails w) {
-				dd.put("kind", "WALLET");
-				dd.put("provider", w.getProvider());
-				dd.put("handle", w.getHandle());
-			} else {
-				// Если details отсутствует — не кладём поле вовсе, чтобы не плодить пустые документы
-				dd = null;
-			}
-
+			dd.put("kind", "CARD");
+			dd.put("brand", c.getBrand());
+			dd.put("last4", c.getLast4());
+			dd.put("expMonth", c.getExpMonth());
+			dd.put("expYear", c.getExpYear());
 			doc.put("details", dd);
-
+		} else if (det instanceof BankDetails b) {
+			Document dd = new Document();
+			dd.put("kind", "BANK");
+			dd.put("bankName", b.getBankName());
+			dd.put("accountMasked", b.getAccountMasked());
+			doc.put("details", dd);
+		} else if (det instanceof WalletDetails w) {
+			Document dd = new Document();
+			dd.put("kind", "WALLET");
+			dd.put("provider", w.getProvider());
+			dd.put("handle", w.getHandle());
+			doc.put("details", dd);
 		}
+		// если details == null — не пишем поле вовсе
 
-		// --- system ---
-		{
-			Document ds = new Document();
-			PaymentMethodSystem s = e.getSystem();
-			if (s != null) {
-				ds.put("status", s.getStatus() != null ? s.getStatus().name() : null);
+		// system
+		var s = e.getSystem();
+		if (s.getStatus() == null)
+			missing("Enum", "system.status", e.getId());
+		if (s.getMeta() == null)
+			missing("Object", "system.meta", e.getId());
 
-				EntityMeta meta = s.getMeta();
-				ds.put("meta", metaMapper.toDocument(meta));
-
-			}
-			doc.put("system", ds);
-		}
+		Document ds = new Document();
+		ds.put("status", s.getStatus().name());
+		ds.put("meta", metaMapper.toDocument(s.getMeta()));
+		doc.put("system", ds);
 
 		return doc;
 	}
 
 	public List<PaymentMethodEntity> findByUserId(String userId, int page, int limit) {
 		return this.findMany("userId", new ObjectId(userId), page, limit);
-	}
-
-	private PaymentMethodDetails parseDetailsByKind(EPaymentMethodType type, Document d) {
-		return switch (type) {
-		case CARD -> CardDetails.builder().brand(d.getString("brand")).last4(d.getString("last4"))
-				.expMonth(d.getInteger("expMonth")).expYear(d.getInteger("expYear")).build();
-		case BANK -> BankDetails.builder().bankName(d.getString("bankName")).accountMasked(d.getString("accountMasked"))
-				.build();
-		case WALLET -> WalletDetails.builder().provider(d.getString("provider")).handle(d.getString("handle")).build();
-		default -> null;
-		};
 	}
 }

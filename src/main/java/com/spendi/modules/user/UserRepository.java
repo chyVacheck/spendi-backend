@@ -1,16 +1,18 @@
 
 /**
-* @file UserRepository.java
-* @module modules/user
-*
-* @see BaseRepository
-*
-* Репозиторий для работы с UserEntity.
-* Предоставляет CRUD-операции как в "сыром" виде (Document),
-* так и с маппингом в сущности (TEntity).
-*
-* @author Dmytro Shakh
-*/
+ * @file UserRepository.java
+ * @module modules/user
+ *
+ * @see BaseRepository
+ *
+ * Репозиторий для работы с UserEntity.
+ * Предоставляет CRUD-операции как в "сыром" виде (Document),
+ * так и с маппингом в сущности (TEntity).
+ *
+ * Строгий маппинг через req/opt хелперы BaseRepository.
+ *
+ * @author Dmytro Shakh
+ */
 
 package com.spendi.modules.user;
 
@@ -23,27 +25,24 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 
-import java.util.ArrayList;
 /**
  * ! java imports
  */
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 /**
  * ! my imports
  */
 import com.spendi.core.base.BaseRepository;
-import com.spendi.core.utils.InstantUtils;
 import com.spendi.modules.user.model.UserEntity;
 import com.spendi.modules.user.model.UserFinance;
-import com.spendi.modules.user.model.UserSystemMeta;
 import com.spendi.modules.user.model.UserProfile;
 import com.spendi.modules.user.model.UserSecurity;
 import com.spendi.modules.user.model.UserSystem;
+import com.spendi.modules.user.model.UserSystemMeta;
 
 public class UserRepository extends BaseRepository<UserEntity> {
 
@@ -68,77 +67,52 @@ public class UserRepository extends BaseRepository<UserEntity> {
 		if (doc == null)
 			return null;
 
+		// id
+		ObjectId id = reqObjectId(doc, "_id", null);
+
+		// profile (required block)
+		Document pDoc = reqSubDoc(doc, "profile", id);
+		UserProfile profile = new UserProfile();
+		profile.setEmail(reqString(pDoc, "email", id));
+		profile.setFirstName(optString(pDoc, "firstName").orElse(null));
+		profile.setLastName(optString(pDoc, "lastName").orElse(null));
+		profile.setAvatarFileId(optObjectId(pDoc, "avatarFileId").orElse(null));
+
+		// security (required block)
+		Document sDoc = reqSubDoc(doc, "security", id);
+		UserSecurity security = new UserSecurity();
+		security.setPasswordHash(reqString(sDoc, "passwordHash", id));
+
+		// finance (required block)
+		Document fDoc = reqSubDoc(doc, "finance", id);
+		UserFinance finance = new UserFinance();
+		finance.setDefaultAccountId(optObjectId(fDoc, "defaultAccountId").orElse(null));
+
+		// paymentMethodIds: допускаем отсутствие поля → пустой Set
+		List<ObjectId> pmList = fDoc.containsKey("paymentMethodIds") ? reqObjectIdList(fDoc, "paymentMethodIds", id)
+				: List.of();
+		finance.setPaymentMethodIds(Set.copyOf(pmList));
+
+		// system (required block)
+		Document sysDoc = reqSubDoc(doc, "system", id);
+		UserSystem system = new UserSystem();
+		system.setLastLoginAt(optInstant(sysDoc, "lastLoginAt").orElse(null));
+
+		// meta (required sub-block)
+		Document mDoc = reqSubDoc(sysDoc, "meta", id, "system.meta");
+		UserSystemMeta meta = new UserSystemMeta();
+		meta.setCreatedAt(reqInstant(mDoc, "createdAt", id));
+		meta.setUpdatedAt(optInstant(mDoc, "updatedAt").orElse(null));
+		meta.setDeletedAt(optInstant(mDoc, "deletedAt").orElse(null));
+		system.setMeta(meta);
+
+		// assemble
 		UserEntity e = new UserEntity();
-
-		// _id
-		e.setId(doc.getObjectId("_id"));
-
-		// profile
-		{
-			Document d = doc.get("profile", Document.class);
-			UserProfile p = new UserProfile();
-			if (d != null) {
-				p.setEmail(d.getString("email"));
-				p.setFirstName(d.getString("firstName"));
-				p.setLastName(d.getString("lastName"));
-				p.setAvatarFileId(d.getObjectId("avatarFileId"));
-			}
-			e.setProfile(p);
-		}
-
-		// security
-		{
-			Document d = doc.get("security", Document.class);
-			UserSecurity s = new UserSecurity();
-			if (d != null) {
-				s.setPasswordHash(d.getString("passwordHash"));
-			}
-			e.setSecurity(s);
-		}
-
-		// finance
-		{
-			Document d = doc.get("finance", Document.class);
-			UserFinance f = new UserFinance();
-			if (d != null) {
-				f.setDefaultAccountId(d.getObjectId("defaultAccountId"));
-
-				// ожидаем массив ObjectId; но на всякий случай поддержим строки
-				@SuppressWarnings("unchecked")
-				List<Object> raw = (List<Object>) d.get("paymentMethodIds", List.class);
-				if (raw != null) {
-					Set<ObjectId> ids = raw.stream().filter(Objects::nonNull)
-							.map(o -> (o instanceof ObjectId oid) ? oid : new ObjectId(o.toString()))
-							.collect(Collectors.toUnmodifiableSet());
-					f.setPaymentMethodIds(ids);
-				} else {
-					f.setPaymentMethodIds(Set.of());
-				}
-			}
-			e.setFinance(f);
-		}
-
-		// system (meta + lastLoginAt в system-уровне)
-		{
-			Document d = doc.get("system", Document.class);
-			UserSystem s = new UserSystem();
-			if (d != null) {
-				// lastLoginAt хранится на уровне system
-				Object lla = d.get("lastLoginAt");
-				s.setLastLoginAt(InstantUtils.getInstantOrNull(lla));
-
-				// meta внутри system
-				Document m = d.get("meta", Document.class);
-				UserSystemMeta meta = new UserSystemMeta();
-				if (m != null) {
-					meta.setCreatedAt(InstantUtils.getInstantOrNull(m.get("createdAt")));
-					meta.setUpdatedAt(InstantUtils.getInstantOrNull(m.get("updatedAt")));
-					meta.setDeletedAt(InstantUtils.getInstantOrNull(m.get("deletedAt")));
-				}
-				s.setMeta(meta);
-			}
-			e.setSystem(s);
-		}
+		e.setId(id);
+		e.setProfile(profile);
+		e.setSecurity(security);
+		e.setFinance(finance);
+		e.setSystem(system);
 
 		return e;
 	}

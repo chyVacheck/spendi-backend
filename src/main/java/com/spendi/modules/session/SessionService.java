@@ -25,18 +25,39 @@ import com.spendi.config.AuthConfig;
 import com.spendi.core.base.database.MongoUpdateBuilder;
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.response.ServiceResponse;
-import com.spendi.modules.session.dto.CreateSessionDto;
+import com.spendi.modules.session.cmd.SessionCreateCmd;
 import com.spendi.core.exceptions.UnauthorizedException;
 
+/**
+ * Сервис для управления пользовательскими сессиями. Предоставляет методы для создания, получения, обновления и отзыва
+ * сессий.
+ */
 public class SessionService extends BaseRepositoryService<SessionRepository, SessionEntity> {
 
+	/**
+	 * Единственный экземпляр {@link SessionService} (Singleton).
+	 */
 	private static volatile SessionService INSTANCE;
+	/**
+	 * Конфигурация аутентификации, используемая для определения времени жизни сессий.
+	 */
 	private final AuthConfig authCfg = AuthConfig.getConfig();
 
+	/**
+	 * Конструктор сервиса сессий.
+	 *
+	 * @param repository Репозиторий для доступа к данным сессий.
+	 */
 	public SessionService(SessionRepository repository) {
 		super(SessionService.class.getSimpleName(), repository);
 	}
 
+	/**
+	 * Инициализирует единственный экземпляр {@link SessionService}. Этот метод должен быть вызван один раз при старте
+	 * приложения.
+	 *
+	 * @param repository Репозиторий для доступа к данным сессий.
+	 */
 	public static void init(SessionRepository repository) {
 		synchronized (SessionService.class) {
 			if (INSTANCE == null) {
@@ -45,6 +66,12 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		}
 	}
 
+	/**
+	 * Возвращает единственный экземпляр {@link SessionService}.
+	 *
+	 * @return Экземпляр {@link SessionService}.
+	 * @throws IllegalStateException если сервис не был инициализирован.
+	 */
 	public static SessionService getInstance() {
 		SessionService ref = INSTANCE;
 		if (ref == null)
@@ -65,20 +92,20 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 	 * 
 	 * @return созданная сессия
 	 */
-	public ServiceResponse<SessionEntity> create(String requestId, CreateSessionDto dto) {
+	public ServiceResponse<SessionEntity> create(String requestId, SessionCreateCmd cmd) {
 		var s = new SessionEntity();
-		s.id = new ObjectId();
-		s.userId = new ObjectId(dto.getUserId());
-		s.createdAt = Instant.now();
-		s.lastSeenAt = s.createdAt;
-		s.expiresAt = s.createdAt.plusSeconds(authCfg.getSessionTtlSec());
-		s.revoked = false;
-		s.ip = dto.getIp();
-		s.userAgent = dto.getUserAgent();
+		s.setId(new ObjectId());
+		s.setUserId(new ObjectId(cmd.getUserId()));
+		s.setCreatedAt(Instant.now());
+		s.setLastSeenAt(s.getCreatedAt());
+		s.setExpiresAt(s.getCreatedAt().plusSeconds(authCfg.getSessionTtlSec()));
+		s.setRevoked(false);
+		s.setIp(cmd.getIp());
+		s.setUserAgent(cmd.getUserAgent());
 		var created = super.createOne(s);
 		// Лог: создана сессия
-		this.info("session created", requestId, detailsOf("sessionId", s.id.toHexString(), "expiresAt",
-				s.expiresAt.toString(), "userId", dto.getUserId()), true);
+		this.info("session created", requestId, detailsOf("sessionId", s.getHexId(), "expiresAt",
+				s.getExpiresAt().toString(), "userId", cmd.getUserId()), true);
 		return created;
 	}
 
@@ -88,6 +115,10 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 
 	/**
 	 * Найти активную (не отозванную и не истёкшую) сессию по id.
+	 *
+	 * @param id Идентификатор сессии в виде строки.
+	 * @return {@link ServiceResponse} с найденной активной сессией.
+	 * @throws UnauthorizedException если сессия не найдена или неактивна.
 	 */
 	public ServiceResponse<SessionEntity> getActiveById(String id) {
 		var opt = this.repository.findActiveById(id);
@@ -119,15 +150,22 @@ public class SessionService extends BaseRepositoryService<SessionRepository, Ses
 		return this.updateById(id, updateBuilder.build());
 	}
 
-	public ServiceResponse<String> revokeById(String requestId, String id) {
+	/**
+	 * Отзывает сессию по её идентификатору.
+	 *
+	 * @param requestId Идентификатор запроса для логирования.
+	 * @param id        Идентификатор сессии, которую нужно отозвать.
+	 * @return {@link ServiceResponse} с hex-строковым представлением отозванной сессии.
+	 */
+	public ServiceResponse<String> revokeById(String requestId, ObjectId id) {
 		var updateBuilder = new MongoUpdateBuilder();
 		updateBuilder.set("revoked", true);
 
 		this.updateById(id, updateBuilder.build());
 
 		// Лог: сессия отозвана
-		this.info("session revoked", requestId, detailsOf("sessionId", id), true);
-		return ServiceResponse.deleted(id);
+		this.info("session revoked", requestId, detailsOf("sessionId", id.toHexString()), true);
+		return ServiceResponse.deleted(id.toHexString());
 	}
 
 	/**
