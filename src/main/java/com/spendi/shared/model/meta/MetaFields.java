@@ -15,6 +15,8 @@ package com.spendi.shared.model.meta;
 public final class MetaFields {
 	private MetaFields() {}
 
+	public static final String META = "meta";
+
 	public static final String CREATED_AT = "createdAt";
 	public static final String CREATED_BY = "createdBy";
 

@@ -14,17 +14,14 @@ package com.spendi.modules.files;
 import org.bson.types.ObjectId;
 
 /**
- * ! java imports
- */
-import java.time.Instant;
-
-/**
  * ! my imports
  */
 import com.spendi.core.base.service.BaseRepositoryService;
 import com.spendi.core.exceptions.EntityNotFoundException;
 import com.spendi.core.response.ServiceResponse;
 import com.spendi.modules.files.model.FileEntity;
+import com.spendi.modules.files.model.FileSystem;
+import com.spendi.shared.model.meta.BaseMeta;
 import com.spendi.core.files.StoredFile;
 import com.spendi.core.files.UploadedFile;
 import com.spendi.core.files.FileStorage;
@@ -76,7 +73,7 @@ public class FileService extends BaseRepositoryService<FileRepository, FileEntit
 		e.setSize(uf.getSize());
 		e.setFilename(stored.getFilename());
 		e.setRelativePath(stored.getRelative());
-		e.setCreatedAt(Instant.now());
+		e.setSystem(FileSystem.builder().meta(BaseMeta.builder().build()).build());
 
 		ServiceResponse<FileEntity> res = this.createOne(e);
 

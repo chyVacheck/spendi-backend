@@ -24,15 +24,11 @@ import com.spendi.core.utils.InstantUtils;
 import com.spendi.shared.model.meta.BaseMeta;
 import com.spendi.shared.model.meta.MetaFields;
 
-public class BaseMetaMapper extends BaseMapper implements DocMapper<BaseMeta> {
+public class BaseMetaMapper extends BaseMapper<BaseMeta> implements DocMapper<BaseMeta> {
 	private static final BaseMetaMapper INSTANCE = new BaseMetaMapper();
 
 	private BaseMetaMapper() {
-		super(BaseMetaMapper.class.getSimpleName());
-	}
-
-	protected BaseMetaMapper(String mapperName) {
-		super(mapperName);
+		super(BaseMetaMapper.class.getSimpleName(), BaseMeta.class, MetaFields.META);
 	}
 
 	public static BaseMetaMapper getInstance() {
@@ -48,7 +44,7 @@ public class BaseMetaMapper extends BaseMapper implements DocMapper<BaseMeta> {
 		return d;
 	}
 
-	public BaseMeta fromDocument(Document d) {
+	public BaseMeta toEntity(Document d) {
 		if (d == null)
 			return null;
 

@@ -24,12 +24,12 @@ import com.spendi.core.utils.InstantUtils;
 import com.spendi.shared.model.meta.LifecycleMeta;
 import com.spendi.shared.model.meta.MetaFields;
 
-public final class LifecycleMetaMapper extends BaseMapper implements DocMapper<LifecycleMeta> {
+public final class LifecycleMetaMapper extends BaseMapper<LifecycleMeta> implements DocMapper<LifecycleMeta> {
 	private static final LifecycleMetaMapper INSTANCE = new LifecycleMetaMapper();
 	private static final AuditMetaMapper AUDIT = AuditMetaMapper.getInstance();
 
 	private LifecycleMetaMapper() {
-		super(LifecycleMetaMapper.class.getSimpleName());
+		super(LifecycleMetaMapper.class.getSimpleName(), LifecycleMeta.class, MetaFields.META);
 	}
 
 	public static LifecycleMetaMapper getInstance() {
@@ -46,7 +46,7 @@ public final class LifecycleMetaMapper extends BaseMapper implements DocMapper<L
 	}
 
 	@Override
-	public LifecycleMeta fromDocument(Document d) {
+	public LifecycleMeta toEntity(Document d) {
 		if (d == null)
 			return null;
 

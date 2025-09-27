@@ -11,7 +11,6 @@ package com.spendi.modules.payment;
  * ! lib imports
  */
 import org.bson.types.ObjectId;
-import java.time.Instant;
 import java.util.Map;
 
 import com.spendi.core.base.database.MongoUpdateBuilder;
@@ -25,7 +24,7 @@ import com.spendi.modules.payment.model.EPaymentMethodStatus;
 import com.spendi.modules.payment.model.PaymentMethodEntity;
 import com.spendi.modules.payment.model.PaymentMethodInfo;
 import com.spendi.modules.payment.model.PaymentMethodSystem;
-import com.spendi.shared.model.EntityMeta;
+import com.spendi.shared.model.meta.LifecycleMeta;
 
 public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRepository, PaymentMethodEntity> {
 
@@ -59,7 +58,6 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 	 * @return созданный способ оплаты
 	 */
 	public ServiceResponse<PaymentMethodEntity> createOne(String requestId, String userId, PaymentMethodCreateCmd cmd) {
-		final Instant now = Instant.now();
 
 		final PaymentMethodEntity e = new PaymentMethodEntity();
 		e.setId(new ObjectId());
@@ -78,14 +76,9 @@ public class PaymentMethodService extends BaseRepositoryService<PaymentMethodRep
 		e.setDetails(cmd.getDetails());
 
 		// system
-		final var meta = new EntityMeta();
-		meta.setCreatedAt(now);
-		meta.setUpdatedAt(null);
-		meta.setDeletedAt(null);
-
 		final var sys = new PaymentMethodSystem();
 		sys.setStatus(EPaymentMethodStatus.ACTIVE);
-		sys.setMeta(meta);
+		sys.setMeta(new LifecycleMeta());
 		e.setSystem(sys);
 
 		return super.createOne(e);

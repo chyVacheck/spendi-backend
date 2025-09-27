@@ -12,6 +12,8 @@ package com.spendi.modules.user.model;
  * ! lib imports
  */
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spendi.shared.model.meta.LifecycleMeta;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +25,8 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
- * Класс, представляющий системные данные пользователя. Содержит метаинформацию и данные о последнем входе в систему.
+ * Системные данные пользователя: - {@link LifecycleMeta} — аудит и soft-delete поля; - {@code lastLoginAt} — время
+ * последнего входа пользователя.
  */
 @Data
 @NoArgsConstructor
@@ -33,9 +36,9 @@ import java.time.Instant;
 public class UserSystem {
 
 	/**
-	 * Метаданные пользователя, включающие информацию о создании, обновлении и удалении.
+	 * Метаданные жизненного цикла сущности (кто/когда создал, обновил, удалил).
 	 */
-	private UserSystemMeta meta;
+	private LifecycleMeta meta;
 
 	/**
 	 * Время последнего входа пользователя в систему (может быть null).

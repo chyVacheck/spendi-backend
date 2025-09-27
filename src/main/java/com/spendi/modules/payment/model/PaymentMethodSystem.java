@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 /**
  * ! my imports
  */
-import com.spendi.shared.model.EntityMeta;
+import com.spendi.shared.model.meta.LifecycleMeta;
 
 /**
  * Системная информация о методе оплаты.
@@ -37,5 +37,5 @@ public class PaymentMethodSystem {
 	/**
 	 * Метаданные метода оплаты.
 	 */
-	private EntityMeta meta;
+	private LifecycleMeta meta;
 }

@@ -44,12 +44,12 @@ import com.spendi.modules.payment.model.PaymentMethodEntity;
 import com.spendi.modules.user.cmd.UserCreateCmd;
 import com.spendi.modules.user.model.UserEntity;
 import com.spendi.modules.user.model.UserFinance;
-import com.spendi.modules.user.model.UserSystemMeta;
 import com.spendi.modules.user.model.UserProfile;
 import com.spendi.modules.user.model.UserSecurity;
 import com.spendi.modules.user.model.UserSystem;
 import com.spendi.modules.payment.PaymentMethodService;
 import com.spendi.shared.dto.PaginationQueryDto;
+import com.spendi.shared.model.meta.LifecycleMeta;
 
 public class UserService extends BaseRepositoryService<UserRepository, UserEntity> {
 
@@ -97,8 +97,6 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 					Map.of("profile.email", cmd.getProfile().getEmail()));
 		}
 
-		var now = Instant.now();
-
 		var entity = new UserEntity();
 		entity.setId(new ObjectId());
 
@@ -122,10 +120,7 @@ public class UserService extends BaseRepositoryService<UserRepository, UserEntit
 
 		// system
 		var sys = new UserSystem();
-		var meta = new UserSystemMeta();
-		meta.setCreatedAt(now);
-		meta.setUpdatedAt(now);
-		sys.setMeta(meta);
+		sys.setMeta(new LifecycleMeta());
 		entity.setSystem(sys);
 
 		var created = super.createOne(entity);

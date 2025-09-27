@@ -25,6 +25,7 @@ import com.spendi.core.response.ServiceResponse;
 import com.spendi.core.exceptions.ValidationException;
 import com.spendi.modules.auth.dto.LoginDto;
 import com.spendi.modules.auth.dto.RegisterDto;
+import com.spendi.modules.user.UserMapper;
 import com.spendi.modules.user.UserService;
 import com.spendi.modules.user.cmd.UserCreateCmd;
 import com.spendi.modules.user.model.UserEntity;
@@ -39,7 +40,7 @@ public class AuthService extends BaseService {
 	private final UserService userService = UserService.getInstance();
 	private final SessionService sessionService = SessionService.getInstance();
 	protected final AuthConfig authCfg = AuthConfig.getConfig();
-	protected final AuthMapper authMapper = AuthMapper.getInstance();
+	protected final UserMapper userMapper = UserMapper.getInstance();
 
 	protected AuthService() {
 		super(AuthService.class.getSimpleName());
@@ -57,7 +58,7 @@ public class AuthService extends BaseService {
 	 */
 	public ServiceResponse<UserEntity> register(String requestId, RegisterDto dto) {
 		// маппим dto в command
-		UserCreateCmd command = authMapper.toCmd(dto);
+		UserCreateCmd command = userMapper.toCmd(dto);
 
 		// создаем пользователя
 		var created = this.userService.create(requestId, command);

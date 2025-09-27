@@ -24,12 +24,12 @@ import com.spendi.core.utils.InstantUtils;
 import com.spendi.shared.model.meta.AuditMeta;
 import com.spendi.shared.model.meta.MetaFields;
 
-public class AuditMetaMapper extends BaseMapper implements DocMapper<AuditMeta> {
+public class AuditMetaMapper extends BaseMapper<AuditMeta> implements DocMapper<AuditMeta> {
 	private static final AuditMetaMapper INSTANCE = new AuditMetaMapper();
 	private static final BaseMetaMapper BASE = BaseMetaMapper.getInstance();
 
 	private AuditMetaMapper() {
-		super(AuditMetaMapper.class.getSimpleName());
+		super(AuditMetaMapper.class.getSimpleName(), AuditMeta.class, MetaFields.META);
 	}
 
 	public static AuditMetaMapper getInstance() {
@@ -46,7 +46,7 @@ public class AuditMetaMapper extends BaseMapper implements DocMapper<AuditMeta> 
 	}
 
 	@Override
-	public AuditMeta fromDocument(Document d) {
+	public AuditMeta toEntity(Document d) {
 		if (d == null)
 			return null;
 

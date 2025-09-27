@@ -24,11 +24,6 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-/**
- * ! java imports
- */
-import java.time.Instant;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -78,10 +73,7 @@ public class FileEntity {
 	 */
 	private String relativePath;
 
-	/**
-	 * Дата и время загрузки файла. Применяется для построения структуры каталогов.
-	 */
-	private Instant createdAt;
+	private FileSystem system;
 
 	/**
 	 * @return строковое представление {@link #id} в формате hex.

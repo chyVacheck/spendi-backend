@@ -30,6 +30,7 @@ import java.util.Optional;
  * ! my imports
  */
 import com.spendi.core.utils.CryptoUtils;
+import com.spendi.shared.model.meta.LifecycleMeta;
 
 /**
  * Корневая сущность пользователя, объединяющая различные аспекты пользовательских данных. Включает ссылки на профиль,
@@ -199,7 +200,7 @@ public class UserEntity {
 		if (this.system != null) {
 			Map<String, Object> sys = new HashMap<>(2);
 
-			UserSystemMeta m = this.system.getMeta();
+			LifecycleMeta m = this.system.getMeta();
 			if (m != null) {
 				Map<String, Object> meta = new HashMap<>(3);
 				meta.put("createdAt", m.getCreatedAt());
@@ -256,7 +257,7 @@ public class UserEntity {
 		if (this.system != null) {
 			Map<String, Object> sys = new HashMap<>(2);
 
-			UserSystemMeta m = this.system.getMeta();
+			LifecycleMeta m = this.system.getMeta();
 			if (m != null) {
 				Map<String, Object> meta = new HashMap<>(3);
 				meta.put("createdAt", m.getCreatedAt());

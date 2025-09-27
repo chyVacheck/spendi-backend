@@ -21,7 +21,20 @@ import org.bson.Document;
  * @param <T> entity type
  */
 public interface DocMapper<T> {
+	/**
+	 * Преобразует BSON-документ в сущность доменной модели.
+	 *
+	 * @param doc BSON-документ из MongoDB (не null)
+	 * @return сущность TEntity
+	 */
+	T toEntity(Document doc);
+
+	/**
+	 * Преобразует сущность доменной модели в BSON-документ для записи в MongoDB.
+	 *
+	 * @param value сущность TEntity (не null)
+	 * @return BSON-документ Document
+	 */
 	Document toDocument(T value);
 
-	T fromDocument(Document doc);
 }
