@@ -9,7 +9,8 @@
 #
 # Commands:
 #   build        - mvn clean package -DskipTests
-#   test         - mvn test
+#   test         - mvn test (unit tests only)
+#   test:it      - mvn failsafe:integration-test failsafe:verify (integration tests only)
 #   clean        - mvn clean
 #   run          - start in background (with PID file)
 #   run:fg       - start in foreground (dev)
@@ -183,7 +184,14 @@ cmd_test() {
   require_tools
   note "Запуск тестов..."
   (cd "${PROJECT_ROOT}" && mvn test)
-  ok "Тесты выполнены."
+  ok "Unit-тесты выполнены."
+}
+
+cmd_test_it() {
+  require_tools
+  note "Запуск интеграционных тестов (Failsafe)..."
+  (cd "${PROJECT_ROOT}" && mvn -DtrimStackTrace=false test-compile failsafe:integration-test failsafe:verify)
+  ok "Интеграционные тесты выполнены."
 }
 
 cmd_clean() {
@@ -391,6 +399,7 @@ ${BLUE}Spendi - утилита управления${NC}
 Команды:
   ${GREEN}build${NC}       Сборка (mvn clean package -DskipTests)
   ${GREEN}test${NC}        Запуск тестов (mvn test)
+  ${GREEN}test:it${NC}     Интеграционные тесты (mvn failsafe:integration-test failsafe:verify)
   ${GREEN}clean${NC}       Очистка (mvn clean)
   ${GREEN}run${NC}         Запуск в фоне (PID-файл: .runtime/spendi.pid)
   ${GREEN}run:fg${NC}      Запуск в консоли (для разработки)
@@ -417,6 +426,7 @@ cmd="${1:-}"
 case "${cmd}" in
   build)    shift; cmd_build "$@";;
   test)     shift; cmd_test "$@";;
+  test:it)  shift; cmd_test_it "$@";;
   clean)    shift; cmd_clean "$@";;
   run)      shift; cmd_run_bg "$@";;
   run:fg)   shift; cmd_run_fg "$@";;

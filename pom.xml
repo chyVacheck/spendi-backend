@@ -15,22 +15,34 @@
 		<maven.compiler.target>21</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
+		<maven.failsafe.plugin.version>3.3.0</maven.failsafe.plugin.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<junit.version>5.13.4</junit.version>
 		<jackson.bom.version>2.20.0</jackson.bom.version>
 		<lombok.version>1.18.34</lombok.version>
+		<testcontainers.version>1.20.1</testcontainers.version>
   	</properties>
 
 	<!-- Используем BOM, чтобы все Jackson-зависимости были в единой версии -->
 	<dependencyManagement>
 		<dependencies>
-		<dependency>
-			<groupId>com.fasterxml.jackson</groupId>
-			<artifactId>jackson-bom</artifactId>
-			<version>${jackson.bom.version}</version>
-			<type>pom</type>
-			<scope>import</scope>
-		</dependency>
+			<!-- Jackson BOM -->
+			<dependency>
+				<groupId>com.fasterxml.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${jackson.bom.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- Testcontainers BOM (ADD) -->
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>${testcontainers.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -47,6 +59,51 @@
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- AssertJ -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.26.3</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Mockito JUnit Jupiter -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>5.13.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Testcontainers: ядро + интеграция с JUnit 5 + MongoDB -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mongodb</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Embedded MongoDB for integration tests -->
+		<dependency>
+  			<groupId>de.flapdoodle.embed</groupId>
+  			<artifactId>de.flapdoodle.embed.mongo</artifactId>
+  			<version>4.12.3</version>
+  			<scope>test</scope>
+		</dependency>
+
+		<!-- (опционально) простой логгер в тестах -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -205,6 +262,26 @@
 				</configuration>
 			</plugin>
 
+			<!-- Интеграционные тесты *IT.java (ADD) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>${maven.failsafe.plugin.version}</version>
+				<configuration>
+					<includes>
+						<include>**/*IT.java</include>
+					</includes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
 			<!-- Обычный JAR (версии, манифест и т.п.) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
