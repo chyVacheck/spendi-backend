@@ -285,7 +285,7 @@ public abstract class BaseRepository<TEntity> extends BaseClass {
 	 *
 	 * @param docs список BSON-документов
 	 */
-	public void insertMany(List<Document> docs) {
+	public void insertManyDocs(List<Document> docs) {
 		if (docs == null || docs.isEmpty())
 			return;
 		collection.insertMany(docs);

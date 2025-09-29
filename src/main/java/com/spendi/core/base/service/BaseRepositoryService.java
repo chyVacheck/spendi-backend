@@ -267,7 +267,7 @@ public abstract class BaseRepositoryService<TRepo extends BaseRepository<TEntity
 	 * Создать несколько документов.
 	 */
 	public ServiceResponse<List<Document>> createManyDocs(List<Document> docs) {
-		this.repository.insertMany(docs);
+		this.repository.insertManyDocs(docs);
 		return ServiceResponse.created(docs);
 	}
 
