@@ -9,8 +9,6 @@
 
 package com.spendi.modules.auth.dto;
 
-import com.spendi.core.utils.StringUtils;
-
 /**
  * ! lib imports
  */
@@ -18,21 +16,26 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * ! my imports
+ */
+import com.spendi.core.utils.StringUtils;
+
 public class RegisterDto {
-	@Email
-	@NotBlank
+	@Email(message = "Email is not valid")
+	@NotBlank(message = "Email is required")
 	private String email;
 
-	@Size(min = 3, max = 80)
-	@NotBlank
+	@Size(min = 3, max = 80, message = "First name must be between 3 and 80 characters")
+	@NotBlank(message = "First name is required")
 	private String firstName;
 
-	@Size(min = 3, max = 80)
-	@NotBlank
+	@Size(min = 3, max = 80, message = "Last name must be between 3 and 80 characters")
+	@NotBlank(message = "Last name is required")
 	private String lastName;
 
-	@NotBlank
-	@Size(min = 8, max = 128)
+	@NotBlank(message = "Password is required")
+	@Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
 	private String password;
 
 	// --- getters ---

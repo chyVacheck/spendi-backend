@@ -16,12 +16,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class LoginDto {
-	@Email
-	@NotBlank
+	@Email(message = "Email is not valid")
+	@NotBlank(message = "Email is required")
 	private String email;
 
-	@NotBlank
-	@Size(min = 8, max = 128)
+	@NotBlank(message = "Password is required")
+	@Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
 	private String password;
 
 	// --- getters ---
