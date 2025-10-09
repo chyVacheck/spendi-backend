@@ -27,10 +27,13 @@ public final class AuthConfig extends BaseConfig {
 	private final String cookieDomain; // nullable
 
 	private AuthConfig() {
-		this.cookieName = getenv(this.dotenv, "SPENDI_AUTH_COOKIE", "ems.sid");
-		this.sessionTtlSec = (int) parseLong(getenv(this.dotenv, "SPENDI_AUTH_TTL_SEC", "1800"), 1800); // 30m
-		this.cookieSecure = parseBool(getenv(this.dotenv, "SPENDI_AUTH_COOKIE_SECURE", "true"), true);
-		this.cookieHttpOnly = parseBool(getenv(this.dotenv, "SPENDI_AUTH_COOKIE_HTTP_ONLY", "true"), true);
+		this.cookieName = getenv(this.dotenv, "SPENDI_AUTH_COOKIE", "spendi.sid");
+		this.sessionTtlSec = (int) parseLong(getenv(this.dotenv, "SPENDI_AUTH_TTL_SEC", "1800"),
+				1800); // 30m
+		this.cookieSecure = parseBool(getenv(this.dotenv, "SPENDI_AUTH_COOKIE_SECURE", "false"),
+				true);
+		this.cookieHttpOnly = parseBool(getenv(this.dotenv, "SPENDI_AUTH_COOKIE_HTTP_ONLY", "true"),
+				true);
 		this.cookieSameSite = getenv(this.dotenv, "SPENDI_AUTH_COOKIE_SAMESITE", "Lax");
 		this.cookiePath = getenv(this.dotenv, "SPENDI_AUTH_COOKIE_PATH", "/");
 		this.cookieDomain = getenv(this.dotenv, "SPENDI_AUTH_COOKIE_DOMAIN", null);
@@ -70,7 +73,8 @@ public final class AuthConfig extends BaseConfig {
 
 	@Override
 	public String toString() {
-		return "AuthConfig{cookie='%s', ttl=%ds, secure=%s, httpOnly=%s, sameSite=%s}".formatted(cookieName,
+		return "AuthConfig{cookie='%s', ttl=%ds, secure=%s, httpOnly=%s, sameSite=%s}".formatted(
+				cookieName,
 				sessionTtlSec, cookieSecure, cookieHttpOnly, cookieSameSite);
 	}
 }

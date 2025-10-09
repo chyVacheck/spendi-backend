@@ -99,10 +99,10 @@
   			<scope>test</scope>
 		</dependency>
 
-		<!-- (опционально) простой логгер в тестах -->
+		<!-- Логи: глушилка; можно заменить на slf4j-simple для вывода -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
+			<artifactId>slf4j-nop</artifactId>
 			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>

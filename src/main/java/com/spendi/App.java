@@ -2,23 +2,21 @@
  * @file App.java
  * @module com.spendi
  *
- * @description
- * Точка входа в приложение Spendi Backend.
- * Отвечает за инициализацию конфигурации, настройку сервера и регистрацию роутеров.
+ * @description Точка входа в приложение Spendi Backend. Отвечает за инициализацию конфигурации,
+ *              настройку сервера и регистрацию роутеров.
  *
- * Запуск приложения:
- *  - Загружаются конфиги (ServerConfig, ApiConfig).
- *  - Создаётся и настраивается адаптер веб-сервера (JavalinServerAdapter).
- *  - Подключается глобальный ExceptionMapper для унифицированной обработки ошибок.
- *  - Подключаются глобальные middleware (например, RequestLifecycleMiddleware).
- *  - Регистрируются роутеры (PingRouter, NotFoundRouter и др.).
- *  - Запускается HTTP-сервер на указанном порту.
+ *              Запуск приложения: - Загружаются конфиги (ServerConfig, ApiConfig). - Создаётся и
+ *              настраивается адаптер веб-сервера (JavalinServerAdapter). - Подключается глобальный
+ *              ExceptionMapper для унифицированной обработки ошибок. - Подключаются глобальные
+ *              middleware (например, RequestLifecycleMiddleware). - Регистрируются роутеры
+ *              (PingRouter, NotFoundRouter и др.). - Запускается HTTP-сервер на указанном порту.
  *
  * @author Dmytro Shakh
  */
 
 package com.spendi;
 
+import java.util.List;
 /**
  * ! java imports
  */
@@ -88,12 +86,17 @@ public class App {
 		// HTTP-статусом. Это повышает предсказуемость для клиентов API.
 		server.setExceptionMapper(new MyExceptionMapper());
 
-		// ? --- Глобальные middleware -------------------------------------------
+		// Список разрешенных источников (origin) для CORS
+		var allowedOrigins = List.of(
+				"http://localhost:3000",
+				"http://127.0.0.1:3000");
+
+		// ? --- --- --- Глобальные middleware --- --- ---
 		// RequestLifecycleMiddleware (after-фаза):
 		// - считает время обработки и выставляет X-Response-Time;
 		// - присваивает/прокидывает X-Request-Id для корреляции логов;
 		// - логирует результат (успех/ошибка) с итоговым статусом.
-		server.useAfter(new RequestLifecycleMiddleware());
+		server.useAfter(new RequestLifecycleMiddleware(allowedOrigins));
 
 		// ? --- Регистрация роутеров -------------------------------------------
 		// Рекомендуется группировать регистрацию логически и передавать общий

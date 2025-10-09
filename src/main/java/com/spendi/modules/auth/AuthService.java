@@ -22,7 +22,7 @@ import org.bson.types.ObjectId;
 import com.spendi.config.AuthConfig;
 import com.spendi.core.base.service.BaseService;
 import com.spendi.core.response.ServiceResponse;
-import com.spendi.core.exceptions.ValidationException;
+import com.spendi.core.exceptions.InvalidPasswordException;
 import com.spendi.modules.auth.dto.LoginDto;
 import com.spendi.modules.auth.dto.RegisterDto;
 import com.spendi.modules.user.UserMapper;
@@ -84,8 +84,10 @@ public class AuthService extends BaseService {
 
 		if (!ok) {
 			// Лог: неверные учётные данные (сохраняем)
-			this.warn("login failed: invalid credentials", requestId, detailsOf("email", dto.getEmail()), true);
-			throw new ValidationException("Invalid credentials", Map.of("password", "invalid password"), Map.of());
+			this.warn("login failed: invalid credentials", requestId,
+					detailsOf("email", dto.getEmail()), true);
+			throw new InvalidPasswordException("Invalid credentials", null,
+					Map.of("password", "Invalid password"));
 		}
 
 		this.info("user found and password verified", requestId, detailsOf("email", dto.getEmail()), true);

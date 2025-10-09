@@ -2,7 +2,8 @@
 /**
  * @file UserEntity.java
  * @module modules/user/model
- * @description Корневая сущность пользователя: ссылки на профиль, безопасность, финансы и системный блок.
+ * @description Корневая сущность пользователя: ссылки на профиль, безопасность, финансы и системный
+ *              блок.
  *
  * @author Dmytro Shakh
  */
@@ -33,8 +34,8 @@ import com.spendi.core.utils.CryptoUtils;
 import com.spendi.shared.model.meta.LifecycleMeta;
 
 /**
- * Корневая сущность пользователя, объединяющая различные аспекты пользовательских данных. Включает ссылки на профиль,
- * данные безопасности, финансовую информацию и системные метаданные.
+ * Корневая сущность пользователя, объединяющая различные аспекты пользовательских данных. Включает
+ * ссылки на профиль, данные безопасности, финансовую информацию и системные метаданные.
  */
 @Data
 @NoArgsConstructor
@@ -141,10 +142,12 @@ public class UserEntity {
 	/**
 	 * Возвращает Optional с идентификатором файла аватара.
 	 * 
-	 * @return Optional, содержащий ObjectId файла аватара, если он существует, иначе пустой Optional.
+	 * @return Optional, содержащий ObjectId файла аватара, если он существует, иначе пустой
+	 *         Optional.
 	 */
 	public Optional<ObjectId> getAvatarFileIdOptional() {
-		return (profile != null && profile.getAvatarFileId() != null) ? Optional.of(profile.getAvatarFileId())
+		return (profile != null && profile.getAvatarFileId() != null)
+				? Optional.of(profile.getAvatarFileId())
 				: Optional.empty();
 	}
 
@@ -169,8 +172,8 @@ public class UserEntity {
 	}
 
 	/**
-	 * Возвращает публичные данные пользователя. Эти данные предназначены для отображения широкому кругу пользователей и
-	 * не содержат конфиденциальной информации.
+	 * Возвращает публичные данные пользователя. Эти данные предназначены для отображения широкому
+	 * кругу пользователей и не содержат конфиденциальной информации.
 	 * 
 	 * @return Объект, содержащий публичные данные пользователя.
 	 */
@@ -188,11 +191,7 @@ public class UserEntity {
 			prof.put("email", this.profile.getEmail());
 			prof.put("firstName", this.profile.getFirstName());
 			prof.put("lastName", this.profile.getLastName());
-			boolean hasAvatar = this.hasAvatar();
-			prof.put("hasAvatar", hasAvatar);
-			if (hasAvatar) {
-				prof.put("avatarUrl", getAvatarUrl());
-			}
+			prof.put("avatarUrl", getAvatarUrl());
 			out.put("profile", prof);
 		}
 
@@ -217,9 +216,9 @@ public class UserEntity {
 	}
 
 	/**
-	 * Возвращает приватные данные пользователя. Эти данные включают финансовую информацию, но исключают
-	 * конфиденциальные данные безопасности (например, хэш пароля). Предназначены для использования текущим
-	 * пользователем.
+	 * Возвращает приватные данные пользователя. Эти данные включают финансовую информацию, но
+	 * исключают конфиденциальные данные безопасности (например, хэш пароля). Предназначены для
+	 * использования текущим пользователем.
 	 * 
 	 * @return Объект, содержащий приватные данные пользователя.
 	 */
@@ -233,15 +232,11 @@ public class UserEntity {
 
 		// profile (как в public)
 		if (this.profile != null) {
-			Map<String, Object> prof = new HashMap<>(6);
+			Map<String, Object> prof = new HashMap<>(4);
 			prof.put("email", this.profile.getEmail());
 			prof.put("firstName", this.profile.getFirstName());
 			prof.put("lastName", this.profile.getLastName());
-			boolean hasAvatar = this.hasAvatar();
-			prof.put("hasAvatar", hasAvatar);
-			if (hasAvatar) {
-				prof.put("avatarUrl", getAvatarUrl());
-			}
+			prof.put("avatarUrl", getAvatarUrl());
 			out.put("profile", prof);
 		}
 
@@ -261,8 +256,11 @@ public class UserEntity {
 			if (m != null) {
 				Map<String, Object> meta = new HashMap<>(3);
 				meta.put("createdAt", m.getCreatedAt());
+				meta.put("createdBy", m.getCreatedBy());
 				meta.put("updatedAt", m.getUpdatedAt());
+				meta.put("updatedBy", m.getUpdatedBy());
 				meta.put("deletedAt", m.getDeletedAt());
+				meta.put("deletedBy", m.getDeletedBy());
 				sys.put("meta", meta);
 			}
 
